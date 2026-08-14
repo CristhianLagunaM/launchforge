@@ -25,6 +25,33 @@ Devuelve categorías activas para usuarios anónimos. Un admin autenticado puede
 - `PATCH /api/v1/products/{id}/status`
 - `DELETE /api/v1/products/{id}`
 
+## Inventory
+
+### ADMIN
+
+- `GET /api/v1/inventory`
+- `GET /api/v1/inventory/{productId}`
+- `PATCH /api/v1/inventory/{productId}`
+
+`PATCH` body:
+
+```json
+{
+  "operation": "INCREASE",
+  "quantity": 2,
+  "version": 0
+}
+```
+
+Sort fields soportados:
+
+- `productName`
+- `sku`
+- `availableQuantity`
+- `reservedQuantity`
+- `version`
+- `updatedAt`
+
 ## Query params soportados en catálogo
 
 - `name`
@@ -55,3 +82,4 @@ Casos esperados:
 - `403` sin rol suficiente
 - `404` recurso inexistente
 - `409` conflicto de SKU/slug
+- `409` inventario insuficiente o conflicto optimista de inventario

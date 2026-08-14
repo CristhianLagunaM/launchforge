@@ -44,6 +44,11 @@ export const routes: Routes = [
             redirectTo: 'products'
           },
           {
+            path: 'inventory',
+            loadComponent: () =>
+              import('./features/admin/inventory/admin-inventory-page.component').then((m) => m.AdminInventoryPageComponent)
+          },
+          {
             path: 'products',
             loadComponent: () =>
               import('./features/admin/products/admin-products-page.component').then((m) => m.AdminProductsPageComponent)

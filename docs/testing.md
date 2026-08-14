@@ -7,6 +7,8 @@ Se cubren tres niveles:
 - unit tests para lógica de catálogo
 - integration tests con PostgreSQL/Testcontainers para búsqueda y paginación
 - MockMvc para contrato HTTP, seguridad y validaciones
+- unit tests para invariantes de inventario
+- integración concurrente real para `inventory.version`
 
 ## Frontend
 
@@ -50,3 +52,29 @@ docker compose up --build
 - sorting
 - conflicto de SKU/slug
 - DTOs y formularios
+
+## Qué valida Fase 4
+
+- endpoints admin de inventario
+- operaciones `increase`, `decrease`, `restore`
+- rechazo de inventario insuficiente
+- rechazo de versión obsoleta
+- optimistic locking real con dos transacciones concurrentes sobre stock `1`
+
+## Prueba concurrente
+
+La prueba de concurrencia no usa solo mocks.
+
+Usa:
+
+- PostgreSQL real vía Testcontainers
+- dos transacciones reales
+- misma fila `inventory`
+- mismo `version`
+
+Resultado esperado:
+
+- una operación consume el único cupo
+- la otra falla por optimistic locking
+- el stock final queda en `0`
+- nunca queda negativo

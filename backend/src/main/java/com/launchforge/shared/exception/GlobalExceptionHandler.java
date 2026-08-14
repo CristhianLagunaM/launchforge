@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
@@ -74,6 +75,22 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                         exception.getMessage(),
                         request.getRequestURI(),
                         exception.getTypeSuffix()
+                )
+        );
+    }
+
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    ResponseEntity<ProblemDetail> handleOptimisticLocking(
+            ObjectOptimisticLockingFailureException exception,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                ProblemDetailsFactory.problem(
+                        HttpStatus.CONFLICT,
+                        "Inventory conflict",
+                        "Inventory was updated by another request. Reload and retry.",
+                        request.getRequestURI(),
+                        "inventory/optimistic-lock-conflict"
                 )
         );
     }
