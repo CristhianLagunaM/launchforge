@@ -55,8 +55,17 @@ public class InventoryManagementService {
 
     @Transactional
     public InventoryResponse consumeCapacity(UUID productId, int quantity) {
+        return applyDirectAdjustment(productId, InventoryAdjustmentOperation.DECREASE, quantity);
+    }
+
+    @Transactional
+    public InventoryResponse restoreCapacity(UUID productId, int quantity) {
+        return applyDirectAdjustment(productId, InventoryAdjustmentOperation.RESTORE, quantity);
+    }
+
+    private InventoryResponse applyDirectAdjustment(UUID productId, InventoryAdjustmentOperation operation, int quantity) {
         Inventory inventory = loadInventory(productId);
-        applyOperation(inventory, InventoryAdjustmentOperation.DECREASE, quantity);
+        applyOperation(inventory, operation, quantity);
         try {
             Inventory savedInventory = inventoryRepository.saveAndFlush(inventory);
             return inventoryMapper.toResponse(savedInventory);

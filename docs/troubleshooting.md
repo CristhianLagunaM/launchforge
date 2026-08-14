@@ -74,3 +74,28 @@ FROM inventory i
 JOIN products p ON p.id = i.product_id
 ORDER BY p.name;
 ```
+
+## 10. `409` al crear orden
+
+- revisar `Idempotency-Key`
+- revisar si el producto sigue activo
+- consultar `inventory.available_quantity`
+- verificar si el cliente reintentó un checkout anterior
+
+## 11. No aparecen órdenes del cliente
+
+- confirmar que el JWT pertenezca al usuario correcto
+- revisar si la UI está consultando `/api/v1/orders` ya autenticada
+- validar en backend que la orden se creó para ese `customer_id`
+
+## 12. `403` al consultar detalle de orden
+
+- un `CUSTOMER` solo puede ver órdenes propias
+- probar el mismo id con un token `ADMIN`
+- validar el `customer_id` de la orden en PostgreSQL
+
+## 13. Idempotencia no evita duplicados
+
+- confirmar que el cliente reusa exactamente la misma `Idempotency-Key`
+- revisar la restricción única de `orders(customer_id, idempotency_key)`
+- inspeccionar la tabla `flyway_schema_history` para confirmar que la migración base está aplicada

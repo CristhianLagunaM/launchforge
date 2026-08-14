@@ -9,6 +9,8 @@ Se cubren tres niveles:
 - MockMvc para contrato HTTP, seguridad y validaciones
 - unit tests para invariantes de inventario
 - integración concurrente real para `inventory.version`
+- unit tests para creación, idempotencia y cancelación de órdenes
+- MockMvc para endpoints de órdenes y ownership
 
 ## Frontend
 
@@ -17,6 +19,8 @@ Se prueban:
 - `CatalogStore`
 - interceptor y guards de auth existentes
 - formulario de producto
+- `CartStore`
+- `OrdersStore`
 
 ## Comandos
 
@@ -78,3 +82,24 @@ Resultado esperado:
 - la otra falla por optimistic locking
 - el stock final queda en `0`
 - nunca queda negativo
+
+## Qué valida Fase 5
+
+- creación de órdenes confirmadas
+- consolidación de items repetidos
+- snapshot de nombre, SKU y precio
+- idempotencia por `Idempotency-Key`
+- rechazo de producto inactivo
+- rechazo por capacidad insuficiente
+- ownership de lectura
+- cancelación con restauración de capacidad
+
+## Validación manual recomendada para órdenes
+
+1. autenticar un `CUSTOMER`;
+2. crear una orden con `Idempotency-Key`;
+3. repetir el mismo `POST` con la misma llave;
+4. listar órdenes del cliente;
+5. consultar detalle;
+6. cancelar una orden confirmada;
+7. verificar en SQL que la capacidad fue restaurada.

@@ -1,0 +1,45 @@
+<section class="order-detail-shell">
+  <a mat-button routerLink="/orders">Volver a órdenes</a>
+
+  @if (ordersStore.loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  @if (ordersStore.error()) {
+    <mat-card appearance="outlined">
+      <mat-card-title>Error</mat-card-title>
+      <mat-card-content>{{ ordersStore.error() }}</mat-card-content>
+    </mat-card>
+  }
+
+  @if (ordersStore.selectedOrder(); as order) {
+    <mat-card appearance="outlined">
+      <mat-card-header>
+        <mat-card-title>{{ order.orderNumber }}</mat-card-title>
+        <mat-card-subtitle>{{ order.status }} · {{ order.createdAt | date:'medium' }}</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <p><strong>Cliente:</strong> {{ order.customerEmail }}</p>
+        <p><strong>Subtotal:</strong> {{ order.subtotal | currency:'USD':'symbol':'1.2-2' }}</p>
+        <p><strong>Total:</strong> {{ order.total | currency:'USD':'symbol':'1.2-2' }}</p>
+
+        <div class="items-list">
+          @for (item of order.items; track item.productId + item.sku) {
+            <div class="item-row">
+              <div>
+                <strong>{{ item.productName }}</strong>
+                <p>{{ item.sku }} · {{ item.quantity }} unidad(es)</p>
+              </div>
+              <strong>{{ item.subtotal | currency:'USD':'symbol':'1.2-2' }}</strong>
+            </div>
+          }
+        </div>
+      </mat-card-content>
+      <mat-card-actions>
+        @if (order.status === 'CONFIRMED') {
+          <button mat-button type="button" (click)="ordersStore.cancelOrder(order.id)">Cancelar orden</button>
+        }
+      </mat-card-actions>
+    </mat-card>
+  }
+</section>

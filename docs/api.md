@@ -52,6 +52,36 @@ Sort fields soportados:
 - `version`
 - `updatedAt`
 
+## Orders
+
+Autenticados:
+
+- `POST /api/v1/orders`
+- `GET /api/v1/orders`
+- `GET /api/v1/orders/{id}`
+- `PATCH /api/v1/orders/{id}/cancel`
+
+`POST /api/v1/orders` acepta el header opcional `Idempotency-Key`.
+
+Body:
+
+```json
+{
+  "items": [
+    {
+      "productId": "22222222-2222-2222-2222-222222222221",
+      "quantity": 1
+    }
+  ]
+}
+```
+
+Notas de autorización:
+
+- `CUSTOMER` puede crear y cancelar sus propias órdenes;
+- `ADMIN` puede consultar órdenes;
+- clientes autenticados no pueden consultar órdenes de otros clientes.
+
 ## Query params soportados en catálogo
 
 - `name`
@@ -83,3 +113,4 @@ Casos esperados:
 - `404` recurso inexistente
 - `409` conflicto de SKU/slug
 - `409` inventario insuficiente o conflicto optimista de inventario
+- `409` orden ya cancelada, producto inactivo o conflicto de idempotencia
