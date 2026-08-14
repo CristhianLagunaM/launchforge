@@ -52,6 +52,45 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         );
     }
 
+    @ExceptionHandler(ApiNotFoundException.class)
+    ResponseEntity<ProblemDetail> handleNotFound(ApiNotFoundException exception, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                ProblemDetailsFactory.problem(
+                        HttpStatus.NOT_FOUND,
+                        exception.getTitle(),
+                        exception.getMessage(),
+                        request.getRequestURI(),
+                        exception.getTypeSuffix()
+                )
+        );
+    }
+
+    @ExceptionHandler(ApiConflictException.class)
+    ResponseEntity<ProblemDetail> handleConflict(ApiConflictException exception, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                ProblemDetailsFactory.problem(
+                        HttpStatus.CONFLICT,
+                        exception.getTitle(),
+                        exception.getMessage(),
+                        request.getRequestURI(),
+                        exception.getTypeSuffix()
+                )
+        );
+    }
+
+    @ExceptionHandler(ApiBadRequestException.class)
+    ResponseEntity<ProblemDetail> handleBadRequest(ApiBadRequestException exception, HttpServletRequest request) {
+        return ResponseEntity.badRequest().body(
+                ProblemDetailsFactory.problem(
+                        HttpStatus.BAD_REQUEST,
+                        exception.getTitle(),
+                        exception.getMessage(),
+                        request.getRequestURI(),
+                        exception.getTypeSuffix()
+                )
+        );
+    }
+
     @ExceptionHandler(Exception.class)
     ResponseEntity<ProblemDetail> handleUnexpected(Exception exception, HttpServletRequest request) {
         log.error("Unhandled exception for {} {}", request.getMethod(), request.getRequestURI(), exception);

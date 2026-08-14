@@ -4,6 +4,14 @@ import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
   {
+    path: 'products',
+    loadComponent: () => import('./features/catalog/catalog-page.component').then((m) => m.CatalogPageComponent)
+  },
+  {
+    path: 'products/:id',
+    loadComponent: () => import('./features/catalog/product-detail.component').then((m) => m.ProductDetailComponent)
+  },
+  {
     path: 'login',
     loadComponent: () => import('./features/auth/login/login.component').then((m) => m.LoginComponent)
   },
@@ -29,17 +37,28 @@ export const routes: Routes = [
         path: 'admin',
         canActivate: [roleGuard],
         data: { roles: ['ADMIN'] },
-        loadComponent: () => import('./features/admin/admin.component').then((m) => m.AdminComponent)
+        children: [
+          {
+            path: '',
+            pathMatch: 'full',
+            redirectTo: 'products'
+          },
+          {
+            path: 'products',
+            loadComponent: () =>
+              import('./features/admin/products/admin-products-page.component').then((m) => m.AdminProductsPageComponent)
+          }
+        ]
       }
     ]
   },
   {
     path: '',
     pathMatch: 'full',
-    redirectTo: 'login'
+    redirectTo: 'products'
   },
   {
     path: '**',
-    redirectTo: 'login'
+    redirectTo: 'products'
   }
 ];

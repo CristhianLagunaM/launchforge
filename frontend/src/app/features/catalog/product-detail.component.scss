@@ -1,0 +1,72 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f7f8fc, #eef3fb);
+}
+
+.detail-shell {
+  margin: 0 auto;
+  max-width: 72rem;
+  padding: 2rem 1rem 3rem;
+}
+
+.detail-card,
+.state-card {
+  margin-top: 1rem;
+}
+
+.detail-card {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.detail-card__heading {
+  align-items: flex-start;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.detail-card h1 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  margin: 0;
+}
+
+.eyebrow,
+.label {
+  color: #5d6b86;
+  font-size: 0.9rem;
+}
+
+.description {
+  color: #44506a;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.detail-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+}
+
+.detail-grid strong,
+.availability {
+  display: block;
+  margin-top: 0.3rem;
+}
+
+.available {
+  color: #187651;
+}
+
+.unavailable {
+  color: #9f2f2f;
+}
+
+@media (max-width: 768px) {
+  .detail-card__heading {
+    flex-direction: column;
+  }
+}
