@@ -1,0 +1,98 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { OrdersStore } from './orders.store';
+
+describe('OrdersStore', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()]
+    });
+  });
+
+  it('creates an order and keeps the latest created order in state', async () => {
+    const store = TestBed.inject(OrdersStore);
+    const httpTestingController = TestBed.inject(HttpTestingController);
+
+    const createPromise = store.createOrder(
+      {
+        items: [
+          {
+            productId: '22222222-2222-2222-2222-222222222221',
+            quantity: 1
+          }
+        ]
+      },
+      'frontend-idem-001'
+    );
+
+    const request = httpTestingController.expectOne('/api/v1/orders');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.headers.get('Idempotency-Key')).toBe('frontend-idem-001');
+    request.flush({
+      id: '55555555-5555-5555-5555-555555555501',
+      orderNumber: 'LF-2026-ABC12345',
+      customerId: '11111111-1111-1111-1111-111111111112',
+      customerEmail: 'customer@launchforge.dev',
+      status: 'CONFIRMED',
+      idempotencyKey: 'frontend-idem-001',
+      subtotal: 1200,
+      discountTotal: 0,
+      total: 1200,
+      createdAt: '2026-08-14T12:00:00Z',
+      updatedAt: '2026-08-14T12:00:00Z',
+      items: [
+        {
+          id: '66666666-6666-6666-6666-666666666601',
+          productId: '22222222-2222-2222-2222-222222222221',
+          sku: 'LF-LANDING-001',
+          productName: 'Landing Page Launch',
+          quantity: 1,
+          unitPrice: 1200,
+          subtotal: 1200
+        }
+      ]
+    });
+
+    const createdOrder = await createPromise;
+
+    expect(createdOrder?.id).toBe('55555555-5555-5555-5555-555555555501');
+    expect(store.latestCreatedOrder()?.id).toBe('55555555-5555-5555-5555-555555555501');
+    expect(store.orders()).toHaveLength(1);
+    httpTestingController.verify();
+  });
+
+  it('captures problem details when order creation fails', async () => {
+    const store = TestBed.inject(OrdersStore);
+    const httpTestingController = TestBed.inject(HttpTestingController);
+
+    const createPromise = store.createOrder(
+      {
+        items: [
+          {
+            productId: '22222222-2222-2222-2222-222222222221',
+            quantity: 1
+          }
+        ]
+      },
+      'frontend-idem-002'
+    );
+
+    const request = httpTestingController.expectOne('/api/v1/orders');
+    request.flush(
+      {
+        type: 'https://launchforge/errors/inventory/insufficient-capacity',
+        title: 'Inventory conflict',
+        status: 409,
+        detail: 'Not enough available capacity.'
+      },
+      { status: 409, statusText: 'Conflict' }
+    );
+
+    const result = await createPromise;
+
+    expect(result).toBeNull();
+    expect(store.error()).toBe('Not enough available capacity.');
+    httpTestingController.verify();
+  });
+});

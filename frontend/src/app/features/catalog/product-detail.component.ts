@@ -6,6 +6,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { CatalogStore } from '../../core/catalog/catalog.store';
+import { CartStore } from '../../core/orders/cart.store';
 
 @Component({
   selector: 'app-product-detail',
@@ -17,6 +18,7 @@ import { CatalogStore } from '../../core/catalog/catalog.store';
 export class ProductDetailComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   readonly catalogStore = inject(CatalogStore);
+  readonly cartStore = inject(CartStore);
 
   async ngOnInit(): Promise<void> {
     const productId = this.route.snapshot.paramMap.get('id');
@@ -27,5 +29,19 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.catalogStore.clearSelectedProduct();
+  }
+
+  addSelectedProductToCart(): void {
+    const product = this.catalogStore.selectedProduct();
+    if (!product) {
+      return;
+    }
+
+    this.cartStore.addItem({
+      productId: product.id,
+      sku: product.sku,
+      name: product.name,
+      price: product.price
+    });
   }
 }

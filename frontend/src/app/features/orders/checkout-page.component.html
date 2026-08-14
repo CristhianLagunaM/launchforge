@@ -1,0 +1,27 @@
+<section class="checkout-shell">
+  <mat-card appearance="outlined">
+    <mat-card-header>
+      <mat-card-title>Checkout</mat-card-title>
+      <mat-card-subtitle>El frontend evita doble submit, pero la idempotencia real vive en backend.</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      @if (cartStore.isEmpty()) {
+        <p>No hay items para procesar.</p>
+      } @else {
+        <p><strong>Items:</strong> {{ cartStore.itemCount() }}</p>
+        <p><strong>Subtotal:</strong> {{ cartStore.subtotal() | currency:'USD':'symbol':'1.2-2' }}</p>
+        <p><strong>Idempotency-Key:</strong> {{ cartStore.checkoutIdempotencyKey() ?? 'Se generará al enviar.' }}</p>
+      }
+
+      @if (ordersStore.error()) {
+        <p class="error-text">{{ ordersStore.error() }}</p>
+      }
+    </mat-card-content>
+    <mat-card-actions>
+      <a mat-button routerLink="/cart">Volver al carrito</a>
+      <button mat-flat-button color="primary" type="button" [disabled]="cartStore.isEmpty() || ordersStore.submitting()" (click)="submitOrder()">
+        {{ ordersStore.submitting() ? 'Procesando...' : 'Confirmar orden' }}
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</section>

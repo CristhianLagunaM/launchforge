@@ -11,6 +11,8 @@ import { PageEvent, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { CatalogStore } from '../../core/catalog/catalog.store';
+import { CartStore } from '../../core/orders/cart.store';
+import { Product } from '../../core/catalog/catalog.models';
 
 @Component({
   selector: 'app-catalog-page',
@@ -34,6 +36,7 @@ import { CatalogStore } from '../../core/catalog/catalog.store';
 export class CatalogPageComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
   readonly catalogStore = inject(CatalogStore);
+  readonly cartStore = inject(CartStore);
 
   readonly filtersForm = this.formBuilder.nonNullable.group({
     name: [''],
@@ -73,6 +76,15 @@ export class CatalogPageComponent implements OnInit {
       filters: this.toFilters(),
       page: event.pageIndex,
       size: event.pageSize
+    });
+  }
+
+  addToCart(product: Product): void {
+    this.cartStore.addItem({
+      productId: product.id,
+      sku: product.sku,
+      name: product.name,
+      price: product.price
     });
   }
 

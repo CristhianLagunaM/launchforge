@@ -43,6 +43,11 @@
           <strong>{{ product.updatedAt | date:'medium' }}</strong>
         </div>
       </div>
+
+      <div class="detail-actions">
+        <button mat-flat-button color="primary" type="button" (click)="addSelectedProductToCart()">Agregar al carrito</button>
+        <a mat-button routerLink="/cart">Ir al carrito</a>
+      </div>
     </mat-card>
   }
 </section>
