@@ -1,0 +1,26 @@
+.inventory-form {
+  position: sticky;
+  top: 1.5rem;
+}
+
+.inventory-form__meta {
+  margin-bottom: 1rem;
+}
+
+.inventory-form__meta p {
+  margin: 0.2rem 0;
+}
+
+.inventory-form__grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.inventory-form__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.muted {
+  color: #5b6475;
+}

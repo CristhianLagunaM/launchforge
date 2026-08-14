@@ -23,6 +23,7 @@ import { AuthStore } from '../../core/auth/auth.store';
         <a mat-flat-button color="primary" routerLink="/products">Ver catálogo público</a>
         @if (authStore.isAdmin()) {
           <a mat-button routerLink="/app/admin/products">Administrar productos</a>
+          <a mat-button routerLink="/app/admin/inventory">Administrar inventario</a>
         }
       </mat-card-actions>
     </mat-card>

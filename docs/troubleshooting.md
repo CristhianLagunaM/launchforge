@@ -22,6 +22,8 @@
 
 - consultar productos por `sku` o `slug`
 - revisar si la edición intenta reutilizar un valor ya existente
+- en inventario, revisar si la capacidad disponible alcanzaba
+- si el mensaje habla de versión obsoleta, recargar la fila antes de reintentar
 
 ## 5. Búsqueda vacía o inesperada
 
@@ -42,4 +44,33 @@ Si cambiaste migraciones o seed, reinicio limpio local:
 ```bash
 docker compose down -v
 docker compose up --build
+```
+
+## 7. Conflicto optimista en inventario
+
+- revisar `version` devuelta por `GET /api/v1/inventory/{productId}`
+- confirmar que el `PATCH` envía esa misma versión
+- si otra operación modificó la fila, el backend responderá `409`
+- recargar inventario y reintentar con la versión nueva
+
+## 8. Inventario insuficiente
+
+- consultar `available_quantity` en PostgreSQL
+- verificar si otro ajuste o consumo concurrente ya descontó capacidad
+- revisar que no se esté intentando `DECREASE` por encima del disponible
+
+## 9. Diagnóstico SQL rápido
+
+```sql
+SELECT
+    p.id,
+    p.sku,
+    p.name,
+    i.available_quantity,
+    i.reserved_quantity,
+    i.version,
+    i.updated_at
+FROM inventory i
+JOIN products p ON p.id = i.product_id
+ORDER BY p.name;
 ```

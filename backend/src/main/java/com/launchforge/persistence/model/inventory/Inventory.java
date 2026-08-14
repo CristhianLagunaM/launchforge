@@ -21,6 +21,8 @@ import jakarta.validation.constraints.PositiveOrZero;
 @Table(name = "inventory")
 public class Inventory extends AbstractUuidEntity {
 
+    private static final String QUANTITY_MUST_BE_POSITIVE = "Quantity must be greater than zero.";
+
     @NotNull
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "product_id", nullable = false, unique = true)
@@ -66,6 +68,23 @@ public class Inventory extends AbstractUuidEntity {
         this.product = product;
     }
 
+    public void increase(int quantity) {
+        validatePositiveQuantity(quantity);
+        availableQuantity += quantity;
+    }
+
+    public void decrease(int quantity) {
+        validatePositiveQuantity(quantity);
+        if (availableQuantity < quantity) {
+            throw new InsufficientInventoryException(product.getId(), availableQuantity, quantity);
+        }
+        availableQuantity -= quantity;
+    }
+
+    public void restore(int quantity) {
+        increase(quantity);
+    }
+
     public Integer getAvailableQuantity() {
         return availableQuantity;
     }
@@ -96,5 +115,11 @@ public class Inventory extends AbstractUuidEntity {
 
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    private void validatePositiveQuantity(int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException(QUANTITY_MUST_BE_POSITIVE);
+        }
     }
 }
