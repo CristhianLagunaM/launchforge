@@ -25,6 +25,8 @@ services:
       SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-jdbc:postgresql://db:5432/launchforge}
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-launchforge}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-change-me-local-only}
+      JWT_SECRET: ${JWT_SECRET:-change-me-local-only-change-me-local-only}
+      JWT_EXPIRATION_SECONDS: ${JWT_EXPIRATION_SECONDS:-3600}
     ports:
       - "${BACKEND_HOST_PORT:-8080}:8080"
     depends_on:

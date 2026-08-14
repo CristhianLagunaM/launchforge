@@ -1,6 +1,6 @@
 # LaunchForge
 
-LaunchForge será un e-commerce de paquetes de desarrollo web. Este repositorio contiene únicamente la **Fase 0: bootstrap e infraestructura**; todavía no existen entidades, tablas de dominio, autenticación, CRUD, órdenes ni descuentos.
+LaunchForge es una plataforma para comercializar paquetes de desarrollo web. El repositorio ya incluye bootstrap, persistencia base y autenticación/autorización con JWT.
 
 ## Arquitectura actual
 
@@ -14,8 +14,8 @@ flowchart LR
 ```
 
 - `frontend`: SPA standalone, routing, TypeScript estricto y Angular Material; Nginx la sirve en producción.
-- `backend`: monolito modular preparado para capas `domain/application/infrastructure`; en Fase 0 solo contiene configuración transversal.
-- `db`: PostgreSQL persistente. Flyway está habilitado, pero no hay migraciones de dominio en esta fase.
+- `backend`: Spring Boot 3 sobre Java 21 con JPA, Flyway, Security stateless, JWT y BCrypt.
+- `db`: PostgreSQL persistente con migraciones versionadas V1-V8 y datos demo deterministas.
 
 ## Requisitos
 
@@ -77,15 +77,17 @@ docker compose config
 
 También existen `make up`, `down`, `reset`, `logs`, `logs-backend`, `logs-db`, `test` y `build`.
 
-## Base de datos en Fase 0
+## Base de datos
 
-`spring.flyway.enabled=true` y `ddl-auto=validate`. La carpeta `db/migration` se reserva para el plan V1–V8, pero permanece vacía para respetar el requisito de no crear tablas aún. PostgreSQL crea la base vacía; Flyway gestionará versiones desde Fase 1; Hibernate validará las entidades cuando existan.
+`spring.flyway.enabled=true` y `ddl-auto=validate`. Flyway administra el esquema con migraciones V1-V8; Hibernate valida el mapeo JPA contra PostgreSQL en cada arranque.
 
 ## Decisiones y alcance
 
 - Un monolito modular evita complejidad distribuida prematura.
 - Nginx entrega archivos estáticos y resuelve rutas SPA; además deja preparado el proxy `/api`.
 - Compose ordena el arranque por salud real: DB, backend y frontend.
-- No hay credenciales demo porque no existe autenticación ni seed en Fase 0.
+- Credenciales demo actuales:
+  - `admin@launchforge.dev` / `launchforge-demo`
+  - `customer@launchforge.dev` / `launchforge-demo`
 
-Consulta [Docker](docs/handbook/07-docker.md), [PostgreSQL/JPA](docs/handbook/03-postgresql-jpa.md) y [F00 Bootstrap](docs/features/F00-bootstrap.md).
+Consulta [Docker](docs/handbook/07-docker.md), [PostgreSQL/JPA](docs/handbook/03-postgresql-jpa.md), [F00 Bootstrap](docs/features/F00-bootstrap.md), [F01 Persistence](docs/features/F01-persistence.md) y [F02 Authentication](docs/features/F02-authentication.md).
