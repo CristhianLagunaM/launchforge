@@ -33,11 +33,19 @@ En PowerShell: `Copy-Item .env.example .env`.
 
 Servicios:
 
-- Frontend: <http://localhost>
-- Backend health: <http://localhost:8080/actuator/health>
-- Swagger UI: <http://localhost:8080/swagger-ui/index.html>
-- OpenAPI JSON: <http://localhost:8080/v3/api-docs>
-- PostgreSQL: `localhost:5432`
+- Frontend: <http://localhost> por defecto, o `http://localhost:${FRONTEND_HOST_PORT}` si cambias el puerto.
+- Backend health: <http://localhost:8080/actuator/health> por defecto, o `http://localhost:${BACKEND_HOST_PORT}/actuator/health`.
+- Swagger UI: <http://localhost:8080/swagger-ui/index.html> por defecto, o `http://localhost:${BACKEND_HOST_PORT}/swagger-ui/index.html`.
+- OpenAPI JSON: <http://localhost:8080/v3/api-docs> por defecto, o `http://localhost:${BACKEND_HOST_PORT}/v3/api-docs`.
+- PostgreSQL: `localhost:5432` por defecto, o `localhost:${DB_HOST_PORT}`.
+
+Si un puerto ya está ocupado en tu máquina, ajusta `.env` antes de levantar Compose. Ejemplo:
+
+```bash
+DB_HOST_PORT=5433
+BACKEND_HOST_PORT=8081
+FRONTEND_HOST_PORT=8088
+```
 
 Los valores de `.env.example` son solo para desarrollo; cambia la contraseña en cualquier entorno compartido.
 
@@ -81,4 +89,3 @@ También existen `make up`, `down`, `reset`, `logs`, `logs-backend`, `logs-db`, 
 - No hay credenciales demo porque no existe autenticación ni seed en Fase 0.
 
 Consulta [Docker](docs/handbook/07-docker.md), [PostgreSQL/JPA](docs/handbook/03-postgresql-jpa.md) y [F00 Bootstrap](docs/features/F00-bootstrap.md).
-
