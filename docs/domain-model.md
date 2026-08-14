@@ -1525,9 +1525,9 @@ seed planificado
 
 ---
 
-# 42. Regla para Codex
+# 42. Regla de cambio del modelo
 
-Antes de crear una entidad JPA, migration o repository:
+Antes de crear o modificar una entidad JPA, migración o repository:
 
 1. revisar este documento;
 2. verificar si la tabla/campo ya está definido;
