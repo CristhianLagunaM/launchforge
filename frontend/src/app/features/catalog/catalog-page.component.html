@@ -1,0 +1,116 @@
+<section class="catalog-shell">
+  <header class="catalog-hero">
+    <div>
+      <p class="eyebrow">LaunchForge Catalog</p>
+      <h1>Paquetes digitales listos para despegar proyectos reales.</h1>
+      <p class="hero-copy">
+        Busca por nombre, SKU, categoría, precio o disponibilidad. Las consultas públicas solo muestran productos activos.
+      </p>
+    </div>
+    <a mat-stroked-button routerLink="/login">Acceso admin</a>
+  </header>
+
+  <mat-card appearance="outlined" class="filters-card">
+    <mat-card-header>
+      <mat-card-title>Buscar catálogo</mat-card-title>
+      <mat-card-subtitle>La búsqueda se resuelve en base de datos con filtros dinámicos y paginación.</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <form class="filters-grid" [formGroup]="filtersForm" (ngSubmit)="search()">
+        <mat-form-field>
+          <mat-label>Nombre</mat-label>
+          <input matInput formControlName="name" />
+        </mat-form-field>
+
+        <mat-form-field>
+          <mat-label>SKU</mat-label>
+          <input matInput formControlName="sku" />
+        </mat-form-field>
+
+        <mat-form-field>
+          <mat-label>Categoría</mat-label>
+          <mat-select formControlName="category">
+            <mat-option value="">Todas</mat-option>
+            @for (category of catalogStore.categories(); track category.id) {
+              <mat-option [value]="category.slug">{{ category.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field>
+          <mat-label>Precio mínimo</mat-label>
+          <input matInput type="number" min="0" step="0.01" formControlName="minPrice" />
+        </mat-form-field>
+
+        <mat-form-field>
+          <mat-label>Precio máximo</mat-label>
+          <input matInput type="number" min="0" step="0.01" formControlName="maxPrice" />
+        </mat-form-field>
+
+        <mat-form-field>
+          <mat-label>Disponible</mat-label>
+          <mat-select formControlName="available">
+            <mat-option value="">Cualquiera</mat-option>
+            <mat-option value="true">Sí</mat-option>
+            <mat-option value="false">No</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <div class="filters-actions">
+          <button mat-button type="button" (click)="resetFilters()">Limpiar</button>
+          <button mat-flat-button color="primary" type="submit">Buscar</button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  @if (catalogStore.loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  @if (catalogStore.error()) {
+    <mat-card appearance="outlined" class="state-card error-card">
+      <mat-card-title>Error</mat-card-title>
+      <mat-card-content>{{ catalogStore.error() }}</mat-card-content>
+    </mat-card>
+  }
+
+  @if (catalogStore.isEmpty()) {
+    <mat-card appearance="outlined" class="state-card">
+      <mat-card-title>Sin resultados</mat-card-title>
+      <mat-card-content>No encontramos productos con esos filtros.</mat-card-content>
+    </mat-card>
+  }
+
+  @if (catalogStore.hasResults()) {
+    <section class="product-grid">
+      @for (product of catalogStore.products(); track product.id) {
+        <mat-card appearance="outlined" class="product-card">
+          <div class="product-card__meta">
+            <span class="product-card__category">{{ product.category.name }}</span>
+            <span class="product-card__sku">{{ product.sku }}</span>
+          </div>
+          <h2>{{ product.name }}</h2>
+          <p>{{ product.description }}</p>
+          <div class="product-card__footer">
+            <div>
+              <strong>{{ product.price | currency:'USD':'symbol':'1.2-2' }}</strong>
+              <span [class.available]="product.available" [class.unavailable]="!product.available">
+                {{ product.available ? 'Disponible' : 'Sin cupo inmediato' }}
+              </span>
+            </div>
+            <a mat-flat-button color="primary" [routerLink]="['/products', product.id]">Ver detalle</a>
+          </div>
+        </mat-card>
+      }
+    </section>
+
+    <mat-paginator
+      [length]="catalogStore.totalElements()"
+      [pageIndex]="catalogStore.page()"
+      [pageSize]="catalogStore.size()"
+      [pageSizeOptions]="[6, 12, 24]"
+      (page)="changePage($event)"
+    />
+  }
+</section>

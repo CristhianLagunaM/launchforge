@@ -3,13 +3,16 @@
     <mat-icon>rocket_launch</mat-icon>
     <div>
       <strong>LaunchForge</strong>
-      <small>Authentication & Authorization</small>
+      <small>Catalog, Security & Operations</small>
     </div>
   </div>
 
   <nav class="shell-nav">
     <a mat-button routerLink="/app" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }">Inicio</a>
-    <a mat-button routerLink="/app/admin" routerLinkActive="active-link">Admin</a>
+    <a mat-button routerLink="/products" routerLinkActive="active-link">Catálogo</a>
+    @if (authStore.isAdmin()) {
+      <a mat-button routerLink="/app/admin/products" routerLinkActive="active-link">Admin productos</a>
+    }
   </nav>
 
   <div class="shell-user">

@@ -1,0 +1,105 @@
+<section class="admin-shell">
+  <header class="admin-header">
+    <div>
+      <p class="eyebrow">Admin</p>
+      <h1>Gestión del catálogo</h1>
+      <p>CRUD de productos con seguridad backend real, búsqueda dinámica, activación y desactivación lógica.</p>
+    </div>
+    <button mat-flat-button color="primary" type="button" (click)="newProduct()">Nuevo producto</button>
+  </header>
+
+  @if (adminProductStore.error()) {
+    <mat-card appearance="outlined" class="error-card">
+      <mat-card-title>Error</mat-card-title>
+      <mat-card-content>{{ adminProductStore.error() }}</mat-card-content>
+    </mat-card>
+  }
+
+  @if (adminProductStore.loading() || adminProductStore.saving()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  <div class="admin-grid">
+    <div class="admin-grid__list">
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title>Filtro admin</mat-card-title>
+          <mat-card-subtitle>Consulta activos e inactivos con el mismo endpoint protegido por rol.</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <form class="filters-grid" [formGroup]="filtersForm" (ngSubmit)="search()">
+            <mat-form-field>
+              <mat-label>Nombre</mat-label>
+              <input matInput formControlName="name" />
+            </mat-form-field>
+            <mat-form-field>
+              <mat-label>SKU</mat-label>
+              <input matInput formControlName="sku" />
+            </mat-form-field>
+            <mat-form-field>
+              <mat-label>Activo</mat-label>
+              <mat-select formControlName="active">
+                <mat-option value="">Todos</mat-option>
+                <mat-option value="true">Activos</mat-option>
+                <mat-option value="false">Inactivos</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <div class="filters-actions">
+              <button mat-flat-button color="primary" type="submit">Aplicar filtros</button>
+            </div>
+          </form>
+        </mat-card-content>
+      </mat-card>
+
+      @if (adminProductStore.emptyState()) {
+        <mat-card appearance="outlined" class="empty-card">
+          <mat-card-title>Sin productos</mat-card-title>
+          <mat-card-content>No hay resultados para el filtro actual.</mat-card-content>
+        </mat-card>
+      }
+
+      <div class="admin-list">
+        @for (product of adminProductStore.products(); track product.id) {
+          <mat-card appearance="outlined" class="admin-item">
+            <div class="admin-item__content">
+              <div>
+                <h2>{{ product.name }}</h2>
+                <p>{{ product.sku }} · {{ product.category.name }}</p>
+                <p class="muted">Actualizado: {{ product.updatedAt | date:'medium' }}</p>
+              </div>
+              <div class="admin-item__meta">
+                <strong>{{ product.price | currency:'USD':'symbol':'1.2-2' }}</strong>
+                <span [class.active]="product.active" [class.inactive]="!product.active">
+                  {{ product.active ? 'Activo' : 'Inactivo' }}
+                </span>
+              </div>
+            </div>
+            <div class="admin-item__actions">
+              <button mat-button type="button" (click)="editProduct(product)">Editar</button>
+              <button mat-button type="button" (click)="adminProductStore.toggleStatus(product)">
+                {{ product.active ? 'Desactivar' : 'Activar' }}
+              </button>
+              <button mat-button type="button" (click)="adminProductStore.deleteProduct(product.id)">Eliminar</button>
+            </div>
+          </mat-card>
+        }
+      </div>
+
+      <mat-paginator
+        [length]="adminProductStore.totalElements()"
+        [pageIndex]="adminProductStore.page()"
+        [pageSize]="adminProductStore.size()"
+        [pageSizeOptions]="[5, 10, 20]"
+        (page)="changePage($event)"
+      />
+    </div>
+
+    <app-product-form
+      [categories]="adminProductStore.categories()"
+      [product]="adminProductStore.selectedProduct()"
+      [saving]="adminProductStore.saving()"
+      (saveProduct)="adminProductStore.saveProduct($event)"
+      (cancelEdit)="adminProductStore.selectProduct(null)"
+    />
+  </div>
+</section>

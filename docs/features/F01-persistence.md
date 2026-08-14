@@ -88,4 +88,4 @@ Los tests de integración levantan PostgreSQL real con Testcontainers y validan:
 
 ## 10. Regla de evolución
 
-Una vez compartidas `V1-V8`, no se editan. Cualquier cambio nuevo entra como `V9__...` o siguiente versión libre.
+Una vez compartidas `V1-V8`, no se editan. Después de `V9`, cualquier cambio nuevo entra como `V10__...` o la siguiente versión libre.
