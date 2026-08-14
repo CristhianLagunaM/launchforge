@@ -63,3 +63,23 @@ Cancelación:
 - la creación de órdenes usa una transacción corta y explícita
 - la idempotencia se apoya en un header HTTP y una restricción única en PostgreSQL
 - `order_items` conserva snapshots para proteger histórico frente a cambios del catálogo
+
+## Flujo principal de Fase 6
+
+Discount pipeline:
+
+`Checkout -> TransactionalOrderCreator -> DiscountEngine -> DiscountConfigurationService -> DiscountStrategy[] -> order_discounts + orders.total`
+
+Orden actual:
+
+1. `TIME_RANGE`
+2. `RANDOM_ORDER`
+3. `FREQUENT_CUSTOMER`
+
+Decisiones específicas:
+
+- los descuentos combinables se calculan sobre el subtotal original;
+- `DiscountEngine` recibe estrategias por DI;
+- `RandomProvider` desacopla producción y tests;
+- `OrderDiscount` conserva trazabilidad histórica aunque cambie la configuración;
+- `DiscountConfigurationService` evita queries duplicadas por estrategia.

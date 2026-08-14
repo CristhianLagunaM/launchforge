@@ -90,9 +90,19 @@ public class CustomerOrder extends AbstractTimestampedEntity {
         items.add(item);
     }
 
+    public void addDiscount(OrderDiscount discount) {
+        discount.setOrder(this);
+        orderDiscounts.add(discount);
+    }
+
     public void initializeMonetaryTotals() {
         this.discountTotal = ZERO;
         this.total = subtotal.subtract(discountTotal);
+    }
+
+    public void applyDiscountSummary(BigDecimal discountTotal, BigDecimal total) {
+        this.discountTotal = discountTotal;
+        this.total = total;
     }
 
     public String getOrderNumber() {

@@ -44,8 +44,8 @@ class PersistenceIntegrationTest extends AbstractPostgresIntegrationTest {
                 "SELECT version FROM flyway_schema_history WHERE version IS NOT NULL ORDER BY installed_rank",
                 String.class);
 
-        assertThat(installedCount).isEqualTo(9);
-        assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9");
+        assertThat(installedCount).isEqualTo(10);
+        assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10");
     }
 
     @org.junit.jupiter.api.Test
@@ -103,7 +103,7 @@ class PersistenceIntegrationTest extends AbstractPostgresIntegrationTest {
         assertThat(order.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
         assertThat(order.getCustomer().getEmail()).isEqualTo("frequent@launchforge.dev");
         assertThat(order.getItems()).hasSize(2);
-        assertThat(order.getOrderDiscounts()).hasSize(2);
+        assertThat(order.getOrderDiscounts()).hasSize(3);
 
         OrderItem firstItem = order.getItems().getFirst();
         assertThat(firstItem.getProductName()).isEqualTo("MVP SaaS Forge");
@@ -137,5 +137,19 @@ class PersistenceIntegrationTest extends AbstractPostgresIntegrationTest {
         assertThat(discount).containsEntry("code", "FREQUENT_CUSTOMER");
         assertThat(discount).containsEntry("minimum_orders", 5);
         assertThat(discount).containsEntry("lookback_months", 12);
+    }
+
+    @org.junit.jupiter.api.Test
+    void randomDiscountMigrationConfiguresAConcreteDateRange() {
+        Map<String, Object> discount = jdbcTemplate.queryForMap(
+                """
+                SELECT code, start_at, end_at
+                FROM discount_configuration
+                WHERE code = 'RANDOM_ORDER'
+                """);
+
+        assertThat(discount).containsEntry("code", "RANDOM_ORDER");
+        assertThat(discount.get("start_at")).isNotNull();
+        assertThat(discount.get("end_at")).isNotNull();
     }
 }

@@ -9,6 +9,10 @@ import static org.mockito.Mockito.when;
 
 import com.launchforge.auth.infrastructure.UserRepository;
 import com.launchforge.catalog.infrastructure.ProductRepository;
+import com.launchforge.discounts.application.DiscountApplication;
+import com.launchforge.discounts.application.DiscountCode;
+import com.launchforge.discounts.application.DiscountEngine;
+import com.launchforge.discounts.application.DiscountEngineResult;
 import com.launchforge.inventory.application.InventoryManagementService;
 import com.launchforge.orders.api.dto.CreateOrderRequest;
 import com.launchforge.orders.api.dto.OrderItemRequest;
@@ -17,6 +21,7 @@ import com.launchforge.orders.application.OrderMapper;
 import com.launchforge.orders.application.TransactionalOrderCreator;
 import com.launchforge.orders.infrastructure.OrderRepository;
 import com.launchforge.persistence.model.catalog.Category;
+import com.launchforge.persistence.model.discounts.DiscountConfiguration;
 import com.launchforge.persistence.model.catalog.Product;
 import com.launchforge.persistence.model.identity.User;
 import com.launchforge.persistence.model.orders.CustomerOrder;
@@ -49,6 +54,9 @@ class TransactionalOrderCreatorTest {
     @Mock
     private InventoryManagementService inventoryManagementService;
 
+    @Mock
+    private DiscountEngine discountEngine;
+
     private TransactionalOrderCreator transactionalOrderCreator;
 
     @BeforeEach
@@ -58,7 +66,8 @@ class TransactionalOrderCreatorTest {
                 productRepository,
                 orderRepository,
                 new OrderMapper(),
-                inventoryManagementService
+                inventoryManagementService,
+                discountEngine
         );
     }
 
@@ -68,6 +77,11 @@ class TransactionalOrderCreatorTest {
         Product product = product(UUID.fromString("22222222-2222-2222-2222-222222222221"), "LF-LANDING-001", "Landing Page Launch", true, "1200.00");
         when(userRepository.findById(customer.getId())).thenReturn(Optional.of(customer));
         when(productRepository.findById(product.getId())).thenReturn(Optional.of(product));
+        when(discountEngine.applyDiscounts(any())).thenReturn(new DiscountEngineResult(
+                new BigDecimal("0.00"),
+                new BigDecimal("2400.00"),
+                List.of()
+        ));
         when(orderRepository.saveAndFlush(any(CustomerOrder.class))).thenAnswer(invocation -> {
             CustomerOrder order = invocation.getArgument(0);
             order.setId(UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"));
@@ -98,6 +112,11 @@ class TransactionalOrderCreatorTest {
         Product product = product(UUID.fromString("22222222-2222-2222-2222-222222222221"), "LF-LANDING-001", "Landing Page Launch", true, "1200.00");
         when(userRepository.findById(customer.getId())).thenReturn(Optional.of(customer));
         when(productRepository.findById(product.getId())).thenReturn(Optional.of(product));
+        when(discountEngine.applyDiscounts(any())).thenReturn(new DiscountEngineResult(
+                new BigDecimal("0.00"),
+                new BigDecimal("3600.00"),
+                List.of()
+        ));
         when(orderRepository.saveAndFlush(any(CustomerOrder.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         transactionalOrderCreator.create(
@@ -145,6 +164,47 @@ class TransactionalOrderCreatorTest {
                 "idem-004"
         ))
                 .isInstanceOf(ApiNotFoundException.class);
+    }
+
+    @Test
+    void appliesDiscountBreakdownToOrderTotals() {
+        User customer = customer();
+        Product product = product(UUID.fromString("22222222-2222-2222-2222-222222222221"), "LF-LANDING-001", "Landing Page Launch", true, "1200.00");
+        DiscountConfiguration configuration = new DiscountConfiguration();
+        configuration.setId(UUID.fromString("55555555-5555-5555-5555-555555555551"));
+        configuration.setCode("TIME_RANGE");
+        configuration.setType("TIME_RANGE");
+        configuration.setEnabled(true);
+        configuration.setPercentage(new BigDecimal("10.00"));
+
+        when(userRepository.findById(customer.getId())).thenReturn(Optional.of(customer));
+        when(productRepository.findById(product.getId())).thenReturn(Optional.of(product));
+        when(discountEngine.applyDiscounts(any())).thenReturn(new DiscountEngineResult(
+                new BigDecimal("120.00"),
+                new BigDecimal("1080.00"),
+                List.of(new DiscountApplication(
+                        configuration,
+                        DiscountCode.TIME_RANGE,
+                        new BigDecimal("10.00"),
+                        new BigDecimal("1200.00"),
+                        new BigDecimal("120.00"),
+                        "Order created inside configured promotional time range.",
+                        1
+                ))
+        ));
+        when(orderRepository.saveAndFlush(any(CustomerOrder.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        OrderResponse response = transactionalOrderCreator.create(
+                customer.getId(),
+                new CreateOrderRequest(List.of(new OrderItemRequest(product.getId(), 1))),
+                "idem-005"
+        );
+
+        assertThat(response.discountTotal()).isEqualByComparingTo("120.00");
+        assertThat(response.total()).isEqualByComparingTo("1080.00");
+        assertThat(response.discounts()).hasSize(1);
+        assertThat(response.discounts().getFirst().code()).isEqualTo("TIME_RANGE");
+        assertThat(response.discounts().getFirst().amount()).isEqualByComparingTo("120.00");
     }
 
     private User customer() {

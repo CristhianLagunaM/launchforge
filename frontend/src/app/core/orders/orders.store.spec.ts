@@ -51,7 +51,8 @@ describe('OrdersStore', () => {
           unitPrice: 1200,
           subtotal: 1200
         }
-      ]
+      ],
+      discounts: []
     });
 
     const createdOrder = await createPromise;

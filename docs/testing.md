@@ -11,6 +11,9 @@ Se cubren tres niveles:
 - integración concurrente real para `inventory.version`
 - unit tests para creación, idempotencia y cancelación de órdenes
 - MockMvc para endpoints de órdenes y ownership
+- unit tests del `DiscountEngine`
+- integration tests de descuentos con PostgreSQL/Testcontainers
+- MockMvc para configuración admin de descuentos
 
 ## Frontend
 
@@ -21,6 +24,7 @@ Se prueban:
 - formulario de producto
 - `CartStore`
 - `OrdersStore`
+- `AdminDiscountStore`
 
 ## Comandos
 
@@ -93,6 +97,25 @@ Resultado esperado:
 - rechazo por capacidad insuficiente
 - ownership de lectura
 - cancelación con restauración de capacidad
+
+## Qué valida Fase 6
+
+- cálculo acumulable sobre subtotal original con orden de trazabilidad `TIME_RANGE -> RANDOM_ORDER -> FREQUENT_CUSTOMER`
+- query `COUNT` para cliente frecuente
+- `RANDOM_ORDER` testeable sin aleatoriedad real
+- persistencia de `order_discounts`
+- conservación histórica del desglose aunque cambie la configuración
+- edición admin de `discount_configuration`
+
+## Validación manual recomendada para descuentos
+
+1. autenticar `frequent@launchforge.dev`;
+2. crear una orden dentro de un rango activo;
+3. verificar el detalle y el arreglo `discounts`;
+4. editar una regla desde `/app/admin/discounts`;
+5. crear otra orden y comparar el nuevo cálculo;
+6. ejecutar la consulta SQL sobre `order_discounts`;
+7. cambiar la configuración y confirmar que una orden histórica no se alteró.
 
 ## Validación manual recomendada para órdenes
 
