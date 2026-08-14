@@ -568,6 +568,15 @@ inyectable.
 
 Así los tests son deterministas.
 
+Regla de cálculo adoptada:
+
+```text
+si coinciden varias reglas,
+los porcentajes se acumulan sobre el subtotal original
+```
+
+`application_order` se conserva para trazabilidad y orden de explicación del cálculo.
+
 ---
 
 # 16. Auditoría

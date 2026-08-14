@@ -126,6 +126,22 @@ class OrderControllerMockMvcTest extends AbstractPostgresIntegrationTest {
                 .andExpect(jsonPath("$.status", is("CANCELLED")));
     }
 
+    @Test
+    void getOrderReturnsDiscountBreakdownForHistoricalOrder() throws Exception {
+        mockMvc.perform(get("/api/v1/orders/44444444-4444-4444-4444-444444444406")
+                .with(jwt()
+                                .jwt(jwt -> jwt
+                                        .subject("11111111-1111-1111-1111-111111111113")
+                                        .claim("email", "frequent@launchforge.dev")
+                                        .claim("roles", java.util.List.of("CUSTOMER")))
+                                .authorities(new SimpleGrantedAuthority("ROLE_CUSTOMER"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.discounts.length()").value(3))
+                .andExpect(jsonPath("$.discounts[0].code").value("TIME_RANGE"))
+                .andExpect(jsonPath("$.discounts[1].code").value("RANDOM_ORDER"))
+                .andExpect(jsonPath("$.discounts[2].code").value("FREQUENT_CUSTOMER"));
+    }
+
     private org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.JwtRequestPostProcessor customerJwt() {
         return jwt()
                 .jwt(jwt -> jwt

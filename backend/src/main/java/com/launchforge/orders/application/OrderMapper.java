@@ -2,8 +2,10 @@ package com.launchforge.orders.application;
 
 import com.launchforge.orders.api.dto.OrderItemResponse;
 import com.launchforge.orders.api.dto.OrderResponse;
+import com.launchforge.orders.api.dto.OrderDiscountResponse;
 import com.launchforge.persistence.model.orders.CustomerOrder;
 import com.launchforge.persistence.model.orders.OrderItem;
+import com.launchforge.persistence.model.discounts.OrderDiscount;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -22,7 +24,8 @@ public class OrderMapper {
                 order.getIdempotencyKey(),
                 order.getCreatedAt(),
                 order.getUpdatedAt(),
-                order.getItems().stream().map(this::toItemResponse).toList()
+                order.getItems().stream().map(this::toItemResponse).toList(),
+                order.getOrderDiscounts().stream().map(this::toDiscountResponse).toList()
         );
     }
 
@@ -34,6 +37,17 @@ public class OrderMapper {
                 item.getQuantity(),
                 item.getUnitPrice(),
                 item.getSubtotal()
+        );
+    }
+
+    private OrderDiscountResponse toDiscountResponse(OrderDiscount discount) {
+        return new OrderDiscountResponse(
+                discount.getCode(),
+                discount.getPercentage(),
+                discount.getBaseAmount(),
+                discount.getAmount(),
+                discount.getReason(),
+                discount.getApplicationOrder()
         );
     }
 }

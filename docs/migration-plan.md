@@ -196,6 +196,17 @@ V11__...
 
 No corregir historia editando scripts ya aplicados. Corregir con nueva migración incremental.
 
+### V11__align_discount_seed_with_accumulative_rules.sql
+
+Alinea los datos demo históricos con la regla acumulable sobre subtotal original:
+
+```text
+ajusta orders.discount_total y orders.total
+ajusta RANDOM_ORDER en order_discounts
+agrega FREQUENT_CUSTOMER a la orden demo principal
+actualiza metadata de audit_log asociada
+```
+
 ### V9__create_product_search_indexes.sql
 
 Índices adicionales para catálogo:
