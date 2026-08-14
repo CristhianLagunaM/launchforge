@@ -46,7 +46,7 @@ No hay secretos reales versionados, tag `latest`, Maven/Node en runtime, tablas 
 
 ## 12. Riesgos y casos límite
 
-Los puertos 80/5432/8080 pueden estar ocupados. `depends_on` no gestiona caídas posteriores. Node local 20 no ejecuta Angular 22.
+Los puertos 80/5432/8080 pueden estar ocupados, por eso Compose permite override con `FRONTEND_HOST_PORT`, `BACKEND_HOST_PORT` y `DB_HOST_PORT`. `depends_on` no gestiona caídas posteriores. Node local 20 no ejecuta Angular 22.
 
 ## 13. Qué puede fallar
 
@@ -80,19 +80,6 @@ Backend: clase `*Test` bajo el mismo package en `src/test/java`. Frontend: archi
 
 Cambiar una variable en `.env.example` y Compose de forma coordinada, validar con `docker compose config`, reconstruir solo el servicio y revisar su health.
 
-## 21. Preguntas probables de entrevista
-
-¿Por qué `db` y no localhost? ¿Qué diferencia hay entre running y healthy? ¿Por qué Flyway más validate? ¿Qué aporta multi-stage?
-
-## 22. Respuestas esperadas
-
-Compose ofrece DNS por servicio; health ejecuta una prueba de disponibilidad; Flyway versiona y Hibernate detecta divergencias; multi-stage excluye toolchains del runtime.
-
-## 23. Ejercicio práctico recomendado
-
-Detener DB, observar el estado, leer logs, restaurarla y verificar `/actuator/health` sin cambiar configuración.
-
-## 24. Resumen de 60 segundos
+## 21. Resumen
 
 LaunchForge Fase 0 es un monorepo con Angular 22 servido por Nginx, Spring Boot 3 sobre Java 21 y PostgreSQL 17. Compose usa red interna, volumen y healthchecks. Flyway está listo para versionar el schema y Hibernate solo valida. Builds y tests base son reproducibles; no existe aún ninguna feature de negocio.
-

@@ -2,15 +2,15 @@
 
 ## Ciclo real
 
-Docker inicia PostgreSQL y crea una base vacía. `pg_isready` la marca healthy. Spring Boot abre el datasource, Flyway inspecciona `classpath:db/migration` y luego Hibernate ejecuta `validate`. En Fase 0 no hay entidades ni scripts SQL, por lo que una base vacía es el resultado correcto.
+Docker inicia PostgreSQL y crea una base vacía. `pg_isready` la marca healthy. Spring Boot abre el datasource, Flyway inspecciona `classpath:db/migration`, aplica `V1` a `V8` y luego Hibernate ejecuta `validate`.
 
 ## Responsabilidades
 
 - Docker entrega proceso, red, credenciales y volumen; no crea tablas de negocio.
-- Flyway será la única fuente de verdad del esquema mediante V1–V8 según `migration-plan.md`.
+- Flyway es la única fuente de verdad del esquema mediante `V1–V8` según `migration-plan.md`.
 - Hibernate mapea objetos y, con `ddl-auto=validate`, detecta divergencias; nunca crea ni altera el esquema.
 
-Cuando existan migraciones, Flyway creará `flyway_schema_history` con versión, script, checksum, fecha y resultado. Una migración compartida no se edita; un cambio se expresa como V9 o la siguiente versión libre.
+`flyway_schema_history` registra versión, descripción, script, checksum, fecha, usuario instalador y resultado. Una migración compartida no se edita; un cambio se expresa como `V9__...` o la siguiente versión libre.
 
 ```sql
 SELECT * FROM flyway_schema_history ORDER BY installed_rank;
@@ -18,7 +18,33 @@ SELECT * FROM flyway_schema_history ORDER BY installed_rank;
 
 ## Constraints, índices, seed y tests
 
-Se añadirán junto con cada feature, no en bootstrap. Constraints protegen invariantes en DB; índices deben responder a consultas reales; seed será determinista y separado conceptualmente de datos estructurales. Las pruebas críticas usarán Testcontainers PostgreSQL y las mismas migraciones; H2 no reproduciría SQL, locks y tipos PostgreSQL.
+Fase 1 ya instala constraints, índices y seed determinista:
+
+- constraints como última línea de defensa del dominio;
+- índices alineados con consultas reales de catálogo, órdenes y auditoría;
+- seed demo reproducible con BCrypt y fechas UTC;
+- tests con Testcontainers usando PostgreSQL real y las mismas migraciones de producción.
+
+No usar H2: no reproduce SQL PostgreSQL, `JSONB`, índices parciales ni comportamiento de locking.
+
+## Mapeos acordados
+
+- Dinero: `NUMERIC(19,2)` ↔ `BigDecimal`
+- Timestamps: `TIMESTAMPTZ` ↔ `Instant`
+- Estado de orden: `EnumType.STRING`
+- Metadata de auditoría: `JSONB` ↔ `Map<String, Object>`
+- Lock de inventario: columna `version` ↔ `@Version`
+
+## Orden de migraciones
+
+1. `V1__create_identity.sql`
+2. `V2__create_catalog.sql`
+3. `V3__create_inventory.sql`
+4. `V4__create_orders.sql`
+5. `V5__create_discounts.sql`
+6. `V6__create_audit.sql`
+7. `V7__create_indexes.sql`
+8. `V8__seed_demo_data.sql`
 
 ## Conectividad y depuración
 
@@ -31,7 +57,7 @@ Secuencia de diagnóstico:
 3. `docker compose config`: comprobar variables resueltas.
 4. `docker compose logs backend`: distinguir timeout, password, Flyway o validate.
 5. `docker compose exec db pg_isready -U launchforge -d launchforge`.
-6. Entrar con `psql` y consultar `flyway_schema_history` cuando ya existan migraciones.
+6. Entrar con `psql` y consultar `flyway_schema_history`.
+7. Comparar el nombre exacto de columna/constraint entre SQL y entidades JPA.
 
-Si Flyway falla, se corrige el SQL/estado local; no se deshabilita. Si Hibernate validate falla, se alinean entidad y migración; no se cambia a `update`.
-
+Si Flyway falla, se corrige el SQL o se recrea el entorno local; no se deshabilita. Si Hibernate `validate` falla, se alinean entidad y migración; no se cambia a `update`.

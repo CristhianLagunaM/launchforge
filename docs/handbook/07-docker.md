@@ -6,7 +6,7 @@
 
 ## Red y puertos
 
-Compose crea la red interna `launchforge`. DNS interno resuelve nombres de servicio: backend conecta a `db:5432` y Nginx reenvía `/api` a `backend:8080`. `localhost` dentro de backend sería el propio contenedor backend, no PostgreSQL. Los puertos publicados son 80, 8080 y 5432.
+Compose crea la red interna `launchforge`. DNS interno resuelve nombres de servicio: backend conecta a `db:5432` y Nginx reenvía `/api` a `backend:8080`. `localhost` dentro de backend sería el propio contenedor backend, no PostgreSQL. Los puertos publicados por defecto son 80, 8080 y 5432, pero puedes cambiarlos con `FRONTEND_HOST_PORT`, `BACKEND_HOST_PORT` y `DB_HOST_PORT` en `.env`.
 
 ## Healthchecks y orden
 
@@ -30,7 +30,8 @@ docker inspect launchforge-backend-1
 
 Si health falla, probar el comando exacto dentro del contenedor, revisar variables con `docker compose config` y comparar logs de DB/backend. Para reinicio limpio: `docker compose down -v` y `docker compose up --build`.
 
+Si Compose falla con `failed to bind host port`, otro proceso ya ocupa ese puerto en el host. Cambia el puerto publicado en `.env` o libera el puerto en el sistema operativo.
+
 ## Volúmenes y secretos
 
 `postgres_data` conserva datos entre `down/up`. `.env` no se versiona; `.env.example` solo contiene valores locales inseguros. Compose sustituye variables del host y pasa al backend la URL interna.
-
