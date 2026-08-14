@@ -1,0 +1,44 @@
+<mat-card appearance="outlined" class="inventory-form">
+  <mat-card-header>
+    <mat-card-title>Ajuste de capacidad</mat-card-title>
+    <mat-card-subtitle>
+      @if (inventory) {
+        {{ inventory.productName }} · v{{ inventory.version }}
+      } @else {
+        Selecciona un producto del inventario.
+      }
+    </mat-card-subtitle>
+  </mat-card-header>
+
+  <mat-card-content>
+    @if (inventory) {
+      <div class="inventory-form__meta">
+        <p><strong>SKU:</strong> {{ inventory.sku }}</p>
+        <p><strong>Disponible:</strong> {{ inventory.availableQuantity }}</p>
+        <p><strong>Reservado:</strong> {{ inventory.reservedQuantity }}</p>
+      </div>
+
+      <form class="inventory-form__grid" [formGroup]="form" (ngSubmit)="submit()">
+        <mat-form-field>
+          <mat-label>Operación</mat-label>
+          <mat-select formControlName="operation">
+            <mat-option value="INCREASE">Increase</mat-option>
+            <mat-option value="DECREASE">Decrease</mat-option>
+            <mat-option value="RESTORE">Restore</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field>
+          <mat-label>Cantidad</mat-label>
+          <input matInput type="number" min="1" formControlName="quantity" />
+        </mat-form-field>
+
+        <div class="inventory-form__actions">
+          <button mat-flat-button color="primary" type="submit" [disabled]="saving">Aplicar ajuste</button>
+        </div>
+      </form>
+    } @else {
+      <p class="muted">No hay un producto seleccionado.</p>
+    }
+  </mat-card-content>
+</mat-card>

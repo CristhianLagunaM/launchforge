@@ -1,0 +1,90 @@
+.inventory-shell {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.inventory-header h1 {
+  margin-bottom: 0.35rem;
+}
+
+.inventory-header p {
+  margin: 0;
+}
+
+.eyebrow {
+  margin: 0 0 0.35rem;
+  color: #4a5f95;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.inventory-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.9fr);
+}
+
+.inventory-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.inventory-item {
+  border-color: #c7d1e4;
+}
+
+.inventory-item--selected {
+  border-color: #274690;
+  box-shadow: 0 0 0 1px #274690 inset;
+}
+
+.inventory-item__button {
+  width: 100%;
+  justify-content: stretch;
+  padding: 0;
+  text-align: left;
+}
+
+.inventory-item__content {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  width: 100%;
+}
+
+.inventory-item__content h2 {
+  margin: 0 0 0.35rem;
+}
+
+.inventory-item__content p {
+  margin: 0.15rem 0;
+}
+
+.inventory-item__meta {
+  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  justify-content: center;
+}
+
+.inventory-item__meta strong {
+  font-size: 1.6rem;
+}
+
+.muted {
+  color: #5b6475;
+}
+
+.error-card {
+  border-color: #d87070;
+}
+
+@media (max-width: 960px) {
+  .inventory-grid {
+    grid-template-columns: 1fr;
+  }
+}

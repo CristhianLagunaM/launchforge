@@ -1,0 +1,70 @@
+<section class="inventory-shell">
+  <header class="inventory-header">
+    <div>
+      <p class="eyebrow">Admin</p>
+      <h1>Gestión de capacidad</h1>
+      <p>Inventario operativo con optimistic locking para evitar sobreasignación concurrente.</p>
+    </div>
+  </header>
+
+  @if (adminInventoryStore.error()) {
+    <mat-card appearance="outlined" class="error-card">
+      <mat-card-title>Conflicto o error</mat-card-title>
+      <mat-card-content>{{ adminInventoryStore.error() }}</mat-card-content>
+    </mat-card>
+  }
+
+  @if (adminInventoryStore.loading() || adminInventoryStore.saving()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  <div class="inventory-grid">
+    <div class="inventory-grid__list">
+      @if (adminInventoryStore.emptyState()) {
+        <mat-card appearance="outlined" class="empty-card">
+          <mat-card-title>Sin inventario</mat-card-title>
+          <mat-card-content>No hay filas de capacidad disponibles.</mat-card-content>
+        </mat-card>
+      }
+
+      <div class="inventory-list">
+        @for (item of adminInventoryStore.inventory(); track item.productId) {
+          <mat-card
+            appearance="outlined"
+            class="inventory-item"
+            [class.inventory-item--selected]="adminInventoryStore.selectedInventory()?.productId === item.productId"
+          >
+            <button mat-button type="button" class="inventory-item__button" (click)="selectInventory(item)">
+              <div class="inventory-item__content">
+                <div>
+                  <h2>{{ item.productName }}</h2>
+                  <p>{{ item.sku }}</p>
+                  <p class="muted">Actualizado: {{ item.updatedAt | date:'medium' }}</p>
+                </div>
+                <div class="inventory-item__meta">
+                  <strong>{{ item.availableQuantity }}</strong>
+                  <span>disponible</span>
+                  <small>v{{ item.version }}</small>
+                </div>
+              </div>
+            </button>
+          </mat-card>
+        }
+      </div>
+
+      <mat-paginator
+        [length]="adminInventoryStore.totalElements()"
+        [pageIndex]="adminInventoryStore.page()"
+        [pageSize]="adminInventoryStore.size()"
+        [pageSizeOptions]="[5, 10, 20]"
+        (page)="changePage($event)"
+      />
+    </div>
+
+    <app-inventory-adjustment-form
+      [inventory]="adminInventoryStore.selectedInventory()"
+      [saving]="adminInventoryStore.saving()"
+      (submitAdjustment)="adminInventoryStore.adjustInventory($event)"
+    />
+  </div>
+</section>
