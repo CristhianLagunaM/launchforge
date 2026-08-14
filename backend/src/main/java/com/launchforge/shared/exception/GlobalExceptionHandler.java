@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -104,6 +105,19 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                         exception.getMessage(),
                         request.getRequestURI(),
                         exception.getTypeSuffix()
+                )
+        );
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    ResponseEntity<ProblemDetail> handleAccessDenied(AccessDeniedException exception, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                ProblemDetailsFactory.problem(
+                        HttpStatus.FORBIDDEN,
+                        "Forbidden",
+                        exception.getMessage(),
+                        request.getRequestURI(),
+                        "orders/forbidden"
                 )
         );
     }

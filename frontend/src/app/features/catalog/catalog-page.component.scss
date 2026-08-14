@@ -95,6 +95,12 @@
   justify-content: space-between;
 }
 
+.product-card__actions {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+}
+
 .product-card__category {
   background: #e8f0ff;
   border-radius: 999px;
@@ -133,7 +139,8 @@
 
   .filters-actions,
   .product-card__meta,
-  .product-card__footer {
+  .product-card__footer,
+  .product-card__actions {
     align-items: flex-start;
     flex-direction: column;
   }
