@@ -1,6 +1,6 @@
 # LaunchForge
 
-LaunchForge es una plataforma para comercializar paquetes de desarrollo web. El repositorio ya incluye bootstrap, persistencia base, autenticación/autorización con JWT, catálogo de productos con CRUD, búsqueda y administración, e inventario operativo con protección de concurrencia.
+LaunchForge es una plataforma para comercializar paquetes de desarrollo web. El repositorio ya incluye bootstrap, persistencia base, autenticación/autorización con JWT, catálogo de productos con CRUD y búsqueda, inventario operativo con protección de concurrencia, flujo de órdenes con idempotencia y un motor de descuentos configurable.
 
 ## Arquitectura actual
 
@@ -15,7 +15,7 @@ flowchart LR
 
 - `frontend`: SPA standalone, routing, TypeScript estricto y Angular Material; Nginx la sirve en producción.
 - `backend`: Spring Boot 3 sobre Java 21 con JPA, Flyway, Security stateless, JWT y BCrypt.
-- `db`: PostgreSQL persistente con migraciones versionadas V1-V9 y datos demo deterministas.
+- `db`: PostgreSQL persistente con migraciones versionadas V1-V11 y datos demo deterministas.
 
 ## Requisitos
 
@@ -80,7 +80,7 @@ También existen `make up`, `down`, `reset`, `logs`, `logs-backend`, `logs-db`, 
 
 ## Base de datos
 
-`spring.flyway.enabled=true` y `ddl-auto=validate`. Flyway administra el esquema con migraciones V1-V9; Hibernate valida el mapeo JPA contra PostgreSQL en cada arranque.
+`spring.flyway.enabled=true` y `ddl-auto=validate`. Flyway administra el esquema con migraciones V1-V11; Hibernate valida el mapeo JPA contra PostgreSQL en cada arranque.
 
 ## Decisiones y alcance
 
@@ -90,5 +90,6 @@ También existen `make up`, `down`, `reset`, `logs`, `logs-backend`, `logs-db`, 
 - Credenciales demo actuales:
   - `admin@launchforge.dev` / `launchforge-demo`
   - `customer@launchforge.dev` / `launchforge-demo`
+  - `frequent@launchforge.dev` / `launchforge-demo`
 
-Consulta [Architecture](docs/architecture.md), [API](docs/api.md), [Testing](docs/testing.md), [Troubleshooting](docs/troubleshooting.md), [F00 Bootstrap](docs/features/F00-bootstrap.md), [F01 Persistence](docs/features/F01-persistence.md), [F02 Authentication](docs/features/F02-authentication.md), [F03 Products](docs/features/F03-products.md), [F04 Inventory](docs/features/F04-inventory.md) y [ADR Inventory Concurrency](docs/decisions/ADR-inventory-concurrency.md).
+Consulta [Architecture](docs/architecture.md), [API](docs/api.md), [Testing](docs/testing.md), [Troubleshooting](docs/troubleshooting.md), [F00 Bootstrap](docs/features/F00-bootstrap.md), [F01 Persistence](docs/features/F01-persistence.md), [F02 Authentication](docs/features/F02-authentication.md), [F03 Products](docs/features/F03-products.md), [F04 Inventory](docs/features/F04-inventory.md), [F05 Orders](docs/features/F05-orders.md), [F06 Discounts](docs/features/F06-discounts.md), [ADR Inventory Concurrency](docs/decisions/ADR-inventory-concurrency.md) y [ADR Discount Engine](docs/decisions/ADR-discount-engine.md).

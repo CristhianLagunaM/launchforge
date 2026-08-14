@@ -18,6 +18,7 @@ public record OrderResponse(
         String idempotencyKey,
         Instant createdAt,
         Instant updatedAt,
-        List<OrderItemResponse> items
+        List<OrderItemResponse> items,
+        List<OrderDiscountResponse> discounts
 ) {
 }

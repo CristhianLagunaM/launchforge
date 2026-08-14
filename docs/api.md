@@ -76,6 +76,28 @@ Body:
 }
 ```
 
+La respuesta de detalle incluye:
+
+- `subtotal`
+- `discountTotal`
+- `total`
+- `items[]`
+- `discounts[]` con `code`, `percentage`, `baseAmount`, `amount`, `reason`, `applicationOrder`
+
+## Discount configuration
+
+### ADMIN
+
+- `GET /api/v1/discount-configurations`
+- `PATCH /api/v1/discount-configurations/{code}`
+
+Casos de uso:
+
+- habilitar/deshabilitar una regla;
+- ajustar porcentaje;
+- ajustar `startAt/endAt`;
+- ajustar `minimumOrders/lookbackMonths`.
+
 Notas de autorización:
 
 - `CUSTOMER` puede crear y cancelar sus propias órdenes;
@@ -114,3 +136,4 @@ Casos esperados:
 - `409` conflicto de SKU/slug
 - `409` inventario insuficiente o conflicto optimista de inventario
 - `409` orden ya cancelada, producto inactivo o conflicto de idempotencia
+- `409` configuración inválida que produciría un cálculo inconsistente

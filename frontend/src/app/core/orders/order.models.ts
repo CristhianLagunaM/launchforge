@@ -24,6 +24,15 @@ export interface OrderItem {
   subtotal: number;
 }
 
+export interface OrderDiscount {
+  code: string;
+  percentage: number;
+  baseAmount: number;
+  amount: number;
+  reason: string;
+  applicationOrder: number;
+}
+
 export type OrderStatus = 'CREATED' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED';
 
 export interface Order {
@@ -39,4 +48,5 @@ export interface Order {
   createdAt: string;
   updatedAt: string;
   items: OrderItem[];
+  discounts: OrderDiscount[];
 }

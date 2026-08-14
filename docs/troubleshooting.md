@@ -82,19 +82,59 @@ ORDER BY p.name;
 - consultar `inventory.available_quantity`
 - verificar si el cliente reintentó un checkout anterior
 
-## 11. No aparecen órdenes del cliente
+## 11. Descuento no aplicado
+
+- revisar `discount_configuration.enabled`
+- validar `start_at` y `end_at` para reglas temporales
+- confirmar que el backend esté usando el rango vigente en UTC
+- revisar el detalle de la orden y `order_discounts`
+
+## 12. Cliente frecuente no recibe descuento
+
+- ejecutar un `COUNT(*)` sobre órdenes del cliente
+- contar solo `CONFIRMED` y `COMPLETED`
+- validar `minimum_orders` y `lookback_months`
+- confirmar que `CANCELLED` no esté entrando en el conteo
+
+## 13. `RANDOM_ORDER` difícil de probar
+
+- en producción depende de `RandomProvider`
+- en tests debe inyectarse una implementación determinista
+- no usar `new Random()` dentro de la estrategia
+
+## 14. Total de orden no coincide
+
+- verificar que cada descuento se calcule sobre el subtotal original
+- revisar `application_order`
+- comprobar escala `2` y `HALF_UP`
+- comparar `orders.discount_total` con la suma de `order_discounts.amount`
+
+## 15. Configuración admin falla con `400`
+
+- revisar `percentage` entre `0` y `100`
+- validar `startAt <= endAt`
+- para `FREQUENT_CUSTOMER`, confirmar `minimumOrders` y `lookbackMonths`
+- para descuentos temporales, confirmar ambos extremos del rango
+
+## 16. Orden histórica parece cambiar después de editar descuentos
+
+- la fuente correcta es `order_discounts`, no `discount_configuration`
+- consultar el desglose persistido por `order_id`
+- verificar que la UI no esté recalculando porcentajes localmente
+
+## 17. No aparecen órdenes del cliente
 
 - confirmar que el JWT pertenezca al usuario correcto
 - revisar si la UI está consultando `/api/v1/orders` ya autenticada
 - validar en backend que la orden se creó para ese `customer_id`
 
-## 12. `403` al consultar detalle de orden
+## 18. `403` al consultar detalle de orden
 
 - un `CUSTOMER` solo puede ver órdenes propias
 - probar el mismo id con un token `ADMIN`
 - validar el `customer_id` de la orden en PostgreSQL
 
-## 13. Idempotencia no evita duplicados
+## 19. Idempotencia no evita duplicados
 
 - confirmar que el cliente reusa exactamente la misma `Idempotency-Key`
 - revisar la restricción única de `orders(customer_id, idempotency_key)`
