@@ -1,0 +1,93 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(23, 96, 255, 0.16), transparent 28rem),
+    linear-gradient(135deg, #091124, #10203f 45%, #15345f);
+}
+
+.auth-page {
+  align-items: center;
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  margin: 0 auto;
+  max-width: 72rem;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.auth-panel,
+.auth-form-card {
+  border-radius: 1.5rem;
+}
+
+.auth-panel {
+  color: #ecf3ff;
+  padding: 2rem;
+}
+
+.auth-panel h1 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  line-height: 0.95;
+  margin: 0 0 1rem;
+}
+
+.auth-panel p {
+  color: rgba(236, 243, 255, 0.82);
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 32rem;
+}
+
+.auth-bullets {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.auth-bullet {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.6rem;
+}
+
+.auth-form-card {
+  background: rgba(248, 250, 255, 0.96);
+  padding: 1rem;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+.error-banner {
+  background: #fde8ea;
+  border-radius: 0.75rem;
+  color: #8b1320;
+  margin-bottom: 1rem;
+  padding: 0.85rem 1rem;
+}
+
+.link-row {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .auth-page {
+    padding: 1rem;
+  }
+
+  .auth-panel {
+    padding: 1rem 0.25rem 0;
+  }
+}

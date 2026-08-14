@@ -7,5 +7,24 @@ html {
   background: #f6f7fb;
 }
 
-html, body { height: 100%; margin: 0; }
+* {
+  box-sizing: border-box;
+}
 
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  color: #11213f;
+}
+
+a {
+  color: #1459d9;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
