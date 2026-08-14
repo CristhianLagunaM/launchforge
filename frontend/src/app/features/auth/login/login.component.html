@@ -1,0 +1,55 @@
+<section class="auth-page">
+  <aside class="auth-panel">
+    <h1>Acceso seguro LaunchForge</h1>
+    <p>
+      Ingresa con JWT stateless, roles reales de backend y sesiones protegidas con BCrypt.
+    </p>
+    <div class="auth-bullets">
+      <div class="auth-bullet"><mat-icon>shield</mat-icon><span>Security backend real</span></div>
+      <div class="auth-bullet"><mat-icon>bolt</mat-icon><span>Flujo de autenticación rápido</span></div>
+      <div class="auth-bullet"><mat-icon>verified_user</mat-icon><span>Roles ADMIN y CUSTOMER</span></div>
+    </div>
+  </aside>
+
+  <mat-card class="auth-form-card" appearance="outlined">
+    <mat-card-header>
+      <mat-card-title>Login</mat-card-title>
+      <mat-card-subtitle>Usa una cuenta existente para entrar.</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      @if (authStore.error()) {
+        <div class="error-banner">{{ authStore.error() }}</div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <mat-form-field class="full-width">
+          <mat-label>Email</mat-label>
+          <input matInput type="email" formControlName="email" autocomplete="email" />
+        </mat-form-field>
+
+        <mat-form-field class="full-width">
+          <mat-label>Password</mat-label>
+          <input
+            matInput
+            [type]="hidePassword() ? 'password' : 'text'"
+            formControlName="password"
+            autocomplete="current-password"
+          />
+          <button mat-icon-button matSuffix type="button" (click)="hidePassword.set(!hidePassword())">
+            <mat-icon>{{ hidePassword() ? 'visibility' : 'visibility_off' }}</mat-icon>
+          </button>
+        </mat-form-field>
+
+        <div class="actions">
+          <button mat-flat-button color="primary" type="submit" [disabled]="authStore.status() === 'loading'">
+            Entrar
+          </button>
+        </div>
+      </form>
+
+      <p class="link-row">
+        ¿No tienes cuenta? <a routerLink="/register">Crear cuenta</a>
+      </p>
+    </mat-card-content>
+  </mat-card>
+</section>
