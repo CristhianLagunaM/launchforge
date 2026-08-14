@@ -196,6 +196,15 @@ V11__...
 
 No corregir historia editando scripts ya aplicados. Corregir con nueva migración incremental.
 
+### V9__create_product_search_indexes.sql
+
+Índices adicionales para catálogo:
+
+```text
+products.price
+inventory.available_quantity
+```
+
 ## Verificación
 
 Después de cada migración ejecutar:

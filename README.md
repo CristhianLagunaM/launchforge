@@ -1,6 +1,6 @@
 # LaunchForge
 
-LaunchForge es una plataforma para comercializar paquetes de desarrollo web. El repositorio ya incluye bootstrap, persistencia base y autenticación/autorización con JWT.
+LaunchForge es una plataforma para comercializar paquetes de desarrollo web. El repositorio ya incluye bootstrap, persistencia base, autenticación/autorización con JWT y catálogo de productos con CRUD, búsqueda y administración.
 
 ## Arquitectura actual
 
@@ -15,7 +15,7 @@ flowchart LR
 
 - `frontend`: SPA standalone, routing, TypeScript estricto y Angular Material; Nginx la sirve en producción.
 - `backend`: Spring Boot 3 sobre Java 21 con JPA, Flyway, Security stateless, JWT y BCrypt.
-- `db`: PostgreSQL persistente con migraciones versionadas V1-V8 y datos demo deterministas.
+- `db`: PostgreSQL persistente con migraciones versionadas V1-V9 y datos demo deterministas.
 
 ## Requisitos
 
@@ -34,6 +34,7 @@ En PowerShell: `Copy-Item .env.example .env`.
 Servicios:
 
 - Frontend: <http://localhost> por defecto, o `http://localhost:${FRONTEND_HOST_PORT}` si cambias el puerto.
+- Catálogo público: <http://localhost/products> por defecto.
 - Backend health: <http://localhost:8080/actuator/health> por defecto, o `http://localhost:${BACKEND_HOST_PORT}/actuator/health`.
 - Swagger UI: <http://localhost:8080/swagger-ui/index.html> por defecto, o `http://localhost:${BACKEND_HOST_PORT}/swagger-ui/index.html`.
 - OpenAPI JSON: <http://localhost:8080/v3/api-docs> por defecto, o `http://localhost:${BACKEND_HOST_PORT}/v3/api-docs`.
@@ -79,7 +80,7 @@ También existen `make up`, `down`, `reset`, `logs`, `logs-backend`, `logs-db`, 
 
 ## Base de datos
 
-`spring.flyway.enabled=true` y `ddl-auto=validate`. Flyway administra el esquema con migraciones V1-V8; Hibernate valida el mapeo JPA contra PostgreSQL en cada arranque.
+`spring.flyway.enabled=true` y `ddl-auto=validate`. Flyway administra el esquema con migraciones V1-V9; Hibernate valida el mapeo JPA contra PostgreSQL en cada arranque.
 
 ## Decisiones y alcance
 
@@ -90,4 +91,4 @@ También existen `make up`, `down`, `reset`, `logs`, `logs-backend`, `logs-db`, 
   - `admin@launchforge.dev` / `launchforge-demo`
   - `customer@launchforge.dev` / `launchforge-demo`
 
-Consulta [Docker](docs/handbook/07-docker.md), [PostgreSQL/JPA](docs/handbook/03-postgresql-jpa.md), [F00 Bootstrap](docs/features/F00-bootstrap.md), [F01 Persistence](docs/features/F01-persistence.md) y [F02 Authentication](docs/features/F02-authentication.md).
+Consulta [Architecture](docs/architecture.md), [API](docs/api.md), [Testing](docs/testing.md), [Troubleshooting](docs/troubleshooting.md), [F00 Bootstrap](docs/features/F00-bootstrap.md), [F01 Persistence](docs/features/F01-persistence.md), [F02 Authentication](docs/features/F02-authentication.md) y [F03 Products](docs/features/F03-products.md).
