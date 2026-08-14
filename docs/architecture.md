@@ -26,6 +26,16 @@ ADMIN:
 
 `Angular admin page -> JWT interceptor -> ProductController -> ProductCatalogService -> Repository -> PostgreSQL`
 
+## Flujo principal de Fase 4
+
+ADMIN inventory:
+
+`Angular admin inventory page -> JWT interceptor -> InventoryController -> InventoryManagementService -> InventoryRepository -> PostgreSQL`
+
+Concurrencia:
+
+`TX A + TX B -> leen inventory.version = N -> una confirma -> la otra falla por optimistic locking -> API 409`
+
 ## Decisiones relevantes
 
 - PostgreSQL es la fuente persistente de verdad
@@ -34,3 +44,5 @@ ADMIN:
 - JWT y `@PreAuthorize` mantienen seguridad backend real
 - DTOs aíslan API de entidades
 - `JpaSpecificationExecutor` resuelve búsqueda dinámica sin memoria intermedia
+- `Inventory` centraliza invariantes de capacidad
+- `@Version` protege capacidad contra race conditions sin locks en memoria

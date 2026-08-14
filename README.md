@@ -1,6 +1,6 @@
 # LaunchForge
 
-LaunchForge es una plataforma para comercializar paquetes de desarrollo web. El repositorio ya incluye bootstrap, persistencia base, autenticación/autorización con JWT y catálogo de productos con CRUD, búsqueda y administración.
+LaunchForge es una plataforma para comercializar paquetes de desarrollo web. El repositorio ya incluye bootstrap, persistencia base, autenticación/autorización con JWT, catálogo de productos con CRUD, búsqueda y administración, e inventario operativo con protección de concurrencia.
 
 ## Arquitectura actual
 
@@ -91,4 +91,4 @@ También existen `make up`, `down`, `reset`, `logs`, `logs-backend`, `logs-db`, 
   - `admin@launchforge.dev` / `launchforge-demo`
   - `customer@launchforge.dev` / `launchforge-demo`
 
-Consulta [Architecture](docs/architecture.md), [API](docs/api.md), [Testing](docs/testing.md), [Troubleshooting](docs/troubleshooting.md), [F00 Bootstrap](docs/features/F00-bootstrap.md), [F01 Persistence](docs/features/F01-persistence.md), [F02 Authentication](docs/features/F02-authentication.md) y [F03 Products](docs/features/F03-products.md).
+Consulta [Architecture](docs/architecture.md), [API](docs/api.md), [Testing](docs/testing.md), [Troubleshooting](docs/troubleshooting.md), [F00 Bootstrap](docs/features/F00-bootstrap.md), [F01 Persistence](docs/features/F01-persistence.md), [F02 Authentication](docs/features/F02-authentication.md), [F03 Products](docs/features/F03-products.md), [F04 Inventory](docs/features/F04-inventory.md) y [ADR Inventory Concurrency](docs/decisions/ADR-inventory-concurrency.md).
