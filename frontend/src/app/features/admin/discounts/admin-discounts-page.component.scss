@@ -1,0 +1,36 @@
+.discounts-shell {
+  display: grid;
+  gap: 1rem;
+}
+
+.discounts-layout {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
+}
+
+.discount-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.rule-button {
+  justify-content: flex-start;
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.rule-button-active {
+  background: rgba(42, 99, 193, 0.12);
+}
+
+.rule-meta {
+  color: #42526b;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 960px) {
+  .discounts-layout {
+    grid-template-columns: 1fr;
+  }
+}

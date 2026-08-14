@@ -21,7 +21,24 @@
       <mat-card-content>
         <p><strong>Cliente:</strong> {{ order.customerEmail }}</p>
         <p><strong>Subtotal:</strong> {{ order.subtotal | currency:'USD':'symbol':'1.2-2' }}</p>
+        <p><strong>Descuento total:</strong> {{ order.discountTotal | currency:'USD':'symbol':'1.2-2' }}</p>
         <p><strong>Total:</strong> {{ order.total | currency:'USD':'symbol':'1.2-2' }}</p>
+
+        @if (order.discounts.length > 0) {
+          <section class="discount-list">
+            <h3>Descuentos aplicados</h3>
+            @for (discount of order.discounts; track discount.code + '-' + discount.applicationOrder) {
+              <div class="item-row">
+                <div>
+                  <strong>{{ discount.code }}</strong>
+                  <p>{{ discount.reason }}</p>
+                  <p>Base: {{ discount.baseAmount | currency:'USD':'symbol':'1.2-2' }} · {{ discount.percentage }}%</p>
+                </div>
+                <strong>-{{ discount.amount | currency:'USD':'symbol':'1.2-2' }}</strong>
+              </div>
+            }
+          </section>
+        }
 
         <div class="items-list">
           @for (item of order.items; track item.productId + item.sku) {

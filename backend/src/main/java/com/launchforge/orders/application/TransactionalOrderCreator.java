@@ -1,8 +1,13 @@
 package com.launchforge.orders.application;
 
+import com.launchforge.discounts.application.DiscountApplication;
+import com.launchforge.discounts.application.DiscountContext;
+import com.launchforge.discounts.application.DiscountEngine;
+import com.launchforge.discounts.application.DiscountEngineResult;
 import com.launchforge.auth.infrastructure.UserRepository;
 import com.launchforge.catalog.infrastructure.ProductRepository;
 import com.launchforge.inventory.application.InventoryManagementService;
+import com.launchforge.persistence.model.discounts.OrderDiscount;
 import com.launchforge.orders.api.dto.CreateOrderRequest;
 import com.launchforge.orders.api.dto.OrderItemRequest;
 import com.launchforge.orders.api.dto.OrderResponse;
@@ -17,6 +22,7 @@ import com.launchforge.shared.exception.ApiConflictException;
 import com.launchforge.shared.exception.ApiNotFoundException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.LinkedHashMap;
@@ -35,19 +41,22 @@ public class TransactionalOrderCreator {
     private final OrderRepository orderRepository;
     private final OrderMapper orderMapper;
     private final InventoryManagementService inventoryManagementService;
+    private final DiscountEngine discountEngine;
 
     public TransactionalOrderCreator(
             UserRepository userRepository,
             ProductRepository productRepository,
             OrderRepository orderRepository,
             OrderMapper orderMapper,
-            InventoryManagementService inventoryManagementService
+            InventoryManagementService inventoryManagementService,
+            DiscountEngine discountEngine
     ) {
         this.userRepository = userRepository;
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
         this.orderMapper = orderMapper;
         this.inventoryManagementService = inventoryManagementService;
+        this.discountEngine = discountEngine;
     }
 
     @Transactional
@@ -56,11 +65,15 @@ public class TransactionalOrderCreator {
         Map<UUID, Integer> consolidatedItems = consolidateItems(request);
 
         CustomerOrder order = new CustomerOrder();
+        order.setId(UUID.randomUUID());
         order.setCustomer(customer);
         order.setOrderNumber(generateOrderNumber());
         order.setStatus(OrderStatus.CONFIRMED);
         order.setIdempotencyKey(idempotencyKey);
         order.setDiscountTotal(ZERO);
+        Instant orderCreatedAt = Instant.now();
+        order.setCreatedAt(orderCreatedAt);
+        order.setUpdatedAt(orderCreatedAt);
 
         BigDecimal subtotal = ZERO;
         for (Map.Entry<UUID, Integer> entry : consolidatedItems.entrySet()) {
@@ -74,7 +87,14 @@ public class TransactionalOrderCreator {
         }
 
         order.setSubtotal(subtotal.setScale(2, RoundingMode.HALF_UP));
-        order.initializeMonetaryTotals();
+        DiscountEngineResult discountResult = discountEngine.applyDiscounts(new DiscountContext(
+                order.getId(),
+                customerId,
+                orderCreatedAt,
+                order.getSubtotal(),
+                order.getSubtotal()
+        ));
+        applyDiscounts(order, discountResult);
 
         CustomerOrder savedOrder = orderRepository.saveAndFlush(order);
         return orderMapper.toResponse(savedOrder);
@@ -147,5 +167,23 @@ public class TransactionalOrderCreator {
     private String generateOrderNumber() {
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
         return "LF-%s-%s".formatted(today.getYear(), UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+    }
+
+    private void applyDiscounts(CustomerOrder order, DiscountEngineResult discountResult) {
+        for (DiscountApplication application : discountResult.appliedDiscounts()) {
+            OrderDiscount orderDiscount = new OrderDiscount();
+            orderDiscount.setDiscountConfiguration(application.configuration());
+            orderDiscount.setCode(application.code().name());
+            orderDiscount.setPercentage(application.percentage().setScale(2, RoundingMode.HALF_UP));
+            orderDiscount.setBaseAmount(application.baseAmount().setScale(2, RoundingMode.HALF_UP));
+            orderDiscount.setAmount(application.amount().setScale(2, RoundingMode.HALF_UP));
+            orderDiscount.setReason(application.reason());
+            orderDiscount.setApplicationOrder(application.applicationOrder());
+            order.addDiscount(orderDiscount);
+        }
+        order.applyDiscountSummary(
+                discountResult.discountTotal().setScale(2, RoundingMode.HALF_UP),
+                discountResult.finalTotal().setScale(2, RoundingMode.HALF_UP)
+        );
     }
 }

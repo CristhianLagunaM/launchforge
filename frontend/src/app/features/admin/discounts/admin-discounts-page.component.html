@@ -1,0 +1,88 @@
+<section class="discounts-shell">
+  @if (adminDiscountStore.loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  @if (adminDiscountStore.error()) {
+    <mat-card appearance="outlined">
+      <mat-card-title>Error</mat-card-title>
+      <mat-card-content>{{ adminDiscountStore.error() }}</mat-card-content>
+    </mat-card>
+  }
+
+  <div class="discounts-layout">
+    <mat-card appearance="outlined">
+      <mat-card-header>
+        <mat-card-title>Reglas de descuento</mat-card-title>
+        <mat-card-subtitle>El orden de aplicación lo controla backend, no la UI.</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        @for (configuration of adminDiscountStore.configurations(); track configuration.code) {
+          <button
+            mat-button
+            type="button"
+            class="rule-button"
+            [class.rule-button-active]="adminDiscountStore.selectedConfiguration()?.code === configuration.code"
+            (click)="selectConfiguration(configuration)">
+            {{ configuration.code }}
+          </button>
+        }
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card appearance="outlined">
+      <mat-card-header>
+        <mat-card-title>Configuración activa</mat-card-title>
+        <mat-card-subtitle>
+          @if (adminDiscountStore.selectedConfiguration(); as configuration) {
+            Última actualización: {{ configuration.updatedAt | date:'medium' }}
+          }
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        @if (adminDiscountStore.selectedConfiguration(); as configuration) {
+          <form class="discount-form" [formGroup]="configurationForm">
+            <mat-checkbox formControlName="enabled">Habilitado</mat-checkbox>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Percentage</mat-label>
+              <input matInput type="number" min="0" max="100" step="0.01" formControlName="percentage" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Start at (UTC)</mat-label>
+              <input matInput type="datetime-local" formControlName="startAt" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>End at (UTC)</mat-label>
+              <input matInput type="datetime-local" formControlName="endAt" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Minimum orders</mat-label>
+              <input matInput type="number" min="1" formControlName="minimumOrders" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Lookback months</mat-label>
+              <input matInput type="number" min="1" formControlName="lookbackMonths" />
+            </mat-form-field>
+
+            <div class="rule-meta">
+              <p><strong>Type:</strong> {{ configuration.type }}</p>
+              <p><strong>Updated by:</strong> {{ configuration.updatedBy ?? 'seed/system' }}</p>
+            </div>
+          </form>
+        } @else {
+          <p>No hay configuración disponible.</p>
+        }
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-flat-button color="primary" type="button" [disabled]="adminDiscountStore.saving()" (click)="save()">
+          {{ adminDiscountStore.saving() ? 'Guardando...' : 'Guardar configuración' }}
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+</section>
