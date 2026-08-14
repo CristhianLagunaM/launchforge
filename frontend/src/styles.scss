@@ -1,0 +1,11 @@
+@use '@angular/material' as mat;
+
+html {
+  @include mat.theme((color: (primary: mat.$azure-palette, tertiary: mat.$blue-palette), typography: Roboto, density: 0));
+  color-scheme: light;
+  font-family: Roboto, Arial, sans-serif;
+  background: #f6f7fb;
+}
+
+html, body { height: 100%; margin: 0; }
+
