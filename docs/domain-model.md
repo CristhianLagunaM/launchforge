@@ -751,6 +751,7 @@ UNIQUE(slug)
 INDEX(active)
 INDEX(category_id)
 INDEX(name)
+INDEX(price)
 ```
 
 Para búsqueda parcial por nombre se puede evaluar `pg_trgm` únicamente si se justifica.
@@ -761,6 +762,7 @@ No agregar extensión inicialmente si `ILIKE` es suficiente para el challenge.
 
 ```text
 UNIQUE(product_id)
+INDEX(available_quantity)
 ```
 
 ## orders

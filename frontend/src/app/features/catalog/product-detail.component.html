@@ -1,0 +1,48 @@
+<section class="detail-shell">
+  <a mat-button routerLink="/products">
+    <mat-icon>arrow_back</mat-icon>
+    Volver al catálogo
+  </a>
+
+  @if (catalogStore.detailLoading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  @if (catalogStore.error()) {
+    <mat-card appearance="outlined" class="state-card">
+      <mat-card-title>Error</mat-card-title>
+      <mat-card-content>{{ catalogStore.error() }}</mat-card-content>
+    </mat-card>
+  }
+
+  @if (catalogStore.selectedProduct(); as product) {
+    <mat-card appearance="outlined" class="detail-card">
+      <div class="detail-card__heading">
+        <div>
+          <p class="eyebrow">{{ product.category.name }} · {{ product.sku }}</p>
+          <h1>{{ product.name }}</h1>
+        </div>
+        <span class="availability" [class.available]="product.available" [class.unavailable]="!product.available">
+          {{ product.available ? 'Disponible' : 'Sin cupo inmediato' }}
+        </span>
+      </div>
+
+      <p class="description">{{ product.description }}</p>
+
+      <div class="detail-grid">
+        <div>
+          <span class="label">Precio</span>
+          <strong>{{ product.price | currency:'USD':'symbol':'1.2-2' }}</strong>
+        </div>
+        <div>
+          <span class="label">Slug</span>
+          <strong>{{ product.slug }}</strong>
+        </div>
+        <div>
+          <span class="label">Actualizado</span>
+          <strong>{{ product.updatedAt | date:'medium' }}</strong>
+        </div>
+      </div>
+    </mat-card>
+  }
+</section>

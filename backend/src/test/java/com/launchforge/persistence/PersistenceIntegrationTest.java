@@ -44,8 +44,8 @@ class PersistenceIntegrationTest extends AbstractPostgresIntegrationTest {
                 "SELECT version FROM flyway_schema_history WHERE version IS NOT NULL ORDER BY installed_rank",
                 String.class);
 
-        assertThat(installedCount).isEqualTo(8);
-        assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6", "7", "8");
+        assertThat(installedCount).isEqualTo(9);
+        assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9");
     }
 
     @org.junit.jupiter.api.Test
