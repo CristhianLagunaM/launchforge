@@ -99,7 +99,10 @@
                 {{ product.available ? 'Disponible' : 'Sin cupo inmediato' }}
               </span>
             </div>
-            <a mat-flat-button color="primary" [routerLink]="['/products', product.id]">Ver detalle</a>
+            <div class="product-card__actions">
+              <button mat-button type="button" (click)="addToCart(product)">Agregar</button>
+              <a mat-flat-button color="primary" [routerLink]="['/products', product.id]">Ver detalle</a>
+            </div>
           </div>
         </mat-card>
       }

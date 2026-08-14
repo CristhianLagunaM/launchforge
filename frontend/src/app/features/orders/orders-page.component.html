@@ -1,0 +1,45 @@
+<section class="orders-shell">
+  <header class="orders-header">
+    <div>
+      <p class="eyebrow">Orders</p>
+      <h1>Mis órdenes</h1>
+      <p>Consulta el histórico, valida el estado y accede al detalle o cancelación cuando aplique.</p>
+    </div>
+  </header>
+
+  @if (ordersStore.loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  @if (ordersStore.error()) {
+    <mat-card appearance="outlined">
+      <mat-card-title>Error</mat-card-title>
+      <mat-card-content>{{ ordersStore.error() }}</mat-card-content>
+    </mat-card>
+  }
+
+  @if (ordersStore.emptyState()) {
+    <mat-card appearance="outlined">
+      <mat-card-title>Sin órdenes</mat-card-title>
+      <mat-card-content>Aún no has creado órdenes.</mat-card-content>
+    </mat-card>
+  }
+
+  <div class="orders-list">
+    @for (order of ordersStore.orders(); track order.id) {
+      <mat-card appearance="outlined" class="order-card">
+        <div class="order-card__content">
+          <div>
+            <h2>{{ order.orderNumber }}</h2>
+            <p>{{ order.status }} · {{ order.createdAt | date:'medium' }}</p>
+            <p>{{ order.items.length }} item(s)</p>
+          </div>
+          <div class="order-card__meta">
+            <strong>{{ order.total | currency:'USD':'symbol':'1.2-2' }}</strong>
+            <a mat-button [routerLink]="['/orders', order.id]">Ver detalle</a>
+          </div>
+        </div>
+      </mat-card>
+    }
+  </div>
+</section>

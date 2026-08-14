@@ -36,6 +36,20 @@ Concurrencia:
 
 `TX A + TX B -> leen inventory.version = N -> una confirma -> la otra falla por optimistic locking -> API 409`
 
+## Flujo principal de Fase 5
+
+Checkout:
+
+`Angular cart/checkout -> OrdersStore -> OrdersApiService -> OrderController -> CreateOrderUseCase -> TransactionalOrderCreator -> InventoryManagementService + OrderRepository -> PostgreSQL`
+
+Consulta:
+
+`Angular orders page -> OrdersApiService -> OrderController -> OrderQueryService -> OrderRepository -> PostgreSQL`
+
+Cancelación:
+
+`Angular order detail -> OrdersApiService -> OrderController -> CancelOrderUseCase -> InventoryManagementService.restoreCapacity -> PostgreSQL`
+
 ## Decisiones relevantes
 
 - PostgreSQL es la fuente persistente de verdad
@@ -46,3 +60,6 @@ Concurrencia:
 - `JpaSpecificationExecutor` resuelve búsqueda dinámica sin memoria intermedia
 - `Inventory` centraliza invariantes de capacidad
 - `@Version` protege capacidad contra race conditions sin locks en memoria
+- la creación de órdenes usa una transacción corta y explícita
+- la idempotencia se apoya en un header HTTP y una restricción única en PostgreSQL
+- `order_items` conserva snapshots para proteger histórico frente a cambios del catálogo

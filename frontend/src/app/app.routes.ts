@@ -4,6 +4,25 @@ import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
   {
+    path: 'cart',
+    loadComponent: () => import('./features/orders/cart-page.component').then((m) => m.CartPageComponent)
+  },
+  {
+    path: 'checkout',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/orders/checkout-page.component').then((m) => m.CheckoutPageComponent)
+  },
+  {
+    path: 'orders',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/orders/orders-page.component').then((m) => m.OrdersPageComponent)
+  },
+  {
+    path: 'orders/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/orders/order-detail-page.component').then((m) => m.OrderDetailPageComponent)
+  },
+  {
     path: 'products',
     loadComponent: () => import('./features/catalog/catalog-page.component').then((m) => m.CatalogPageComponent)
   },

@@ -28,6 +28,8 @@ import jakarta.validation.constraints.Size;
 @Table(name = "orders")
 public class CustomerOrder extends AbstractTimestampedEntity {
 
+    private static final BigDecimal ZERO = BigDecimal.ZERO.setScale(2);
+
     @NotBlank
     @Size(max = 40)
     @Column(nullable = false, unique = true, length = 40)
@@ -70,6 +72,28 @@ public class CustomerOrder extends AbstractTimestampedEntity {
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderDiscount> orderDiscounts = new ArrayList<>();
+
+    public void confirm() {
+        this.status = OrderStatus.CONFIRMED;
+    }
+
+    public void cancel() {
+        this.status = OrderStatus.CANCELLED;
+    }
+
+    public boolean isCancelled() {
+        return status == OrderStatus.CANCELLED;
+    }
+
+    public void addItem(OrderItem item) {
+        item.setOrder(this);
+        items.add(item);
+    }
+
+    public void initializeMonetaryTotals() {
+        this.discountTotal = ZERO;
+        this.total = subtotal.subtract(discountTotal);
+    }
 
     public String getOrderNumber() {
         return orderNumber;
