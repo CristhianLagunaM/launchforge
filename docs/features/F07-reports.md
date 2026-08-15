@@ -76,7 +76,7 @@ Los `Seq Scan` sobre tablas diminutas son una decisión razonable del planner. N
 
 ## Frontend
 
-`/app/admin/reports` es una ruta lazy dentro del árbol protegido por `roleGuard` para `ADMIN`. `ReportStore` ejecuta las tres lecturas y mantiene estados `loading`, `error`, `empty` y `success`. Angular Material presenta tablas responsivas; no recalcula sumas ni ordena rankings.
+`/admin/reports` es una ruta lazy dentro del árbol protegido por `roleGuard` para `ADMIN`. `ReportStore` ejecuta las tres lecturas y mantiene estados `loading`, `error`, `empty` y `success`. Angular Material presenta tablas responsivas; no recalcula sumas ni ordena rankings.
 
 ## Pruebas
 
@@ -85,8 +85,7 @@ Los `Seq Scan` sobre tablas diminutas son una decisión razonable del planner. N
 ## Validación manual
 
 1. Iniciar `docker compose up --build`.
-2. Autenticar `admin@launchforge.dev` y abrir `/app/admin/reports`.
+2. Autenticar `admin@launchforge.dev` y abrir `/admin/reports`.
 3. Comparar cada tabla con las consultas anteriores en `psql`.
 4. Confirmar que un customer recibe `403` y una petición sin token recibe `401`.
 5. Ejecutar `EXPLAIN (ANALYZE, BUFFERS)` antes de afirmar mejoras de índices.
-

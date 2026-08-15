@@ -8,6 +8,7 @@ import com.launchforge.inventory.api.dto.InventoryAdjustmentOperation;
 import com.launchforge.inventory.api.dto.InventoryAdjustmentRequest;
 import com.launchforge.inventory.application.InventoryManagementService;
 import com.launchforge.inventory.application.InventoryMapper;
+import com.launchforge.inventory.application.InsufficientCapacityException;
 import com.launchforge.persistence.model.catalog.Product;
 import com.launchforge.persistence.model.inventory.Inventory;
 import com.launchforge.shared.exception.ApiConflictException;
@@ -39,6 +40,24 @@ class InventoryManagementServiceTest {
         ))
                 .isInstanceOf(ApiConflictException.class)
                 .hasMessageContaining("Inventory version is stale");
+    }
+
+    @Test
+    void reportsTheProductAndQuantitiesWhenCapacityIsInsufficient() {
+        InventoryManagementService inventoryManagementService =
+                new InventoryManagementService(inventoryRepository, new InventoryMapper());
+        UUID productId = UUID.fromString("22222222-2222-2222-2222-222222222221");
+        Inventory inventory = inventory(productId, 2, 3L);
+        when(inventoryRepository.findByProduct_Id(productId)).thenReturn(Optional.of(inventory));
+
+        assertThatThrownBy(() -> inventoryManagementService.consumeCapacity(productId, 5))
+                .isInstanceOfSatisfying(InsufficientCapacityException.class, exception -> {
+                    org.assertj.core.api.Assertions.assertThat(exception.getProductId()).isEqualTo(productId);
+                    org.assertj.core.api.Assertions.assertThat(exception.getSku()).isEqualTo("LF-LANDING-001");
+                    org.assertj.core.api.Assertions.assertThat(exception.getProductName()).isEqualTo("Landing Page Launch");
+                    org.assertj.core.api.Assertions.assertThat(exception.getAvailableQuantity()).isEqualTo(2);
+                    org.assertj.core.api.Assertions.assertThat(exception.getRequestedQuantity()).isEqualTo(5);
+                });
     }
 
     private Inventory inventory(UUID productId, int availableQuantity, long version) {

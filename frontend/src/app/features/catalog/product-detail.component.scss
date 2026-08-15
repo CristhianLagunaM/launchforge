@@ -1,7 +1,7 @@
 :host {
   display: block;
-  min-height: 100vh;
-  background: linear-gradient(180deg, #f7f8fc, #eef3fb);
+  min-height: 100%;
+  background: radial-gradient(circle at 20% 0, rgba(0, 222, 255, .12), transparent 30rem);
 }
 
 .detail-shell {
@@ -18,7 +18,16 @@
 .detail-card {
   display: grid;
   gap: 1.5rem;
+  overflow: hidden;
+  background: rgba(12, 18, 30, .9);
+  border-color: rgba(114, 231, 255, .16);
 }
+
+.detail-visual { min-height: 18rem; display: grid; place-items: center; position: relative; background: radial-gradient(circle, rgba(114,231,255,.18), transparent 35%), linear-gradient(135deg, #101a2e, #18112e); border-bottom: 1px solid rgba(114,231,255,.14); }
+.detail-visual span { position: absolute; top: 1rem; left: 1rem; color: #73839a; font: .7rem monospace; letter-spacing: .12em; }
+.detail-visual mat-icon { width: auto; height: auto; font-size: 7rem; color: #80ebff; filter: drop-shadow(0 0 30px rgba(114,231,255,.45)); }
+.detail-card > :not(.detail-visual) { margin-inline: 1.5rem; }
+.detail-card > .detail-actions { margin-bottom: 1.5rem; }
 
 .detail-card__heading {
   align-items: flex-start;
@@ -28,19 +37,19 @@
 }
 
 .detail-card h1 {
-  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 300;
   font-size: clamp(2rem, 4vw, 3.2rem);
   margin: 0;
 }
 
 .eyebrow,
 .label {
-  color: #5d6b86;
+  color: #8492a8;
   font-size: 0.9rem;
 }
 
 .description {
-  color: #44506a;
+  color: #aeb9ca;
   line-height: 1.7;
   margin: 0;
 }

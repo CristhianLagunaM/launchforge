@@ -14,7 +14,7 @@ import { MatCardModule } from '@angular/material/card';
         <mat-card-subtitle>Tu usuario está autenticado, pero no tiene este rol.</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
-        <p>La autorización real ocurre en backend. El guard de Angular solo mejora la experiencia de navegación.</p>
+        <p>Tu cuenta no tiene permisos para acceder a esta sección.</p>
       </mat-card-content>
       <mat-card-actions>
         <a mat-flat-button color="primary" routerLink="/app">Volver al inicio</a>

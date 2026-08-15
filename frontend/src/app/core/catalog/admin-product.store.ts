@@ -1,7 +1,7 @@
 import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { firstValueFrom } from 'rxjs';
-import { ProblemDetails } from '../auth/auth.models';
+import { describeHttpError } from '../http/http-error.util';
 import { CatalogApiService } from './catalog-api.service';
 import { Category, Product, ProductFilters, ProductUpsertPayload } from './catalog.models';
 
@@ -120,6 +120,5 @@ export const AdminProductStore = signalStore(
 );
 
 function extractProblemDetail(error: unknown, fallback: string): string {
-  const maybeProblem = (error as { error?: ProblemDetails })?.error;
-  return maybeProblem?.detail ?? maybeProblem?.title ?? fallback;
+  return describeHttpError(error, fallback);
 }
