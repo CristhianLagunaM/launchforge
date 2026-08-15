@@ -29,6 +29,10 @@ management:
       probes:
         enabled: true
 
+logging:
+  pattern:
+    level: "%5p [correlationId:%X{correlationId:-} userId:%X{userId:-} path:%X{requestPath:-}]"
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html

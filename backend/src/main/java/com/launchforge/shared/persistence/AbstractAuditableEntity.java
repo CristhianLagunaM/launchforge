@@ -5,39 +5,32 @@ import java.util.UUID;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
+import jakarta.persistence.EntityListeners;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @MappedSuperclass
+@EntityListeners(AuditingEntityListener.class)
 public abstract class AbstractAuditableEntity extends AbstractUuidEntity {
 
+    @CreatedDate
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
+    @LastModifiedDate
     @Column(nullable = false)
     private Instant updatedAt;
 
+    @CreatedBy
     @Column
     private UUID createdBy;
 
+    @LastModifiedBy
     @Column
     private UUID updatedBy;
-
-    @PrePersist
-    protected void initializeAuditTimestamps() {
-        Instant now = Instant.now();
-        if (createdAt == null) {
-            createdAt = now;
-        }
-        if (updatedAt == null) {
-            updatedAt = now;
-        }
-    }
-
-    @PreUpdate
-    protected void touchUpdatedAt() {
-        updatedAt = Instant.now();
-    }
 
     public Instant getCreatedAt() {
         return createdAt;

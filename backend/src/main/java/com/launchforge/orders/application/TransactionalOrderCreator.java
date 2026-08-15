@@ -30,6 +30,8 @@ import java.util.Map;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.launchforge.audit.application.AuditAction;
+import com.launchforge.audit.application.LogAction;
 
 @Service
 public class TransactionalOrderCreator {
@@ -60,6 +62,7 @@ public class TransactionalOrderCreator {
     }
 
     @Transactional
+    @LogAction(action = AuditAction.ORDER_CREATED, resource = "ORDER", resourceId = "#result.id()")
     public OrderResponse create(UUID customerId, CreateOrderRequest request, String idempotencyKey) {
         User customer = loadCustomer(customerId);
         Map<UUID, Integer> consolidatedItems = consolidateItems(request);
