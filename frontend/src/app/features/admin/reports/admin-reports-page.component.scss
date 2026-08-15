@@ -1,0 +1,10 @@
+.reports-shell { display: grid; gap: 1.5rem; }
+.reports-shell header h1 { margin: 0; }
+.eyebrow { color: var(--mat-sys-primary); font-weight: 700; margin-bottom: .25rem; text-transform: uppercase; }
+.report-grid { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 30rem), 1fr)); }
+.report-grid mat-card:first-child { grid-column: 1 / -1; }
+.table-scroll { overflow-x: auto; padding-top: 1rem; }
+table { width: 100%; }
+.state-card { padding: 1.5rem; }
+.error-card { border-color: var(--mat-sys-error); }
+

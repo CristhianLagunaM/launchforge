@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.math.BigDecimal;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -44,8 +45,8 @@ class PersistenceIntegrationTest extends AbstractPostgresIntegrationTest {
                 "SELECT version FROM flyway_schema_history WHERE version IS NOT NULL ORDER BY installed_rank",
                 String.class);
 
-        assertThat(installedCount).isEqualTo(10);
-        assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10");
+        assertThat(installedCount).isEqualTo(11);
+        assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11");
     }
 
     @org.junit.jupiter.api.Test
@@ -76,7 +77,7 @@ class PersistenceIntegrationTest extends AbstractPostgresIntegrationTest {
                 "invalid-product",
                 "Invalid seed",
                 1L,
-                "-1.00",
+                new BigDecimal("-1.00"),
                 true))
                 .isInstanceOf(DataIntegrityViolationException.class);
 

@@ -83,3 +83,11 @@ Decisiones específicas:
 - `RandomProvider` desacopla producción y tests;
 - `OrderDiscount` conserva trazabilidad histórica aunque cambie la configuración;
 - `DiscountConfigurationService` evita queries duplicadas por estrategia.
+
+## Flujo principal de Fase 7
+
+Reports:
+
+`Angular /app/admin/reports -> ReportStore -> ReportApiService -> ReportController -> ReportQueryService -> ReportRepository -> PostgreSQL`
+
+El módulo `report` está separado de catálogo, órdenes y usuarios. `ReportRepository` ejecuta SQL nativo agregado y entrega interface projections cerradas. PostgreSQL filtra estados, agrupa, ordena y limita; la capa application solo adapta projections a records de API. `@PreAuthorize` exige `ADMIN` en backend.

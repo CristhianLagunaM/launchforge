@@ -28,7 +28,6 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.oauth2.jwt.Jwt;
 
 @ExtendWith(MockitoExtension.class)
 class LoginUseCaseTest {
@@ -59,15 +58,8 @@ class LoginUseCaseTest {
 
         when(authenticationManager.authenticate(any(Authentication.class))).thenReturn(authentication);
         when(userRepository.findByEmailIgnoreCase(request.email())).thenReturn(Optional.of(user));
-        when(jwtService.generateToken(any())).thenReturn("jwt-token");
-        when(jwtService.decode("jwt-token")).thenReturn(Jwt.withTokenValue("jwt-token")
-                .header("alg", "HS256")
-                .subject(user.getId().toString())
-                .claim("email", user.getEmail())
-                .claim("roles", java.util.List.of("ADMIN"))
-                .issuedAt(issuedAt)
-                .expiresAt(expiresAt)
-                .build());
+        when(jwtService.issueToken(any()))
+                .thenReturn(new JwtService.IssuedToken("jwt-token", issuedAt, expiresAt));
 
         AuthenticatedUser response = loginUseCase.login(request);
 

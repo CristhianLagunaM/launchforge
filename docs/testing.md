@@ -14,6 +14,8 @@ Se cubren tres niveles:
 - unit tests del `DiscountEngine`
 - integration tests de descuentos con PostgreSQL/Testcontainers
 - MockMvc para configuración admin de descuentos
+- integration tests PostgreSQL para las tres queries de reportes
+- MockMvc para autorización y contrato de reportes
 
 ## Frontend
 
@@ -25,6 +27,7 @@ Se prueban:
 - `CartStore`
 - `OrdersStore`
 - `AdminDiscountStore`
+- `ReportStore`
 
 ## Comandos
 
@@ -87,6 +90,17 @@ Resultado esperado:
 - el stock final queda en `0`
 - nunca queda negativo
 
+### Aislamiento de fixtures mutables
+
+Las pruebas que modifican inventario u órdenes preparan un estado conocido y restauran los datos compartidos cuando corresponde:
+
+- los tests HTTP eliminan únicamente las órdenes creadas con su prefijo reservado de idempotencia;
+- la prueba concurrente restaura el inventario demo al finalizar;
+- las entidades nuevas dejan UUID y versión sin asignar para que JPA las reconozca como nuevas;
+- la versión esperada se consulta en PostgreSQL después de preparar el escenario concurrente.
+
+Así, el resultado no depende del orden de ejecución de JUnit. Los reintentos idempotentes también se consultan y transforman a DTO dentro de una transacción de solo lectura, manteniendo disponibles las relaciones lazy durante el mapeo.
+
 ## Qué valida Fase 5
 
 - creación de órdenes confirmadas
@@ -126,3 +140,17 @@ Resultado esperado:
 5. consultar detalle;
 6. cancelar una orden confirmada;
 7. verificar en SQL que la capacidad fue restaurada.
+
+## Qué valida Fase 7
+
+- productos inactivos excluidos;
+- suma de cantidades por producto en PostgreSQL;
+- solo estados `CONFIRMED/COMPLETED`;
+- `CANCELLED` excluidas;
+- límite cinco con más de cinco candidatos;
+- desempates deterministas;
+- conteo de órdenes por cliente;
+- `ADMIN 200`, `CUSTOMER 403`, anónimo `401`;
+- estados loading/error y mapping del store frontend.
+
+Los tests de repository reemplazan el seed dentro de una transacción y crean datos controlados; no dependen de los rankings demo.

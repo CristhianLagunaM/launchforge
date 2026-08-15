@@ -15,10 +15,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -35,18 +37,34 @@ class InventoryConcurrencyIntegrationTest extends AbstractPostgresIntegrationTes
     @Autowired
     private PlatformTransactionManager transactionManager;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @AfterEach
+    void restoreSeedInventory() {
+        jdbcTemplate.update(
+                "UPDATE inventory SET available_quantity = 8, reserved_quantity = 1 WHERE product_id = ?",
+                PRODUCT_ID
+        );
+    }
+
     @Test
     void optimisticLockingAllowsOnlyOneSuccessfulConsumption() throws Exception {
         Inventory inventory = inventoryRepository.findByProduct_Id(PRODUCT_ID).orElseThrow();
         inventory.setAvailableQuantity(1);
         inventory.setReservedQuantity(0);
         inventoryRepository.saveAndFlush(inventory);
+        Long initialVersion = jdbcTemplate.queryForObject(
+                "SELECT version FROM inventory WHERE product_id = ?",
+                Long.class,
+                PRODUCT_ID
+        );
 
         ExecutorService executorService = Executors.newFixedThreadPool(2);
         CyclicBarrier barrier = new CyclicBarrier(2);
         TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
         AtomicInteger successCount = new AtomicInteger();
-        List<Throwable> failures = new ArrayList<>();
+        List<Throwable> failures = java.util.Collections.synchronizedList(new ArrayList<>());
 
         Callable<Void> consumeTask = () -> {
             try {
@@ -77,9 +95,11 @@ class InventoryConcurrencyIntegrationTest extends AbstractPostgresIntegrationTes
 
         assertThat(successCount.get()).isEqualTo(1);
         assertThat(failures).hasSize(1);
-        assertThat(rootCause(failures.getFirst())).isInstanceOf(ObjectOptimisticLockingFailureException.class);
+        assertThat(exceptionChain(failures.getFirst()))
+                .anyMatch(throwable -> throwable instanceof ObjectOptimisticLockingFailureException
+                        || throwable instanceof org.hibernate.StaleObjectStateException);
         assertThat(finalInventory.getAvailableQuantity()).isZero();
-        assertThat(finalInventory.getVersion()).isEqualTo(1L);
+        assertThat(finalInventory.getVersion()).isEqualTo(initialVersion + 1);
     }
 
     private void awaitBarrier(CyclicBarrier barrier) {
@@ -90,11 +110,13 @@ class InventoryConcurrencyIntegrationTest extends AbstractPostgresIntegrationTes
         }
     }
 
-    private Throwable rootCause(Throwable throwable) {
+    private List<Throwable> exceptionChain(Throwable throwable) {
+        List<Throwable> chain = new ArrayList<>();
         Throwable current = throwable;
-        while (current.getCause() != null) {
+        while (current != null) {
+            chain.add(current);
             current = current.getCause();
         }
-        return current;
+        return chain;
     }
 }
