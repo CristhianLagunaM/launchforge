@@ -16,6 +16,8 @@ import java.util.Comparator;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.launchforge.audit.application.AuditAction;
+import com.launchforge.audit.application.LogAction;
 
 @Service
 public class RegisterUserUseCase {
@@ -38,6 +40,7 @@ public class RegisterUserUseCase {
     }
 
     @Transactional
+    @LogAction(action = AuditAction.USER_CREATED, resource = "USER", resourceId = "#result.user().id()")
     public AuthenticatedUser register(RegisterRequest request) {
         if (userRepository.existsByEmailIgnoreCase(request.email())) {
             throw new DuplicateEmailException(request.email());

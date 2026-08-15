@@ -22,6 +22,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.launchforge.audit.application.AuditAction;
+import com.launchforge.audit.application.LogAction;
 
 @Service
 public class ProductCatalogService {
@@ -77,6 +79,7 @@ public class ProductCatalogService {
     }
 
     @Transactional
+    @LogAction(action = AuditAction.PRODUCT_CREATED, resource = "PRODUCT", resourceId = "#result.id()")
     public ProductResponse createProduct(ProductUpsertRequest request, UUID actorUserId) {
         validateUniqueFields(request.sku(), request.slug(), null);
         Category category = loadCategory(request.categoryId());
@@ -89,6 +92,7 @@ public class ProductCatalogService {
     }
 
     @Transactional
+    @LogAction(action = AuditAction.PRODUCT_UPDATED, resource = "PRODUCT", resourceId = "#result.id()")
     public ProductResponse updateProduct(UUID productId, ProductUpsertRequest request, UUID actorUserId) {
         Product product = loadProduct(productId);
         validateUniqueFields(request.sku(), request.slug(), productId);
@@ -99,6 +103,7 @@ public class ProductCatalogService {
     }
 
     @Transactional
+    @LogAction(action = AuditAction.PRODUCT_UPDATED, resource = "PRODUCT", resourceId = "#result.id()")
     public ProductResponse changeStatus(UUID productId, ProductStatusRequest request, UUID actorUserId) {
         Product product = loadProduct(productId);
         product.setActive(request.active());
@@ -107,6 +112,7 @@ public class ProductCatalogService {
     }
 
     @Transactional
+    @LogAction(action = AuditAction.PRODUCT_DISABLED, resource = "PRODUCT", resourceId = "#productId")
     public void deleteProduct(UUID productId, UUID actorUserId) {
         Product product = loadProduct(productId);
         if (orderItemRepository.existsByProduct_Id(productId)) {

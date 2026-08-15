@@ -116,6 +116,14 @@ Los rankings incluyen únicamente órdenes `CONFIRMED` y `COMPLETED`; excluyen `
 
 El backend devuelve DTOs preparados; el frontend no calcula sumas ni rankings.
 
+## Audit
+
+Solo ADMIN:
+
+- GET /api/v1/audit
+
+Filtros opcionales: action, resourceType, actor (UUID o email), from, to, page y size. La respuesta es paginada, ordenada por createdAt descendente y de solo lectura. Todas las respuestas propagan X-Correlation-Id; un valor enviado por el cliente debe tener máximo 100 caracteres y usar letras, números, punto, guion o guion bajo.
+
 ## Query params soportados en catálogo
 
 - `name`

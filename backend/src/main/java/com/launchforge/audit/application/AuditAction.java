@@ -1,0 +1,14 @@
+package com.launchforge.audit.application;
+
+public enum AuditAction {
+    USER_CREATED,
+    USER_STATUS_CHANGED,
+    USER_ROLE_CHANGED,
+    PRODUCT_CREATED,
+    PRODUCT_UPDATED,
+    PRODUCT_DISABLED,
+    INVENTORY_ADJUSTED,
+    ORDER_CREATED,
+    ORDER_CANCELLED,
+    DISCOUNT_CONFIGURATION_UPDATED
+}

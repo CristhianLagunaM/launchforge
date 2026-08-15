@@ -91,3 +91,17 @@ Reports:
 `Angular /app/admin/reports -> ReportStore -> ReportApiService -> ReportController -> ReportQueryService -> ReportRepository -> PostgreSQL`
 
 El módulo `report` está separado de catálogo, órdenes y usuarios. `ReportRepository` ejecuta SQL nativo agregado y entrega interface projections cerradas. PostgreSQL filtra estados, agrupa, ordena y limita; la capa application solo adapta projections a records de API. `@PreAuthorize` exige `ADMIN` en backend.
+
+## Flujo principal de Fase 8
+
+Auditoría funcional:
+
+`Caso de uso mutable -> @Transactional + @LogAction -> AuditAspect -> AuditWriter -> audit_log`
+
+La transacción envuelve al Aspect y AuditWriter exige propagación MANDATORY; acción y auditoría se confirman o revierten juntas. CorrelationIdFilter valida o crea X-Correlation-Id y lo añade a la respuesta y a MDC.
+
+Consulta:
+
+`Angular /app/admin/audit -> AuditStore -> AuditController -> AuditQueryService/Specification -> PostgreSQL`
+
+JPA Auditing completa campos técnicos de entidades; AuditLog representa eventos funcionales. Son mecanismos complementarios.

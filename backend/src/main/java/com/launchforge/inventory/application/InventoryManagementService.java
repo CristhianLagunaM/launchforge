@@ -14,6 +14,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.launchforge.audit.application.AuditAction;
+import com.launchforge.audit.application.LogAction;
 
 @Service
 public class InventoryManagementService {
@@ -37,6 +39,7 @@ public class InventoryManagementService {
     }
 
     @Transactional
+    @LogAction(action = AuditAction.INVENTORY_ADJUSTED, resource = "INVENTORY", resourceId = "#result.productId()")
     public InventoryResponse adjustInventory(UUID productId, InventoryAdjustmentRequest request) {
         Inventory inventory = loadInventory(productId);
         validateVersion(inventory, request.version());

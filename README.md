@@ -1,6 +1,6 @@
 # LaunchForge
 
-LaunchForge es una plataforma para comercializar paquetes de desarrollo web. El repositorio ya incluye bootstrap, persistencia base, autenticación/autorización con JWT, catálogo de productos con CRUD y búsqueda, inventario operativo con protección de concurrencia, flujo de órdenes con idempotencia y un motor de descuentos configurable.
+LaunchForge es una plataforma para comercializar paquetes de desarrollo web. Incluye autenticación JWT, catálogo, inventario concurrente, órdenes idempotentes, descuentos configurables, reportes y auditoría funcional para administradores.
 
 ## Arquitectura actual
 
@@ -92,4 +92,4 @@ También existen `make up`, `down`, `reset`, `logs`, `logs-backend`, `logs-db`, 
   - `customer@launchforge.dev` / `launchforge-demo`
   - `frequent@launchforge.dev` / `launchforge-demo`
 
-Consulta [Architecture](docs/architecture.md), [API](docs/api.md), [Testing](docs/testing.md), [Troubleshooting](docs/troubleshooting.md), [F00 Bootstrap](docs/features/F00-bootstrap.md), [F01 Persistence](docs/features/F01-persistence.md), [F02 Authentication](docs/features/F02-authentication.md), [F03 Products](docs/features/F03-products.md), [F04 Inventory](docs/features/F04-inventory.md), [F05 Orders](docs/features/F05-orders.md), [F06 Discounts](docs/features/F06-discounts.md), [ADR Inventory Concurrency](docs/decisions/ADR-inventory-concurrency.md) y [ADR Discount Engine](docs/decisions/ADR-discount-engine.md).
+Consulta [Architecture](docs/architecture.md), [API](docs/api.md), [Security](docs/security.md), [Testing](docs/testing.md), [Troubleshooting](docs/troubleshooting.md), [F08 Audit](docs/features/F08-audit.md) y [ADR Auditing](docs/decisions/ADR-auditing.md).

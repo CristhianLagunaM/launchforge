@@ -15,6 +15,8 @@ import java.util.Map;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.launchforge.audit.application.AuditAction;
+import com.launchforge.audit.application.LogAction;
 
 @Service
 public class DiscountConfigurationService {
@@ -45,6 +47,7 @@ public class DiscountConfigurationService {
     }
 
     @Transactional
+    @LogAction(action = AuditAction.DISCOUNT_CONFIGURATION_UPDATED, resource = "DISCOUNT_CONFIGURATION", resourceId = "#result.id()")
     public DiscountConfigurationView updateConfiguration(String code, DiscountConfigurationUpdateRequest request, UUID updatedBy) {
         DiscountConfiguration configuration = discountConfigurationRepository.findByCodeIgnoreCase(code)
                 .orElseThrow(() -> new ApiNotFoundException(
