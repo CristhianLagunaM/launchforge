@@ -85,7 +85,12 @@ describe('OrdersStore', () => {
         type: 'https://launchforge/errors/inventory/insufficient-capacity',
         title: 'Inventory conflict',
         status: 409,
-        detail: 'Not enough available capacity.'
+        detail: 'Not enough available capacity.',
+        productId: '22222222-2222-2222-2222-222222222221',
+        sku: 'LF-CORP-001',
+        productName: 'Corporate Website Suite',
+        availableQuantity: 2,
+        requestedQuantity: 5
       },
       { status: 409, statusText: 'Conflict' }
     );
@@ -93,7 +98,21 @@ describe('OrdersStore', () => {
     const result = await createPromise;
 
     expect(result).toBeNull();
-    expect(store.error()).toBe('Not enough available capacity.');
+    expect(store.error()).toBe(
+      'No hay capacidad suficiente para completar uno de los productos. Ajusta la cantidad en el carrito e intenta nuevamente.'
+    );
+    expect(store.capacityConflict()).toEqual({
+      productId: '22222222-2222-2222-2222-222222222221',
+      sku: 'LF-CORP-001',
+      productName: 'Corporate Website Suite',
+      availableQuantity: 2,
+      requestedQuantity: 5
+    });
+
+    store.clearCreationFeedback();
+
+    expect(store.error()).toBeNull();
+    expect(store.capacityConflict()).toBeNull();
     httpTestingController.verify();
   });
 });

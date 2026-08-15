@@ -1,13 +1,14 @@
 <section class="auth-page">
   <aside class="auth-panel">
-    <h1>Crea tu acceso</h1>
+    <p class="auth-kicker">Build what comes next</p>
+    <h1>Convierte tu idea en un próximo lanzamiento.</h1>
     <p>
-      El registro crea usuarios CUSTOMER, cifra passwords con BCrypt y devuelve JWT listo para operar.
+      Crea tu espacio para reunir soluciones digitales, compras y seguimiento en una sola experiencia.
     </p>
     <div class="auth-bullets">
-      <div class="auth-bullet"><mat-icon>person_add</mat-icon><span>Registro inmediato</span></div>
-      <div class="auth-bullet"><mat-icon>lock</mat-icon><span>Nunca exponemos password_hash</span></div>
-      <div class="auth-bullet"><mat-icon>key</mat-icon><span>Sesión JWT con expiración</span></div>
+      <div class="auth-bullet"><mat-icon>person_add</mat-icon><span>Empieza en pocos pasos</span></div>
+      <div class="auth-bullet"><mat-icon>shopping_cart</mat-icon><span>Prepara tus soluciones favoritas</span></div>
+      <div class="auth-bullet"><mat-icon>auto_awesome</mat-icon><span>Impulsa tu siguiente lanzamiento</span></div>
     </div>
   </aside>
 
@@ -38,14 +39,14 @@
         </mat-form-field>
 
         <mat-form-field class="full-width">
-          <mat-label>Password</mat-label>
+          <mat-label>Contraseña</mat-label>
           <input
             matInput
             [type]="hidePassword() ? 'password' : 'text'"
             formControlName="password"
             autocomplete="new-password"
           />
-          <button mat-icon-button matSuffix type="button" (click)="hidePassword.set(!hidePassword())">
+          <button mat-icon-button matSuffix type="button" aria-label="Mostrar u ocultar contraseña" (click)="hidePassword.set(!hidePassword())">
             <mat-icon>{{ hidePassword() ? 'visibility' : 'visibility_off' }}</mat-icon>
           </button>
         </mat-form-field>

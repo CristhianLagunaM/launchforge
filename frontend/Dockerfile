@@ -1,7 +1,7 @@
 FROM node:24.15.0-alpine AS build
 WORKDIR /workspace
 COPY package.json package-lock.json ./
-RUN npm ci --legacy-peer-deps
+RUN npm ci
 COPY . .
 RUN npm run build
 

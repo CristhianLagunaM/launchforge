@@ -1,6 +1,7 @@
 package com.launchforge.shared.exception;
 
 import com.launchforge.shared.api.ProblemDetailsFactory;
+import com.launchforge.inventory.application.InsufficientCapacityException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -78,6 +79,26 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                         exception.getTypeSuffix()
                 )
         );
+    }
+
+    @ExceptionHandler(InsufficientCapacityException.class)
+    ResponseEntity<ProblemDetail> handleInsufficientCapacity(
+            InsufficientCapacityException exception,
+            HttpServletRequest request
+    ) {
+        ProblemDetail problem = ProblemDetailsFactory.problem(
+                HttpStatus.CONFLICT,
+                exception.getTitle(),
+                exception.getMessage(),
+                request.getRequestURI(),
+                exception.getTypeSuffix()
+        );
+        problem.setProperty("productId", exception.getProductId());
+        problem.setProperty("sku", exception.getSku());
+        problem.setProperty("productName", exception.getProductName());
+        problem.setProperty("availableQuantity", exception.getAvailableQuantity());
+        problem.setProperty("requestedQuantity", exception.getRequestedQuantity());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(problem);
     }
 
     @ExceptionHandler(ObjectOptimisticLockingFailureException.class)

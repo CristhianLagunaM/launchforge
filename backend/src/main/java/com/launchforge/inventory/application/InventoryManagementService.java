@@ -99,10 +99,12 @@ public class InventoryManagementService {
                 case RESTORE -> inventory.restore(quantity);
             }
         } catch (InsufficientInventoryException exception) {
-            throw new ApiConflictException(
-                    "Insufficient inventory",
-                    exception.getMessage(),
-                    "inventory/insufficient-capacity"
+            throw new InsufficientCapacityException(
+                    inventory.getProduct().getId(),
+                    inventory.getProduct().getSku(),
+                    inventory.getProduct().getName(),
+                    inventory.getAvailableQuantity(),
+                    quantity
             );
         }
     }

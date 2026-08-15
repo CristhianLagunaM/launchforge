@@ -1,7 +1,8 @@
 import { computed, inject } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { firstValueFrom } from 'rxjs';
-import { ProblemDetails } from '../auth/auth.models';
+import { describeHttpError } from '../http/http-error.util';
 import { InventoryApiService } from './inventory-api.service';
 import { InventoryAdjustmentPayload, InventoryItem } from './inventory.models';
 
@@ -86,7 +87,11 @@ export const AdminInventoryStore = signalStore(
             inventory: store.inventory().map((item) => (item.productId === updated.productId ? updated : item))
           });
         } catch (error) {
-          patchState(store, { saving: false, error: extractProblemDetail(error, 'No fue posible ajustar inventario.') });
+        const message = describeHttpError(error, 'No fue posible ajustar inventario.');
+        patchState(store, { saving: false, error: message });
+        if (error instanceof HttpErrorResponse && error.status === 409) {
+          await loadInventory();
+        }
         }
       }
     };
@@ -94,6 +99,5 @@ export const AdminInventoryStore = signalStore(
 );
 
 function extractProblemDetail(error: unknown, fallback: string): string {
-  const maybeProblem = (error as { error?: ProblemDetails })?.error;
-  return maybeProblem?.detail ?? maybeProblem?.title ?? fallback;
+  return describeHttpError(error, fallback);
 }

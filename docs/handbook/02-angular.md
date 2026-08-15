@@ -2,7 +2,7 @@
 
 ## Fase 2
 
-Angular 22 implementa autenticación con formularios reactivos, interceptor HTTP y guards funcionales.
+Angular 21 implementa autenticación con formularios reactivos, interceptor HTTP, guards funcionales y NgRx Signals 21. Se usa esta combinación porque es la línea estable con peer dependencies compatibles y reproducibles mediante `npm ci`.
 
 ## Piezas principales
 

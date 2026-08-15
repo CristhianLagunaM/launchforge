@@ -39,12 +39,13 @@ export const AuthStore = signalStore(
     isAdmin: computed(() => (store.user()?.roles ?? []).includes('ADMIN'))
   })),
   withMethods((store, authApi = inject(AuthApiService), router = inject(Router)) => ({
-    async login(payload: LoginRequest): Promise<void> {
+    async login(payload: LoginRequest, redirectUrl = '/app'): Promise<void> {
       patchState(store, { status: 'loading', error: null });
       try {
         const response = await firstValueFrom(authApi.login(payload));
-        persistAuthenticatedSession(store, response);
-        await router.navigate(['/app']);
+        saveSession(response);
+        patchState(store, authenticatedState(response));
+        await router.navigateByUrl(isSafeRedirect(redirectUrl) ? redirectUrl : '/app');
       } catch (error) {
         patchState(store, { status: 'error', error: extractProblemDetail(error, 'No fue posible iniciar sesión.') });
       }
@@ -53,7 +54,8 @@ export const AuthStore = signalStore(
       patchState(store, { status: 'loading', error: null });
       try {
         const response = await firstValueFrom(authApi.register(payload));
-        persistAuthenticatedSession(store, response);
+        saveSession(response);
+        patchState(store, authenticatedState(response));
         await router.navigate(['/app']);
       } catch (error) {
         patchState(store, { status: 'error', error: extractProblemDetail(error, 'No fue posible crear la cuenta.') });
@@ -92,19 +94,22 @@ export const AuthStore = signalStore(
   })
 );
 
-function persistAuthenticatedSession(store: any, response: AuthResponse): void {
-  saveSession(response);
-  patchState(store, {
+function authenticatedState(response: AuthResponse): Partial<AuthState> {
+  return {
     accessToken: response.accessToken,
     issuedAt: response.issuedAt,
     expiresAt: response.expiresAt,
     user: response.user,
     status: 'authenticated',
     error: null
-  });
+  };
 }
 
 function extractProblemDetail(error: unknown, fallback: string): string {
   const maybeProblem = (error as { error?: ProblemDetails })?.error;
   return maybeProblem?.detail ?? maybeProblem?.title ?? fallback;
+}
+
+function isSafeRedirect(url: string): boolean {
+  return url.startsWith('/') && !url.startsWith('//');
 }

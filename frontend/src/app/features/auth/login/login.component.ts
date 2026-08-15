@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -25,6 +25,7 @@ import { AuthStore } from '../../../core/auth/auth.store';
 })
 export class LoginComponent {
   private readonly formBuilder = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
   readonly authStore = inject(AuthStore);
   readonly hidePassword = signal(true);
 
@@ -39,6 +40,6 @@ export class LoginComponent {
       return;
     }
 
-    await this.authStore.login(this.form.getRawValue());
+    await this.authStore.login(this.form.getRawValue(), this.route.snapshot.queryParamMap.get('redirectUrl') ?? '/app');
   }
 }

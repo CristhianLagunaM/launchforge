@@ -179,3 +179,10 @@ Se registra la IP de la conexión y no se confía en X-Forwarded-For. Detrás de
 - buscar password, token, jwt o secret en metadata;
 - AuditMetadataFactory debe conservar una lista permitida;
 - no añadir Authorization, JWT ni cuerpos completos a MDC o metadata.
+## Frontend: peer dependencies
+
+Si `npm ci` falla, no usar `--force` o `--legacy-peer-deps` como solución permanente. Alinear los majors de Angular, Material, CLI y NgRx. La combinación vigente es Angular 21, NgRx Signals 21 y TypeScript 5.9.
+
+## Checkout o conflicto de inventario
+
+En Network, un retry idéntico debe conservar `Idempotency-Key`; modificar el carrito debe generar otra. Ante 409 de inventario, la interfaz recarga la fila para obtener la versión vigente antes del próximo intento.

@@ -6,7 +6,7 @@ LaunchForge es una plataforma para comercializar paquetes de desarrollo web. Inc
 
 ```mermaid
 flowchart LR
-    B[Browser] -->|HTTP :80| N[Nginx + Angular 22]
+    B[Browser] -->|HTTP :80| N[Nginx + Angular 21]
     N -->|/api proxy| API[Spring Boot 3 / Java 21]
     API -->|JDBC db:5432| DB[(PostgreSQL 17)]
     API --> F[Flyway]
@@ -65,7 +65,7 @@ npm ci
 npm start
 ```
 
-Angular 22 no funciona con Node 20. El contenedor usa Node 24.15.0 de forma reproducible.
+Angular 21 requiere Node 22.22.3 o Node 24.15.0. El contenedor usa Node 24.15.0 y NgRx Signals 21 compatible.
 
 ## Builds y tests
 

@@ -18,7 +18,7 @@ Raíz: `docker-compose.yml`, `.env.example`, `.gitignore`, `Makefile`, `README.m
 
 ## 5. Decisiones tomadas
 
-Angular 22 con Node 24 en contenedor; Spring Boot 3.5/Java 21; PostgreSQL 17 explícito; monolito modular; Flyway habilitado sin migraciones de dominio.
+Angular estable compatible con Node 24 en contenedor; Spring Boot 3.5/Java 21; PostgreSQL 17 explícito; monolito modular; Flyway habilitado sin migraciones de dominio. F09 alineó Angular y NgRx en la línea 21.
 
 ## 6. Por qué se hizo así
 
@@ -46,7 +46,7 @@ No hay secretos reales versionados, tag `latest`, Maven/Node en runtime, tablas 
 
 ## 12. Riesgos y casos límite
 
-Los puertos 80/5432/8080 pueden estar ocupados, por eso Compose permite override con `FRONTEND_HOST_PORT`, `BACKEND_HOST_PORT` y `DB_HOST_PORT`. `depends_on` no gestiona caídas posteriores. Node local 20 no ejecuta Angular 22.
+Los puertos 80/5432/8080 pueden estar ocupados, por eso Compose permite override con `FRONTEND_HOST_PORT`, `BACKEND_HOST_PORT` y `DB_HOST_PORT`. `depends_on` no gestiona caídas posteriores. Node local 20 no ejecuta la versión Angular vigente.
 
 ## 13. Qué puede fallar
 
@@ -82,4 +82,4 @@ Cambiar una variable en `.env.example` y Compose de forma coordinada, validar co
 
 ## 21. Resumen
 
-LaunchForge Fase 0 es un monorepo con Angular 22 servido por Nginx, Spring Boot 3 sobre Java 21 y PostgreSQL 17. Compose usa red interna, volumen y healthchecks. Flyway está listo para versionar el schema y Hibernate solo valida. Builds y tests base son reproducibles; no existe aún ninguna feature de negocio.
+LaunchForge Fase 0 es un monorepo con Angular servido por Nginx, Spring Boot 3 sobre Java 21 y PostgreSQL 17. Compose usa red interna, volumen y healthchecks. Flyway está listo para versionar el schema y Hibernate solo valida. Builds y tests base son reproducibles; no existe aún ninguna feature de negocio.
