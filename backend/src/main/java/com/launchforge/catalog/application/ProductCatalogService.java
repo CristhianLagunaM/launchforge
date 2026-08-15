@@ -85,7 +85,7 @@ public class ProductCatalogService {
         applyUpsert(product, request, category, actorUserId, true);
         Product savedProduct = saveProduct(product);
         ensureInventoryExists(savedProduct);
-        return productMapper.toProductResponse(loadProduct(savedProduct.getId()));
+        return productMapper.toProductResponse(savedProduct);
     }
 
     @Transactional
@@ -161,7 +161,6 @@ public class ProductCatalogService {
         inventory.setProduct(product);
         inventory.setAvailableQuantity(0);
         inventory.setReservedQuantity(0);
-        inventory.setVersion(0L);
         product.setInventory(inventory);
         inventoryRepository.save(inventory);
     }

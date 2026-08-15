@@ -15,11 +15,13 @@ import com.launchforge.catalog.infrastructure.InventoryRepository;
 import com.launchforge.persistence.AbstractPostgresIntegrationTest;
 import com.launchforge.persistence.model.inventory.Inventory;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
@@ -34,6 +36,24 @@ class OrderControllerMockMvcTest extends AbstractPostgresIntegrationTest {
 
     @Autowired
     private InventoryRepository inventoryRepository;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @BeforeEach
+    void resetMutableFixtures() {
+        jdbcTemplate.update(
+                "DELETE FROM order_discounts WHERE order_id IN (SELECT id FROM orders WHERE idempotency_key LIKE 'mvc-idem-%')"
+        );
+        jdbcTemplate.update(
+                "DELETE FROM order_items WHERE order_id IN (SELECT id FROM orders WHERE idempotency_key LIKE 'mvc-idem-%')"
+        );
+        jdbcTemplate.update("DELETE FROM orders WHERE idempotency_key LIKE 'mvc-idem-%'");
+        jdbcTemplate.update(
+                "UPDATE inventory SET available_quantity = 8, reserved_quantity = 1 WHERE product_id = ?",
+                UUID.fromString("22222222-2222-2222-2222-222222222221")
+        );
+    }
 
     @Test
     void createOrderRejectsAnonymousRequest() throws Exception {
