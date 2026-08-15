@@ -4,20 +4,17 @@ import java.time.Instant;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
-import jakarta.persistence.PrePersist;
+import jakarta.persistence.EntityListeners;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @MappedSuperclass
+@EntityListeners(AuditingEntityListener.class)
 public abstract class AbstractCreatedAtEntity extends AbstractUuidEntity {
 
+    @CreatedDate
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
-
-    @PrePersist
-    protected void initializeCreatedAt() {
-        if (createdAt == null) {
-            createdAt = Instant.now();
-        }
-    }
 
     public Instant getCreatedAt() {
         return createdAt;

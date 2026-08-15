@@ -155,3 +155,27 @@ ORDER BY p.name;
 - no agregar índices solo porque una tabla aparece en la consulta;
 - revisar estimaciones frente a filas reales antes de crear una migración;
 - nunca editar `V7__create_indexes.sql` ya compartida.
+
+## 22. No aparece un evento de auditoría
+
+- confirmar que la acción terminó con commit;
+- verificar Transactional y LogAction en el caso de uso;
+- buscar directamente por correlation_id;
+- recordar que GET ordinarios y acciones fallidas no generan eventos de éxito.
+
+## 23. Actor o correlation ID ausente
+
+- actor_user_id NULL es válido para registro público, seed y proceso técnico;
+- comprobar un subject UUID válido en el JWT;
+- revisar X-Correlation-Id en la respuesta;
+- valores inválidos o mayores a 100 caracteres se reemplazan.
+
+## 24. IP distinta a la esperada
+
+Se registra la IP de la conexión y no se confía en X-Forwarded-For. Detrás de un proxy puede aparecer la IP del proxy hasta configurar explícitamente proxies confiables.
+
+## 25. Datos sensibles en auditoría
+
+- buscar password, token, jwt o secret en metadata;
+- AuditMetadataFactory debe conservar una lista permitida;
+- no añadir Authorization, JWT ni cuerpos completos a MDC o metadata.

@@ -1,0 +1,31 @@
+<section class="audit-shell">
+  <header><p class="eyebrow">Administración</p><h1>Auditoría</h1><p>Registro inmutable de acciones relevantes.</p></header>
+  <mat-card appearance="outlined">
+    <mat-card-content>
+      <form [formGroup]="filters" class="filters" (ngSubmit)="search(0)">
+        <mat-form-field><mat-label>Acción</mat-label><input matInput formControlName="action" /></mat-form-field>
+        <mat-form-field><mat-label>Recurso</mat-label><input matInput formControlName="resourceType" /></mat-form-field>
+        <mat-form-field><mat-label>Actor (email o UUID)</mat-label><input matInput formControlName="actor" /></mat-form-field>
+        <mat-form-field><mat-label>Desde</mat-label><input matInput type="datetime-local" formControlName="from" /></mat-form-field>
+        <mat-form-field><mat-label>Hasta</mat-label><input matInput type="datetime-local" formControlName="to" /></mat-form-field>
+        <div class="actions"><button mat-flat-button type="submit">Buscar</button><button mat-button type="button" (click)="clear()">Limpiar</button></div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+  @if (store.loading()) { <mat-progress-bar mode="indeterminate" /> }
+  @else if (store.error()) { <mat-card class="state error" appearance="outlined">{{ store.error() }}</mat-card> }
+  @else if (store.empty()) { <mat-card class="state" appearance="outlined">No hay eventos para los filtros seleccionados.</mat-card> }
+  @else {
+    <mat-card appearance="outlined" class="table-card"><div class="table-scroll">
+      <table mat-table [dataSource]="store.entries()">
+        <ng-container matColumnDef="createdAt"><th mat-header-cell *matHeaderCellDef>Fecha</th><td mat-cell *matCellDef="let row">{{ row.createdAt | date:'medium' }}</td></ng-container>
+        <ng-container matColumnDef="action"><th mat-header-cell *matHeaderCellDef>Acción</th><td mat-cell *matCellDef="let row">{{ row.action }}</td></ng-container>
+        <ng-container matColumnDef="resource"><th mat-header-cell *matHeaderCellDef>Recurso</th><td mat-cell *matCellDef="let row">{{ row.resourceType }}<br /><small>{{ row.resourceId || '—' }}</small></td></ng-container>
+        <ng-container matColumnDef="actor"><th mat-header-cell *matHeaderCellDef>Actor</th><td mat-cell *matCellDef="let row">{{ row.actorEmail || 'Proceso técnico/público' }}</td></ng-container>
+        <ng-container matColumnDef="correlationId"><th mat-header-cell *matHeaderCellDef>Correlation ID</th><td mat-cell *matCellDef="let row"><code>{{ row.correlationId || '—' }}</code></td></ng-container>
+        <ng-container matColumnDef="metadata"><th mat-header-cell *matHeaderCellDef>Metadata</th><td mat-cell *matCellDef="let row"><code>{{ row.metadata | json }}</code></td></ng-container>
+        <tr mat-header-row *matHeaderRowDef="columns"></tr><tr mat-row *matRowDef="let row; columns: columns"></tr>
+      </table>
+    </div><mat-paginator [length]="store.totalElements()" [pageIndex]="store.page()" [pageSize]="store.size()" [pageSizeOptions]="[10,20,50,100]" (page)="pageChanged($event)" /></mat-card>
+  }
+</section>

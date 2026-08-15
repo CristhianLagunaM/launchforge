@@ -2,12 +2,12 @@
 
 ## Ciclo real
 
-Docker inicia PostgreSQL y crea una base vacía. `pg_isready` la marca healthy. Spring Boot abre el datasource, Flyway inspecciona `classpath:db/migration`, aplica `V1` a `V9` y luego Hibernate ejecuta `validate`.
+Docker inicia PostgreSQL y crea una base vacía. `pg_isready` la marca healthy. Spring Boot abre el datasource, Flyway inspecciona `classpath:db/migration`, aplica `V1` a `V11` y luego Hibernate ejecuta `validate`.
 
 ## Responsabilidades
 
 - Docker entrega proceso, red, credenciales y volumen; no crea tablas de negocio.
-- Flyway es la única fuente de verdad del esquema mediante `V1–V9` según `migration-plan.md`.
+- Flyway es la única fuente de verdad del esquema mediante `V1–V11` según `migration-plan.md`.
 - Hibernate mapea objetos y, con `ddl-auto=validate`, detecta divergencias; nunca crea ni altera el esquema.
 
 `flyway_schema_history` registra versión, descripción, script, checksum, fecha, usuario instalador y resultado. Una migración compartida no se edita; un cambio se expresa como `V9__...` o la siguiente versión libre.
@@ -46,6 +46,8 @@ No usar H2: no reproduce SQL PostgreSQL, `JSONB`, índices parciales ni comporta
 7. `V7__create_indexes.sql`
 8. `V8__seed_demo_data.sql`
 9. `V9__create_product_search_indexes.sql`
+10. `V10__configure_random_discount_range.sql`
+11. `V11__align_discount_seed_with_accumulative_rules.sql`
 
 ## Conectividad y depuración
 
