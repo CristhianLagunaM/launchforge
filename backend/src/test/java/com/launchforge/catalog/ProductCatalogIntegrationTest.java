@@ -139,7 +139,6 @@ class ProductCatalogIntegrationTest extends AbstractPostgresIntegrationTest {
         Category category = categoryRepository.findById(1L).orElseThrow();
 
         Product product = new Product();
-        product.setId(UUID.fromString("99999999-9999-9999-9999-999999999991"));
         product.setSku("LF-INACTIVE-001");
         product.setName("Inactive Product");
         product.setSlug("inactive-product");
@@ -152,11 +151,9 @@ class ProductCatalogIntegrationTest extends AbstractPostgresIntegrationTest {
         productRepository.save(product);
 
         Inventory inventory = new Inventory();
-        inventory.setId(UUID.fromString("99999999-9999-9999-9999-999999999992"));
         inventory.setProduct(product);
         inventory.setAvailableQuantity(0);
         inventory.setReservedQuantity(0);
-        inventory.setVersion(0L);
         inventory.setUpdatedAt(Instant.parse("2026-08-14T12:00:00Z"));
         inventoryRepository.save(inventory);
     }

@@ -76,6 +76,11 @@ export const routes: Routes = [
             path: 'products',
             loadComponent: () =>
               import('./features/admin/products/admin-products-page.component').then((m) => m.AdminProductsPageComponent)
+          },
+          {
+            path: 'reports',
+            loadComponent: () =>
+              import('./features/admin/reports/admin-reports-page.component').then((m) => m.AdminReportsPageComponent)
           }
         ]
       }

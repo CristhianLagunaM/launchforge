@@ -8,9 +8,8 @@ import com.launchforge.orders.api.dto.CreateOrderRequest;
 import com.launchforge.orders.api.dto.OrderItemRequest;
 import com.launchforge.orders.api.dto.OrderResponse;
 import com.launchforge.orders.application.CreateOrderUseCase;
-import com.launchforge.orders.application.OrderMapper;
+import com.launchforge.orders.application.IdempotentOrderQueryService;
 import com.launchforge.orders.application.TransactionalOrderCreator;
-import com.launchforge.orders.infrastructure.OrderRepository;
 import com.launchforge.persistence.model.catalog.Product;
 import com.launchforge.persistence.model.identity.User;
 import com.launchforge.persistence.model.orders.CustomerOrder;
@@ -30,7 +29,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class CreateOrderUseCaseTest {
 
     @Mock
-    private OrderRepository orderRepository;
+    private IdempotentOrderQueryService idempotentOrderQueryService;
 
     @Mock
     private TransactionalOrderCreator transactionalOrderCreator;
@@ -39,14 +38,14 @@ class CreateOrderUseCaseTest {
     void returnsExistingOrderOnIdempotencyHit() {
         UUID customerId = UUID.fromString("11111111-1111-1111-1111-111111111112");
         CreateOrderUseCase createOrderUseCase = new CreateOrderUseCase(
-                orderRepository,
-                new OrderMapper(),
+                idempotentOrderQueryService,
                 transactionalOrderCreator
         );
 
         CustomerOrder existingOrder = order(customerId);
-        when(orderRepository.findByCustomer_IdAndIdempotencyKey(customerId, "idem-123"))
-                .thenReturn(Optional.of(existingOrder));
+        OrderResponse existingResponse = new com.launchforge.orders.application.OrderMapper().toResponse(existingOrder);
+        when(idempotentOrderQueryService.findExisting(customerId, "idem-123"))
+                .thenReturn(Optional.of(existingResponse));
 
         OrderResponse response = createOrderUseCase.createOrder(
                 customerId,
