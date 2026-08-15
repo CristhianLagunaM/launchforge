@@ -12,6 +12,8 @@ import java.util.UUID;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.launchforge.audit.application.AuditAction;
+import com.launchforge.audit.application.LogAction;
 
 @Service
 public class CancelOrderUseCase {
@@ -31,6 +33,7 @@ public class CancelOrderUseCase {
     }
 
     @Transactional
+    @LogAction(action = AuditAction.ORDER_CANCELLED, resource = "ORDER", resourceId = "#result.id()")
     public OrderResponse cancelOrder(UUID orderId, UUID requesterId, boolean adminRequest) {
         CustomerOrder order = loadOrder(orderId);
         validateOwnership(order, requesterId, adminRequest);

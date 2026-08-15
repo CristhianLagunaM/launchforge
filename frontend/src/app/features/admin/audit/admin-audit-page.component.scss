@@ -1,0 +1,10 @@
+.audit-shell { display: grid; gap: 1.25rem; }
+.audit-shell h1 { margin: 0; }
+.eyebrow { color: var(--mat-sys-primary); font-weight: 700; margin-bottom: .25rem; text-transform: uppercase; }
+.filters { align-items: start; display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); padding-top: 1rem; }
+.actions { display: flex; gap: .5rem; padding-top: .5rem; }
+.table-scroll { overflow-x: auto; }
+table { min-width: 70rem; width: 100%; }
+td code { font-size: .75rem; overflow-wrap: anywhere; white-space: normal; }
+.state { padding: 1.5rem; }
+.error { border-color: var(--mat-sys-error); }

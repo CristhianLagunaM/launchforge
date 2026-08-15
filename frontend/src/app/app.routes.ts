@@ -81,6 +81,11 @@ export const routes: Routes = [
             path: 'reports',
             loadComponent: () =>
               import('./features/admin/reports/admin-reports-page.component').then((m) => m.AdminReportsPageComponent)
+          },
+          {
+            path: 'audit',
+            loadComponent: () =>
+              import('./features/admin/audit/admin-audit-page.component').then((m) => m.AdminAuditPageComponent)
           }
         ]
       }

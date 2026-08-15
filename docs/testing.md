@@ -154,3 +154,13 @@ Así, el resultado no depende del orden de ejecución de JUnit. Los reintentos i
 - estados loading/error y mapping del store frontend.
 
 Los tests de repository reemplazan el seed dentro de una transacción y crean datos controlados; no dependen de los rankings demo.
+
+## Qué valida Fase 8
+
+- PRODUCT_UPDATED, INVENTORY_ADJUSTED y ORDER_CANCELLED generan eventos;
+- actor y correlation ID corresponden al request;
+- metadata contiene solo detalles permitidos;
+- rollback no conserva una auditoría de éxito;
+- consulta admin con filtros y paginación;
+- ADMIN 200, CUSTOMER 403 y anónimo 401;
+- carga paginada y error de AuditStore.
