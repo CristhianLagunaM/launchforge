@@ -38,7 +38,7 @@ JSONB contiene únicamente detalles pequeños: SKU/estado, cantidades anterior/n
 
 ## Consulta administrativa
 
-GET /api/v1/audit requiere ADMIN, ordena por createdAt DESC y acepta action, resourceType, actor, from, to, page y size. Actor admite UUID o email. /app/admin/audit ofrece filtros, paginación y estados loading/error/empty, sin mutaciones.
+GET /api/v1/audit requiere ADMIN, ordena por createdAt DESC y acepta action, resourceType, actor, from, to, page y size. Actor admite UUID o email. `/admin/audit` ofrece filtros, paginación y estados loading/error/empty, sin mutaciones.
 
 ## Persistencia y pruebas
 

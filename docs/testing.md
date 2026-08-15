@@ -126,7 +126,7 @@ Así, el resultado no depende del orden de ejecución de JUnit. Los reintentos i
 1. autenticar `frequent@launchforge.dev`;
 2. crear una orden dentro de un rango activo;
 3. verificar el detalle y el arreglo `discounts`;
-4. editar una regla desde `/app/admin/discounts`;
+4. editar una regla desde `/admin/discounts`;
 5. crear otra orden y comparar el nuevo cálculo;
 6. ejecutar la consulta SQL sobre `order_discounts`;
 7. cambiar la configuración y confirmar que una orden histórica no se alteró.
@@ -164,3 +164,6 @@ Los tests de repository reemplazan el seed dentro de una transacción y crean da
 - consulta admin con filtros y paginación;
 - ADMIN 200, CUSTOMER 403 y anónimo 401;
 - carga paginada y error de AuditStore.
+- La suite frontend cubre autenticación, catálogo, carrito, órdenes, inventario, reportes, auditoría, guards, interceptor y formularios, incluyendo estados loading/error/empty/success.
+- El carrito verifica reutilización de `Idempotency-Key` para retry e invalidación cuando cambia la intención.
+- Antes de lint, tests y build se ejecuta `npm ci` sin ignorar peer dependencies.

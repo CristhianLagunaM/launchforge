@@ -116,6 +116,8 @@ Los rankings incluyen únicamente órdenes `CONFIRMED` y `COMPLETED`; excluyen `
 
 El backend devuelve DTOs preparados; el frontend no calcula sumas ni rankings.
 
+El frontend consume rutas relativas `/api/v1`; Nginx las reenvía al backend en Compose. El cliente interpreta Problem Details y diferencia especialmente 401, 403, validación y conflictos 409.
+
 ## Audit
 
 Solo ADMIN:

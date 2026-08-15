@@ -1,22 +1,27 @@
 import { CurrencyPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
 import { CartStore } from '../../core/orders/cart.store';
 import { OrdersStore } from '../../core/orders/orders.store';
 
 @Component({
   selector: 'app-checkout-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CurrencyPipe, RouterLink, MatButtonModule, MatCardModule],
+  imports: [CurrencyPipe, RouterLink, MatButtonModule, MatCardModule, MatIconModule],
   templateUrl: './checkout-page.component.html',
   styleUrl: './checkout-page.component.scss'
 })
-export class CheckoutPageComponent {
+export class CheckoutPageComponent implements OnInit {
   private readonly router = inject(Router);
   readonly cartStore = inject(CartStore);
   readonly ordersStore = inject(OrdersStore);
+
+  ngOnInit(): void {
+    this.ordersStore.clearCreationFeedback();
+  }
 
   async submitOrder(): Promise<void> {
     if (this.cartStore.isEmpty() || this.ordersStore.submitting()) {

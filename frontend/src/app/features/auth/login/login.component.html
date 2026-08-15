@@ -1,20 +1,21 @@
 <section class="auth-page">
   <aside class="auth-panel">
-    <h1>Acceso seguro LaunchForge</h1>
+    <p class="auth-kicker">Launch your next idea</p>
+    <h1>Tu próxima entrega comienza aquí.</h1>
     <p>
-      Ingresa con JWT stateless, roles reales de backend y sesiones protegidas con BCrypt.
+      Accede a tu espacio para descubrir soluciones, preparar tu compra y seguir cada proyecto.
     </p>
     <div class="auth-bullets">
-      <div class="auth-bullet"><mat-icon>shield</mat-icon><span>Security backend real</span></div>
-      <div class="auth-bullet"><mat-icon>bolt</mat-icon><span>Flujo de autenticación rápido</span></div>
-      <div class="auth-bullet"><mat-icon>verified_user</mat-icon><span>Roles ADMIN y CUSTOMER</span></div>
+      <div class="auth-bullet"><mat-icon>dashboard</mat-icon><span>Todo tu espacio en un solo lugar</span></div>
+      <div class="auth-bullet"><mat-icon>bolt</mat-icon><span>Una experiencia rápida y directa</span></div>
+      <div class="auth-bullet"><mat-icon>history</mat-icon><span>Consulta el avance de tus órdenes</span></div>
     </div>
   </aside>
 
   <mat-card class="auth-form-card" appearance="outlined">
     <mat-card-header>
-      <mat-card-title>Login</mat-card-title>
-      <mat-card-subtitle>Usa una cuenta existente para entrar.</mat-card-subtitle>
+      <mat-card-title>Bienvenido</mat-card-title>
+      <mat-card-subtitle>Ingresa a tu cuenta LaunchForge.</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
       @if (authStore.error()) {
@@ -28,14 +29,14 @@
         </mat-form-field>
 
         <mat-form-field class="full-width">
-          <mat-label>Password</mat-label>
+          <mat-label>Contraseña</mat-label>
           <input
             matInput
             [type]="hidePassword() ? 'password' : 'text'"
             formControlName="password"
             autocomplete="current-password"
           />
-          <button mat-icon-button matSuffix type="button" (click)="hidePassword.set(!hidePassword())">
+          <button mat-icon-button matSuffix type="button" aria-label="Mostrar u ocultar contraseña" (click)="hidePassword.set(!hidePassword())">
             <mat-icon>{{ hidePassword() ? 'visibility' : 'visibility_off' }}</mat-icon>
           </button>
         </mat-form-field>

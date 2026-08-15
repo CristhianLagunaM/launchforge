@@ -1,1 +1,15 @@
-:host { display: block; min-height: 100%; }
+:host { display: flex; min-height: 100%; flex-direction: column; }
+.main-header { gap: 1rem; flex-wrap: wrap; height: auto; min-height: 68px; position: sticky; top: 0; z-index: 50; background: rgba(6, 9, 16, .82); border-bottom: 1px solid rgba(114, 231, 255, .16); backdrop-filter: blur(18px); }
+.brand { display: flex; align-items: center; gap: .55rem; color: #f4fbff; letter-spacing: .08em; text-transform: uppercase; }
+.brand mat-icon { color: #72e7ff; filter: drop-shadow(0 0 10px rgba(114, 231, 255, .7)); }
+nav { display: flex; flex: 1; flex-wrap: wrap; }
+.session { display: flex; align-items: center; gap: .75rem; font-size: .85rem; }
+.user-identity { align-items: center; display: flex; gap: .65rem; }
+.user-avatar { align-items: center; background: linear-gradient(135deg, #72e7ff, #7654ff); border: 1px solid rgba(255,255,255,.4); border-radius: 50%; box-shadow: 0 0 18px rgba(114,231,255,.24); color: #06101a; display: inline-flex; font-size: .72rem; font-weight: 800; height: 2.25rem; justify-content: center; letter-spacing: .04em; width: 2.25rem; }
+.user-copy { display: grid; line-height: 1.15; }
+.user-copy strong { font-size: .82rem; font-weight: 600; }
+.user-copy small { color: #8190a5; font-size: .68rem; margin-top: .2rem; }
+main { flex: 1; }
+footer { padding: 1.25rem; text-align: center; color: #728097; border-top: 1px solid rgba(255,255,255,.06); letter-spacing: .08em; font-size: .75rem; text-transform: uppercase; }
+.active-link { background: rgba(114, 231, 255, .1); color: #8beeff; }
+@media (max-width: 720px) { .main-header { align-items: flex-start; padding-block: .75rem; } nav { order: 3; flex-basis: 100%; overflow-x: auto; } .user-copy { display: none; } }

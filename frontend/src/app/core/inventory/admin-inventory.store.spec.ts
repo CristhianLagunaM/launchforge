@@ -53,4 +53,29 @@ describe('AdminInventoryStore', () => {
     expect(store.selectedInventory()?.sku).toBe('LF-LANDING-001');
     httpTestingController.verify();
   });
+
+  it('reloads inventory after an optimistic locking conflict', async () => {
+    const store = TestBed.inject(AdminInventoryStore);
+    const http = TestBed.inject(HttpTestingController);
+    const initialLoad = store.loadInventory();
+    http.expectOne((request) => request.url === '/api/v1/inventory').flush({
+      content: [{ productId: 'product-1', sku: 'LF-1', productName: 'Landing', productActive: true,
+        availableQuantity: 2, reservedQuantity: 0, version: 1, updatedAt: '2026-08-01T00:00:00Z' }],
+      number: 0, size: 10, totalElements: 1, totalPages: 1, first: true, last: true, empty: false
+    });
+    await initialLoad;
+
+    const adjustment = store.adjustInventory({ operation: 'INCREASE', quantity: 1, version: 1 });
+    http.expectOne('/api/v1/inventory/product-1').flush({ title: 'Conflict', status: 409 }, { status: 409, statusText: 'Conflict' });
+    await Promise.resolve();
+    http.expectOne((request) => request.url === '/api/v1/inventory').flush({
+      content: [{ productId: 'product-1', sku: 'LF-1', productName: 'Landing', productActive: true,
+        availableQuantity: 3, reservedQuantity: 0, version: 2, updatedAt: '2026-08-01T00:01:00Z' }],
+      number: 0, size: 10, totalElements: 1, totalPages: 1, first: true, last: true, empty: false
+    });
+    await adjustment;
+
+    expect(store.selectedInventory()?.version).toBe(2);
+    http.verify();
+  });
 });

@@ -1,1 +1,27 @@
-<router-outlet />
+<mat-toolbar class="main-header">
+  <a class="brand" routerLink="/catalog" aria-label="Ir al catálogo de LaunchForge">
+    <mat-icon>rocket_launch</mat-icon><strong>LaunchForge</strong>
+  </a>
+  <nav aria-label="Navegación principal">
+    <a mat-button routerLink="/catalog" routerLinkActive="active-link">Catálogo</a>
+    @if (authStore.isAuthenticated()) {
+      <a mat-button routerLink="/cart" routerLinkActive="active-link">Carrito ({{ cartStore.itemCount() }})</a>
+      <a mat-button routerLink="/orders" routerLinkActive="active-link">Órdenes</a>
+      @if (authStore.isAdmin()) { <a mat-button routerLink="/admin/products" routerLinkActive="active-link">Administración</a> }
+    }
+  </nav>
+  <div class="session">
+    @if (authStore.isAuthenticated()) {
+      <div class="user-identity" [attr.aria-label]="'Sesión de ' + authStore.displayName()">
+        <span class="user-avatar" aria-hidden="true">{{ userInitials() }}</span>
+        <span class="user-copy"><strong>{{ authStore.displayName() }}</strong><small>{{ authStore.isAdmin() ? 'Administrador' : 'Cliente' }}</small></span>
+      </div>
+      <button mat-stroked-button type="button" (click)="authStore.logout()">Salir</button>
+    } @else {
+      <a mat-button routerLink="/login">Ingresar</a>
+      <a mat-flat-button routerLink="/register">Crear cuenta</a>
+    }
+  </div>
+</mat-toolbar>
+<main><router-outlet /></main>
+<footer>LaunchForge · Soluciones digitales</footer>

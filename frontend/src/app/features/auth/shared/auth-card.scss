@@ -2,8 +2,22 @@
   display: block;
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(23, 96, 255, 0.16), transparent 28rem),
-    linear-gradient(135deg, #091124, #10203f 45%, #15345f);
+    linear-gradient(90deg, rgba(3, 7, 16, .96), rgba(6, 11, 25, .83) 52%, rgba(16, 10, 38, .9)),
+    url('/images/launchforge-hero-v1.png') center / cover fixed;
+  overflow: hidden;
+  position: relative;
+}
+
+:host::before {
+  animation: auth-orbit 14s linear infinite;
+  background: conic-gradient(from 90deg, transparent, rgba(114, 231, 255, .16), transparent 35%);
+  border-radius: 50%;
+  content: '';
+  height: 42rem;
+  left: -18rem;
+  position: absolute;
+  top: -20rem;
+  width: 42rem;
 }
 
 .auth-page {
@@ -15,6 +29,8 @@
   max-width: 72rem;
   min-height: 100vh;
   padding: 2rem;
+  position: relative;
+  z-index: 1;
 }
 
 .auth-panel,
@@ -25,10 +41,14 @@
 .auth-panel {
   color: #ecf3ff;
   padding: 2rem;
+  animation: auth-enter-left .75s cubic-bezier(.2,.8,.2,1) both;
 }
 
+.auth-kicker { color: #72e7ff !important; font-size: .75rem !important; font-weight: 700; letter-spacing: .16em; margin-bottom: .85rem !important; text-transform: uppercase; }
+
 .auth-panel h1 {
-  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 300;
+  letter-spacing: -0.04em;
   font-size: clamp(2.5rem, 6vw, 4rem);
   line-height: 0.95;
   margin: 0 0 1rem;
@@ -52,12 +72,24 @@
   align-items: center;
   display: inline-flex;
   gap: 0.6rem;
+  transition: color .2s ease, transform .2s ease;
 }
 
+.auth-bullet:hover { color: #8beeff; transform: translateX(.35rem); }
+.auth-bullet mat-icon { color: #72e7ff; }
+
 .auth-form-card {
-  background: rgba(248, 250, 255, 0.96);
+  background: rgba(12, 18, 30, 0.92);
+  border-color: rgba(114, 231, 255, .18);
+  backdrop-filter: blur(18px);
   padding: 1rem;
+  animation: auth-enter-right .75s .08s cubic-bezier(.2,.8,.2,1) both;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, .5), 0 0 55px rgba(73, 189, 255, .08);
+  overflow: hidden;
+  position: relative;
 }
+
+.auth-form-card::before { background: linear-gradient(90deg, transparent, #72e7ff, #8a5cff, transparent); content: ''; height: 2px; left: 0; position: absolute; right: 0; top: 0; }
 
 .full-width {
   width: 100%;
@@ -70,9 +102,9 @@
 }
 
 .error-banner {
-  background: #fde8ea;
+  background: rgba(178, 49, 70, .18);
   border-radius: 0.75rem;
-  color: #8b1320;
+  color: #ff9cab;
   margin-bottom: 1rem;
   padding: 0.85rem 1rem;
 }
@@ -80,6 +112,15 @@
 .link-row {
   margin-top: 1rem;
   text-align: center;
+}
+
+@keyframes auth-enter-left { from { opacity: 0; transform: translateX(-2rem); } to { opacity: 1; transform: none; } }
+@keyframes auth-enter-right { from { opacity: 0; transform: translateX(2rem) scale(.98); } to { opacity: 1; transform: none; } }
+@keyframes auth-orbit { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  :host::before, .auth-panel, .auth-form-card { animation: none; }
+  .auth-bullet { transition: none; }
 }
 
 @media (max-width: 768px) {

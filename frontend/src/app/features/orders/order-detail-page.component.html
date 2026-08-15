@@ -45,7 +45,7 @@
             <div class="item-row">
               <div>
                 <strong>{{ item.productName }}</strong>
-                <p>{{ item.sku }} · {{ item.quantity }} unidad(es)</p>
+                <p>{{ item.sku }} · {{ item.quantity }} unidad(es) · {{ item.unitPrice | currency:'USD':'symbol':'1.2-2' }} c/u</p>
               </div>
               <strong>{{ item.subtotal | currency:'USD':'symbol':'1.2-2' }}</strong>
             </div>
@@ -54,7 +54,9 @@
       </mat-card-content>
       <mat-card-actions>
         @if (order.status === 'CONFIRMED') {
-          <button mat-button type="button" (click)="ordersStore.cancelOrder(order.id)">Cancelar orden</button>
+          <button mat-button type="button" [disabled]="ordersStore.submitting()" (click)="ordersStore.cancelOrder(order.id)">
+            {{ ordersStore.submitting() ? 'Cancelando...' : 'Cancelar orden' }}
+          </button>
         }
       </mat-card-actions>
     </mat-card>

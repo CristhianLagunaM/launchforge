@@ -5,6 +5,7 @@ import { roleGuard } from './core/guards/role.guard';
 export const routes: Routes = [
   {
     path: 'cart',
+    canActivate: [authGuard],
     loadComponent: () => import('./features/orders/cart-page.component').then((m) => m.CartPageComponent)
   },
   {
@@ -23,13 +24,14 @@ export const routes: Routes = [
     loadComponent: () => import('./features/orders/order-detail-page.component').then((m) => m.OrderDetailPageComponent)
   },
   {
-    path: 'products',
+    path: 'catalog',
     loadComponent: () => import('./features/catalog/catalog-page.component').then((m) => m.CatalogPageComponent)
   },
   {
     path: 'products/:id',
     loadComponent: () => import('./features/catalog/product-detail.component').then((m) => m.ProductDetailComponent)
   },
+  { path: 'products', pathMatch: 'full', redirectTo: 'catalog' },
   {
     path: 'login',
     loadComponent: () => import('./features/auth/login/login.component').then((m) => m.LoginComponent)
@@ -52,10 +54,13 @@ export const routes: Routes = [
         path: 'forbidden',
         loadComponent: () => import('./features/app-shell/forbidden.component').then((m) => m.ForbiddenComponent)
       },
-      {
+    ]
+  },
+  {
         path: 'admin',
-        canActivate: [roleGuard],
+        canActivate: [authGuard, roleGuard],
         data: { roles: ['ADMIN'] },
+        loadComponent: () => import('./features/app-shell/app-shell.component').then((m) => m.AppShellComponent),
         children: [
           {
             path: '',
@@ -88,16 +93,14 @@ export const routes: Routes = [
               import('./features/admin/audit/admin-audit-page.component').then((m) => m.AdminAuditPageComponent)
           }
         ]
-      }
-    ]
   },
   {
     path: '',
     pathMatch: 'full',
-    redirectTo: 'products'
+    redirectTo: 'catalog'
   },
   {
     path: '**',
-    redirectTo: 'products'
+    redirectTo: 'catalog'
   }
 ];
