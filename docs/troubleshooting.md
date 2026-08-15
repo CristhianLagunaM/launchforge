@@ -139,3 +139,19 @@ ORDER BY p.name;
 - confirmar que el cliente reusa exactamente la misma `Idempotency-Key`
 - revisar la restricción única de `orders(customer_id, idempotency_key)`
 - inspeccionar la tabla `flyway_schema_history` para confirmar que la migración base está aplicada
+
+## 20. Reportes vacíos o con ranking inesperado
+
+- confirmar que existan órdenes `CONFIRMED` o `COMPLETED`;
+- verificar que `CANCELLED` y `CREATED` no entren en la consulta;
+- comparar la API con el SQL documentado en `F07-reports.md`;
+- revisar que el desempate sea nombre/SKU para productos y email para clientes;
+- confirmar que el JWT tenga autoridad `ROLE_ADMIN`.
+
+## 21. Reportes lentos
+
+- ejecutar `EXPLAIN (ANALYZE, BUFFERS)` con cardinalidad representativa;
+- comprobar uso de `idx_orders_status` y PK en joins;
+- no agregar índices solo porque una tabla aparece en la consulta;
+- revisar estimaciones frente a filas reales antes de crear una migración;
+- nunca editar `V7__create_indexes.sql` ya compartida.

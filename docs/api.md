@@ -104,6 +104,18 @@ Notas de autorización:
 - `ADMIN` puede consultar órdenes;
 - clientes autenticados no pueden consultar órdenes de otros clientes.
 
+## Reports
+
+Solo `ADMIN`:
+
+- `GET /api/v1/reports/active-products`
+- `GET /api/v1/reports/top-products`
+- `GET /api/v1/reports/top-customers`
+
+Los rankings incluyen únicamente órdenes `CONFIRMED` y `COMPLETED`; excluyen `CANCELLED` y `CREATED`. Top productos devuelve máximo cinco filas ordenadas por `quantitySold DESC`, con desempate `name/sku ASC`. Top clientes usa `orderCount DESC` y email ascendente como desempate.
+
+El backend devuelve DTOs preparados; el frontend no calcula sumas ni rankings.
+
 ## Query params soportados en catálogo
 
 - `name`
