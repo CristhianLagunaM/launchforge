@@ -93,3 +93,6 @@ También existen `make up`, `down`, `reset`, `logs`, `logs-backend`, `logs-db`, 
   - `frequent@launchforge.dev` / `launchforge-demo`
 
 Consulta [Architecture](docs/architecture.md), [API](docs/api.md), [Security](docs/security.md), [Testing](docs/testing.md), [Troubleshooting](docs/troubleshooting.md), [F08 Audit](docs/features/F08-audit.md) y [ADR Auditing](docs/decisions/ADR-auditing.md).
+# Quality and CI
+
+La validación técnica de Fase 10 está descrita en [docs/testing.md](docs/testing.md), [docs/quality.md](docs/quality.md) y [docs/ci.md](docs/ci.md). Localmente: `cd backend && mvn clean verify`; `cd frontend && npm ci && npm run lint && npm run test -- --watch=false && npm run build`. Los workflows de GitHub Actions ejecutan estos gates en `main`; no existe despliegue productivo ficticio.

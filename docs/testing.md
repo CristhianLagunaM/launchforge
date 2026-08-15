@@ -1,5 +1,9 @@
 # Testing
 
+## Evidencia de calidad
+
+La suite se clasifica en unitarias, integración con PostgreSQL/Testcontainers y contratos REST con MockMvc. El porcentaje de cobertura válido es exclusivamente el generado por JaCoCo después de `mvn clean verify`; no se afirma 80% sin revisar ese reporte.
+
 ## Backend
 
 Se cubren tres niveles:
