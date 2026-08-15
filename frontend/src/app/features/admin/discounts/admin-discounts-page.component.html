@@ -14,7 +14,7 @@
     <mat-card appearance="outlined">
       <mat-card-header>
         <mat-card-title>Reglas de descuento</mat-card-title>
-        <mat-card-subtitle>El orden de aplicación lo controla backend, no la UI.</mat-card-subtitle>
+        <mat-card-subtitle>Las reglas se aplican automáticamente en el orden definido por el sistema.</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
         @for (configuration of adminDiscountStore.configurations(); track configuration.code) {
@@ -24,7 +24,7 @@
             class="rule-button"
             [class.rule-button-active]="adminDiscountStore.selectedConfiguration()?.code === configuration.code"
             (click)="selectConfiguration(configuration)">
-            {{ configuration.code }}
+            <span class="rule-button__content"><strong>{{ ruleName(configuration.code) }}</strong><small>{{ ruleDescription(configuration.code) }}</small></span>
           </button>
         }
       </mat-card-content>
@@ -45,33 +45,48 @@
             <mat-checkbox formControlName="enabled">Habilitado</mat-checkbox>
 
             <mat-form-field appearance="outline">
-              <mat-label>Percentage</mat-label>
+              <mat-label>Porcentaje de descuento</mat-label>
               <input matInput type="number" min="0" max="100" step="0.01" formControlName="percentage" />
             </mat-form-field>
 
-            <mat-form-field appearance="outline">
-              <mat-label>Start at (UTC)</mat-label>
-              <input matInput type="datetime-local" formControlName="startAt" />
-            </mat-form-field>
+            <div class="date-time-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Fecha de inicio</mat-label>
+                <input matInput [matDatepicker]="startPicker" formControlName="startDate" />
+                <mat-datepicker-toggle matIconSuffix [for]="startPicker" />
+                <mat-datepicker #startPicker />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Hora de inicio</mat-label>
+                <input matInput type="time" formControlName="startTime" />
+              </mat-form-field>
+            </div>
+
+            <div class="date-time-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Fecha de finalización</mat-label>
+                <input matInput [matDatepicker]="endPicker" formControlName="endDate" />
+                <mat-datepicker-toggle matIconSuffix [for]="endPicker" />
+                <mat-datepicker #endPicker />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Hora de finalización</mat-label>
+                <input matInput type="time" formControlName="endTime" />
+              </mat-form-field>
+            </div>
 
             <mat-form-field appearance="outline">
-              <mat-label>End at (UTC)</mat-label>
-              <input matInput type="datetime-local" formControlName="endAt" />
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Minimum orders</mat-label>
+              <mat-label>Cantidad mínima de órdenes</mat-label>
               <input matInput type="number" min="1" formControlName="minimumOrders" />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
-              <mat-label>Lookback months</mat-label>
+              <mat-label>Meses de historial considerados</mat-label>
               <input matInput type="number" min="1" formControlName="lookbackMonths" />
             </mat-form-field>
 
             <div class="rule-meta">
-              <p><strong>Type:</strong> {{ configuration.type }}</p>
-              <p><strong>Updated by:</strong> {{ configuration.updatedBy ?? 'seed/system' }}</p>
+              <p><strong>Tipo de regla:</strong> {{ ruleName(configuration.code) }}</p>
             </div>
           </form>
         } @else {

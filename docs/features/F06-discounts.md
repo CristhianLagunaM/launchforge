@@ -172,7 +172,7 @@ El frontend solo renderiza valores calculados por backend.
 3. consultar el detalle de la orden;
 4. verificar `discountTotal`, `total` y arreglo `discounts`;
 5. autenticar `admin@launchforge.dev`;
-6. abrir `/app/admin/discounts` y editar una regla;
+6. abrir `/admin/discounts` y editar una regla;
 7. crear otra orden y confirmar el nuevo comportamiento.
 
 SQL recomendado:

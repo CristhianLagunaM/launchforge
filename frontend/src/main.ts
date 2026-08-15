@@ -1,6 +1,9 @@
+import { registerLocaleData } from '@angular/common';
+import localeEsCo from '@angular/common/locales/es-CO';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { appConfig } from './app/app.config';
 import { AppComponent } from './app/app.component';
 
-bootstrapApplication(AppComponent, appConfig).catch((error: unknown) => console.error(error));
+registerLocaleData(localeEsCo);
 
+bootstrapApplication(AppComponent, appConfig).catch((error: unknown) => console.error(error));

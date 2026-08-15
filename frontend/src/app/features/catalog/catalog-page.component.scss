@@ -1,15 +1,15 @@
 :host {
   display: block;
-  min-height: 100vh;
+  min-height: 100%;
   background:
-    radial-gradient(circle at top left, rgba(18, 87, 214, 0.16), transparent 22rem),
-    linear-gradient(180deg, #f7f8fc, #eef3fb 40%, #f8fafc);
+    radial-gradient(circle at 12% 5%, rgba(0, 222, 255, 0.14), transparent 28rem),
+    radial-gradient(circle at 88% 18%, rgba(124, 77, 255, 0.13), transparent 30rem);
 }
 
 .catalog-shell {
   margin: 0 auto;
-  max-width: 84rem;
-  padding: 2rem 1rem 3rem;
+  max-width: 100%;
+  padding: 0 1rem 3rem;
 }
 
 .catalog-hero {
@@ -17,11 +17,27 @@
   display: flex;
   gap: 1.5rem;
   justify-content: space-between;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0;
+  min-height: clamp(31rem, 68vh, 44rem);
+  padding: clamp(2rem, 7vw, 6rem);
+  position: relative;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(114, 231, 255, .14);
+  border-radius: 0 0 2rem 2rem;
+  background:
+    linear-gradient(90deg, rgba(3, 6, 13, .98) 0%, rgba(3, 6, 13, .82) 36%, rgba(3, 6, 13, .1) 72%),
+    linear-gradient(0deg, rgba(6, 9, 16, .85), transparent 45%),
+    url('/images/launchforge-hero-v1.png') 65% center / cover no-repeat;
+  box-shadow: 0 28px 70px rgba(0, 0, 0, .45);
 }
 
+.catalog-hero::after { content: ''; position: absolute; inset: auto 0 0; height: 4px; background: linear-gradient(90deg, #72e7ff, #7b4dff 55%, transparent); }
+.catalog-hero > * { position: relative; z-index: 1; }
+.catalog-hero > div { max-width: 43rem; }
+
 .eyebrow {
-  color: #1b56cf;
+  color: #72e7ff;
   font-size: 0.85rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -30,24 +46,35 @@
 }
 
 .catalog-hero h1 {
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: clamp(2.3rem, 5vw, 4rem);
-  line-height: 0.95;
+  font-size: clamp(2.4rem, 6vw, 5rem);
+  font-weight: 300;
+  letter-spacing: -0.045em;
+  line-height: 0.98;
   margin: 0;
   max-width: 44rem;
 }
 
 .hero-copy {
-  color: #42506d;
+  color: #9eabc0;
   line-height: 1.6;
   margin-top: 0.85rem;
   max-width: 40rem;
 }
 
+.hero-signals { display: flex; flex-wrap: wrap; gap: .65rem; margin-top: 1.5rem; }
+.hero-signals span { display: inline-flex; align-items: center; gap: .35rem; padding: .45rem .7rem; border: 1px solid rgba(114, 231, 255, .18); background: rgba(7, 13, 24, .65); color: #c2cedd; font-size: .78rem; backdrop-filter: blur(10px); }
+.hero-signals mat-icon { color: #72e7ff; font-size: 1rem; width: 1rem; height: 1rem; }
+
 .filters-card,
 .state-card {
   margin-bottom: 1.5rem;
+  background: rgba(13, 19, 31, .78);
+  border-color: rgba(114, 231, 255, .13);
+  backdrop-filter: blur(14px);
 }
+
+.filters-card { margin: -2.2rem auto 1.5rem; max-width: 84rem; position: relative; z-index: 3; }
+.state-card, .product-grid, mat-paginator { max-width: 84rem; margin-left: auto; margin-right: auto; }
 
 .filters-grid {
   align-items: start;
@@ -67,58 +94,95 @@
 .product-grid {
   display: grid;
   gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
-  margin: 1.5rem 0;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20.5rem), 1fr));
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
 }
 
 .product-card {
   display: grid;
   gap: 0.9rem;
+  grid-template-rows: 11rem auto auto 1fr auto;
+  overflow: hidden;
+  padding: 0 0 1rem;
+  background: linear-gradient(145deg, rgba(18, 26, 42, .96), rgba(8, 12, 21, .96));
+  border-color: rgba(255, 255, 255, .08);
+  transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
 }
+
+.product-card:hover { transform: translateY(-5px); border-color: rgba(114, 231, 255, .38); box-shadow: 0 20px 50px rgba(0, 0, 0, .35), 0 0 28px rgba(0, 222, 255, .07); }
+.product-card > :not(.product-card__visual) { margin-inline: 1rem; }
+
+.product-card__visual { position: relative; min-height: 11rem; overflow: hidden; display: grid; place-items: center; background: radial-gradient(circle at 70% 25%, rgba(114,231,255,.28), transparent 30%), linear-gradient(135deg, #111b31, #16112d 58%, #071725); border-bottom: 1px solid rgba(114,231,255,.16); }
+.product-card__visual::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 27px, rgba(255,255,255,.035) 28px), repeating-linear-gradient(0deg, transparent 0 27px, rgba(255,255,255,.035) 28px); }
+.product-card__visual mat-icon { width: auto; height: auto; font-size: 4.5rem; color: #8beeff; filter: drop-shadow(0 0 20px rgba(114,231,255,.45)); z-index: 1; }
+.visual-code { position: absolute; top: .8rem; left: .9rem; color: rgba(237,247,255,.58); font: 600 .65rem/1 monospace; letter-spacing: .08em; }
+.visual-orbit { position: absolute; width: 8rem; height: 8rem; border: 1px solid rgba(178,132,255,.4); border-radius: 50%; transform: rotate(-25deg) scaleY(.35); }
 
 .product-card h2 {
   font-size: 1.25rem;
+  line-height: 1.25;
   margin: 0;
+  min-height: 2.5em;
+  overflow-wrap: anywhere;
 }
 
 .product-card p {
-  color: #4d5975;
+  color: #9eabc0;
   line-height: 1.55;
   margin: 0;
+  min-height: 3.1em;
 }
 
-.product-card__meta,
-.product-card__footer {
+.product-card__meta {
   align-items: center;
   display: flex;
   gap: 0.75rem;
   justify-content: space-between;
 }
 
+.product-card__footer {
+  align-items: end;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(7rem, 1fr) auto;
+}
+
 .product-card__actions {
   align-items: center;
   display: flex;
   gap: 0.5rem;
+  justify-content: flex-end;
+  white-space: nowrap;
 }
 
 .product-card__category {
-  background: #e8f0ff;
+  align-items: center;
+  background: rgba(114, 231, 255, .09);
   border-radius: 999px;
-  color: #1d53c6;
+  color: #72e7ff;
   padding: 0.3rem 0.65rem;
+  display: inline-flex;
+  gap: .35rem;
 }
 
+.product-card__category mat-icon { font-size: 1rem; width: 1rem; height: 1rem; }
+
 .product-card__sku {
-  color: #6f7890;
+  color: #748197;
   font-size: 0.9rem;
 }
 
 .available,
 .unavailable {
-  display: block;
+  align-items: center;
+  display: flex;
+  gap: .3rem;
   font-size: 0.9rem;
   margin-top: 0.2rem;
 }
+
+.available mat-icon, .unavailable mat-icon { font-size: 1rem; height: 1rem; width: 1rem; }
 
 .available {
   color: #187651;
@@ -135,13 +199,21 @@
 @media (max-width: 768px) {
   .catalog-hero {
     flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-end;
+    min-height: 38rem;
+    padding: 2rem 1.25rem 4rem;
+    background:
+      linear-gradient(0deg, rgba(3, 6, 13, .98) 0%, rgba(3, 6, 13, .72) 62%, rgba(3, 6, 13, .2)),
+      url('/images/launchforge-hero-v1.png') 68% center / cover no-repeat;
   }
 
   .filters-actions,
   .product-card__meta,
-  .product-card__footer,
   .product-card__actions {
     align-items: flex-start;
     flex-direction: column;
   }
+
+  .product-card__footer { grid-template-columns: 1fr; }
 }

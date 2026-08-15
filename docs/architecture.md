@@ -2,7 +2,9 @@
 
 LaunchForge mantiene un monorepo con tres piezas principales:
 
-- `frontend`: Angular 22 standalone, Angular Material, stores con signals y routing
+- `frontend`: Angular 21 standalone, Angular Material, NgRx Signal Store y routing lazy
+
+El frontend separa HTTP y estado compartido en `core`, páginas en `features` y piezas reutilizables en `shared`. `/admin/**` tiene layout secundario y guards de autenticación y rol.
 - `backend`: Spring Boot 3.5, JPA, Flyway, Security stateless y OpenAPI
 - `db`: PostgreSQL 17 con esquema versionado por Flyway
 
@@ -88,7 +90,7 @@ Decisiones específicas:
 
 Reports:
 
-`Angular /app/admin/reports -> ReportStore -> ReportApiService -> ReportController -> ReportQueryService -> ReportRepository -> PostgreSQL`
+`Angular /admin/reports -> ReportStore -> ReportApiService -> ReportController -> ReportQueryService -> ReportRepository -> PostgreSQL`
 
 El módulo `report` está separado de catálogo, órdenes y usuarios. `ReportRepository` ejecuta SQL nativo agregado y entrega interface projections cerradas. PostgreSQL filtra estados, agrupa, ordena y limita; la capa application solo adapta projections a records de API. `@PreAuthorize` exige `ADMIN` en backend.
 
@@ -102,6 +104,6 @@ La transacción envuelve al Aspect y AuditWriter exige propagación MANDATORY; a
 
 Consulta:
 
-`Angular /app/admin/audit -> AuditStore -> AuditController -> AuditQueryService/Specification -> PostgreSQL`
+`Angular /admin/audit -> AuditStore -> AuditController -> AuditQueryService/Specification -> PostgreSQL`
 
 JPA Auditing completa campos técnicos de entidades; AuditLog representa eventos funcionales. Son mecanismos complementarios.

@@ -1,9 +1,9 @@
 <section class="cart-shell">
   <header class="cart-header">
     <div>
-      <p class="eyebrow">Cart</p>
+      <p class="eyebrow">Tu selección</p>
       <h1>Carrito</h1>
-      <p>El carrito vive en frontend. La confirmación real e idempotente ocurre en backend al hacer checkout.</p>
+      <p>Revisa cantidades y productos antes de continuar con la confirmación de la orden.</p>
     </div>
   </header>
 
@@ -12,7 +12,7 @@
       <mat-card-title>Carrito vacío</mat-card-title>
       <mat-card-content>Agrega productos desde el catálogo para continuar.</mat-card-content>
       <mat-card-actions>
-        <a mat-flat-button color="primary" routerLink="/products">Ir al catálogo</a>
+        <a mat-flat-button color="primary" routerLink="/catalog">Ir al catálogo</a>
       </mat-card-actions>
     </mat-card>
   } @else {
@@ -27,11 +27,11 @@
             <div class="cart-item__meta">
               <strong>{{ item.price | currency:'USD':'symbol':'1.2-2' }}</strong>
               <div class="cart-item__actions">
-                <button mat-icon-button type="button" (click)="cartStore.updateQuantity(item.productId, item.quantity - 1)">
+                <button mat-icon-button type="button" [attr.aria-label]="'Reducir cantidad de ' + item.name" (click)="cartStore.updateQuantity(item.productId, item.quantity - 1)">
                   <mat-icon>remove</mat-icon>
                 </button>
                 <span>{{ item.quantity }}</span>
-                <button mat-icon-button type="button" (click)="cartStore.updateQuantity(item.productId, item.quantity + 1)">
+                <button mat-icon-button type="button" [attr.aria-label]="'Aumentar cantidad de ' + item.name" (click)="cartStore.updateQuantity(item.productId, item.quantity + 1)">
                   <mat-icon>add</mat-icon>
                 </button>
                 <button mat-button type="button" (click)="cartStore.removeItem(item.productId)">Eliminar</button>
@@ -45,7 +45,7 @@
     <mat-card appearance="outlined" class="cart-summary">
       <mat-card-title>Resumen</mat-card-title>
       <mat-card-content>
-        <p><strong>Items:</strong> {{ cartStore.itemCount() }}</p>
+        <p><strong>Productos:</strong> {{ cartStore.itemCount() }}</p>
         <p><strong>Subtotal:</strong> {{ cartStore.subtotal() | currency:'USD':'symbol':'1.2-2' }}</p>
       </mat-card-content>
       <mat-card-actions>

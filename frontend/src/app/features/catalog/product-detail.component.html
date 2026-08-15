@@ -1,5 +1,5 @@
 <section class="detail-shell">
-  <a mat-button routerLink="/products">
+  <a mat-button routerLink="/catalog">
     <mat-icon>arrow_back</mat-icon>
     Volver al catálogo
   </a>
@@ -17,6 +17,10 @@
 
   @if (catalogStore.selectedProduct(); as product) {
     <mat-card appearance="outlined" class="detail-card">
+      <div class="detail-visual" aria-hidden="true">
+        <span>LAUNCHFORGE / {{ product.sku }}</span>
+        <mat-icon>{{ productIcon(product.category.slug) }}</mat-icon>
+      </div>
       <div class="detail-card__heading">
         <div>
           <p class="eyebrow">{{ product.category.name }} · {{ product.sku }}</p>
@@ -35,18 +39,22 @@
           <strong>{{ product.price | currency:'USD':'symbol':'1.2-2' }}</strong>
         </div>
         <div>
-          <span class="label">Slug</span>
-          <strong>{{ product.slug }}</strong>
+          <span class="label">Categoría</span>
+          <strong>{{ product.category.name }}</strong>
         </div>
         <div>
-          <span class="label">Actualizado</span>
-          <strong>{{ product.updatedAt | date:'medium' }}</strong>
+          <span class="label">Capacidad</span>
+          <strong>{{ product.available ? 'Inicio disponible' : 'Próxima apertura por confirmar' }}</strong>
         </div>
       </div>
 
       <div class="detail-actions">
-        <button mat-flat-button color="primary" type="button" (click)="addSelectedProductToCart()">Agregar al carrito</button>
-        <a mat-button routerLink="/cart">Ir al carrito</a>
+        @if (authStore.isAuthenticated()) {
+          <button mat-flat-button color="primary" type="button" [disabled]="!product.available" (click)="addSelectedProductToCart()">Agregar al carrito</button>
+          <a mat-button routerLink="/cart">Ir al carrito</a>
+        } @else {
+          <a mat-flat-button routerLink="/login" [queryParams]="{ redirectUrl: '/products/' + product.id }">Inicia sesión para comprar</a>
+        }
       </div>
     </mat-card>
   }

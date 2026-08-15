@@ -15,10 +15,17 @@
 }
 
 .rule-button {
+  height: auto;
   justify-content: flex-start;
+  min-height: 3.75rem;
   width: 100%;
   margin-bottom: 0.5rem;
 }
+
+.rule-button__content { display: grid; gap: .2rem; padding-block: .35rem; text-align: left; }
+.rule-button__content small { color: #8190a5; font-size: .72rem; line-height: 1.35; white-space: normal; }
+
+.date-time-grid { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr) minmax(9rem, .4fr); }
 
 .rule-button-active {
   background: rgba(42, 99, 193, 0.12);
@@ -34,3 +41,5 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 560px) { .date-time-grid { grid-template-columns: 1fr; } }

@@ -30,4 +30,9 @@ export interface ProblemDetails {
   status?: number;
   detail?: string;
   instance?: string;
+  productId?: string;
+  sku?: string;
+  productName?: string;
+  availableQuantity?: number;
+  requestedQuantity?: number;
 }

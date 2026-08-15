@@ -1,20 +1,26 @@
 <section class="checkout-shell">
-  <mat-card appearance="outlined">
-    <mat-card-header>
-      <mat-card-title>Checkout</mat-card-title>
-      <mat-card-subtitle>El frontend evita doble submit, pero la idempotencia real vive en backend.</mat-card-subtitle>
-    </mat-card-header>
+  <header class="checkout-header">
+    <p class="eyebrow">Último paso</p>
+    <h1>Confirma tu lanzamiento</h1>
+    <p>Revisa las soluciones seleccionadas antes de crear la orden.</p>
+  </header>
+
+  <mat-card appearance="outlined" class="checkout-card">
     <mat-card-content>
       @if (cartStore.isEmpty()) {
-        <p>No hay items para procesar.</p>
+        <div class="empty-state"><mat-icon>shopping_cart</mat-icon><p>No hay productos para procesar.</p></div>
       } @else {
-        <p><strong>Items:</strong> {{ cartStore.itemCount() }}</p>
-        <p><strong>Subtotal:</strong> {{ cartStore.subtotal() | currency:'USD':'symbol':'1.2-2' }}</p>
-        <p><strong>Idempotency-Key:</strong> {{ cartStore.checkoutIdempotencyKey() ?? 'Se generará al enviar.' }}</p>
+        <div class="order-lines">
+          @for (item of cartStore.items(); track item.productId) {
+            <div class="order-line" [class.order-line--conflict]="ordersStore.capacityConflict()?.productId === item.productId"><div><strong>{{ item.name }}</strong><span>{{ item.sku }} · Cantidad {{ item.quantity }}</span>@if (ordersStore.capacityConflict()?.productId === item.productId) {<span class="capacity-warning"><mat-icon>warning</mat-icon>Solicitaste {{ ordersStore.capacityConflict()?.requestedQuantity }}; disponibles {{ ordersStore.capacityConflict()?.availableQuantity }}</span>}</div><strong>{{ item.price * item.quantity | currency:'USD':'symbol':'1.2-2' }}</strong></div>
+          }
+        </div>
+        <div class="checkout-total"><span><small>{{ cartStore.itemCount() }} productos</small>Subtotal</span><strong>{{ cartStore.subtotal() | currency:'USD':'symbol':'1.2-2' }}</strong></div>
+        <p class="checkout-note"><mat-icon>verified_user</mat-icon>La disponibilidad y los descuentos aplicables se confirman al crear la orden.</p>
       }
 
       @if (ordersStore.error()) {
-        <p class="error-text">{{ ordersStore.error() }}</p>
+        <div class="error-banner" role="alert"><mat-icon>error_outline</mat-icon><div><strong>No pudimos confirmar la orden</strong>@if (ordersStore.capacityConflict(); as conflict) {<p><b>{{ conflict.productName }} ({{ conflict.sku }})</b>: solicitaste {{ conflict.requestedQuantity }}, pero hay {{ conflict.availableQuantity }} disponibles.</p>} @else {<p>{{ ordersStore.error() }}</p>}</div></div>
       }
     </mat-card-content>
     <mat-card-actions>

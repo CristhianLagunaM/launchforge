@@ -1,31 +1,12 @@
-<mat-toolbar class="shell-toolbar">
-  <div class="brand">
-    <mat-icon>rocket_launch</mat-icon>
-    <div>
-      <strong>LaunchForge</strong>
-      <small>Catalog, Security & Operations</small>
-    </div>
-  </div>
-
+@if (authStore.isAdmin()) {
   <nav class="shell-nav">
-    <a mat-button routerLink="/app" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }">Inicio</a>
-    <a mat-button routerLink="/products" routerLinkActive="active-link">Catálogo</a>
-    <a mat-button routerLink="/cart" routerLinkActive="active-link">Carrito</a>
-    <a mat-button routerLink="/orders" routerLinkActive="active-link">Órdenes</a>
-    @if (authStore.isAdmin()) {
-      <a mat-button routerLink="/app/admin/products" routerLinkActive="active-link">Admin productos</a>
-      <a mat-button routerLink="/app/admin/inventory" routerLinkActive="active-link">Admin inventario</a>
-      <a mat-button routerLink="/app/admin/discounts" routerLinkActive="active-link">Admin descuentos</a>
-      <a mat-button routerLink="/app/admin/reports" routerLinkActive="active-link">Reportes</a>
-      <a mat-button routerLink="/app/admin/audit" routerLinkActive="active-link">Auditoría</a>
-    }
+    <a mat-button routerLink="/admin/products" routerLinkActive="active-link">Productos</a>
+    <a mat-button routerLink="/admin/inventory" routerLinkActive="active-link">Inventario</a>
+    <a mat-button routerLink="/admin/discounts" routerLinkActive="active-link">Descuentos</a>
+    <a mat-button routerLink="/admin/reports" routerLinkActive="active-link">Reportes</a>
+    <a mat-button routerLink="/admin/audit" routerLinkActive="active-link">Auditoría</a>
   </nav>
-
-  <div class="shell-user">
-    <span>{{ authStore.displayName() }}</span>
-    <button mat-stroked-button type="button" (click)="authStore.logout()">Salir</button>
-  </div>
-</mat-toolbar>
+}
 
 <main class="shell-content">
   <router-outlet />

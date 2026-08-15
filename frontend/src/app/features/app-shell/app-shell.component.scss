@@ -1,35 +1,17 @@
 :host {
   display: block;
-  min-height: 100vh;
+  min-height: 100%;
   background:
-    linear-gradient(180deg, rgba(23, 96, 255, 0.08), transparent 18rem),
-    #f6f7fb;
-}
-
-.shell-toolbar {
-  background: #10203f;
-  color: #f9fbff;
-  display: flex;
-  gap: 1rem;
-  justify-content: space-between;
-  padding: 0 1rem;
-}
-
-.brand,
-.shell-user {
-  align-items: center;
-  display: flex;
-  gap: 0.75rem;
-}
-
-.brand small {
-  color: rgba(249, 251, 255, 0.72);
-  display: block;
+    linear-gradient(180deg, rgba(0, 222, 255, 0.07), transparent 18rem),
+    #060910;
 }
 
 .shell-nav {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
+  justify-content: center;
+  padding: 1rem;
 }
 
 .active-link {
@@ -44,18 +26,7 @@
 }
 
 @media (max-width: 900px) {
-  .shell-toolbar {
-    align-items: flex-start;
-    flex-direction: column;
-    padding: 1rem;
-  }
-
-  .shell-nav,
-  .shell-user {
+  .shell-nav {
     width: 100%;
-  }
-
-  .shell-user {
-    justify-content: space-between;
   }
 }

@@ -1,10 +1,10 @@
 @use '@angular/material' as mat;
 
 html {
-  @include mat.theme((color: (primary: mat.$azure-palette, tertiary: mat.$blue-palette), typography: Roboto, density: 0));
-  color-scheme: light;
-  font-family: Roboto, Arial, sans-serif;
-  background: #f6f7fb;
+  @include mat.theme((color: (theme-type: dark, primary: mat.$cyan-palette, tertiary: mat.$violet-palette), typography: 'Segoe UI', density: 0));
+  color-scheme: dark;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #060910;
 }
 
 * {
@@ -17,14 +17,29 @@ html, body {
 }
 
 body {
-  color: #11213f;
+  color: #edf7ff;
+  background:
+    linear-gradient(rgba(75, 225, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(75, 225, 255, 0.025) 1px, transparent 1px),
+    #060910;
+  background-size: 48px 48px;
 }
 
+button, input, select, textarea { font-family: inherit; }
+
 a {
-  color: #1459d9;
+  color: #72e7ff;
   text-decoration: none;
 }
 
+::selection { background: #7b4dff; color: white; }
+
 a:hover {
   text-decoration: underline;
+}
+
+.cart-success-snackbar {
+  --mat-snack-bar-container-color: #0c2430;
+  --mat-snack-bar-supporting-text-color: #e8fbff;
+  --mat-snack-bar-button-color: #72e7ff;
 }

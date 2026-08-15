@@ -1,13 +1,20 @@
 <section class="catalog-shell">
   <header class="catalog-hero">
     <div>
-      <p class="eyebrow">LaunchForge Catalog</p>
-      <h1>Paquetes digitales listos para despegar proyectos reales.</h1>
+      <p class="eyebrow">Digital launch systems · 2026</p>
+      <h1>Construimos la infraestructura digital de tu próxima idea.</h1>
       <p class="hero-copy">
         Busca por nombre, SKU, categoría, precio o disponibilidad. Las consultas públicas solo muestran productos activos.
       </p>
+      <div class="hero-signals" aria-label="Capacidades de LaunchForge">
+        <span><mat-icon>bolt</mat-icon> Entrega digital</span>
+        <span><mat-icon>verified_user</mat-icon> Flujo seguro</span>
+        <span><mat-icon>monitoring</mat-icon> Operación trazable</span>
+      </div>
     </div>
-    <a mat-stroked-button routerLink="/login">Acceso admin</a>
+    @if (!authStore.isAuthenticated()) {
+      <a mat-stroked-button routerLink="/login" [queryParams]="{ redirectUrl: '/catalog' }">Iniciar sesión para comprar</a>
+    }
   </header>
 
   <mat-card appearance="outlined" class="filters-card">
@@ -86,8 +93,13 @@
     <section class="product-grid">
       @for (product of catalogStore.products(); track product.id) {
         <mat-card appearance="outlined" class="product-card">
+          <div class="product-card__visual" aria-hidden="true">
+            <span class="visual-code">LF / {{ product.sku }}</span>
+            <mat-icon>{{ productIcon(product.category.slug) }}</mat-icon>
+            <span class="visual-orbit"></span>
+          </div>
           <div class="product-card__meta">
-            <span class="product-card__category">{{ product.category.name }}</span>
+            <span class="product-card__category"><mat-icon>{{ productIcon(product.category.slug) }}</mat-icon>{{ product.category.name }}</span>
             <span class="product-card__sku">{{ product.sku }}</span>
           </div>
           <h2>{{ product.name }}</h2>
@@ -96,11 +108,16 @@
             <div>
               <strong>{{ product.price | currency:'USD':'symbol':'1.2-2' }}</strong>
               <span [class.available]="product.available" [class.unavailable]="!product.available">
+                <mat-icon>{{ product.available ? 'check_circle' : 'schedule' }}</mat-icon>
                 {{ product.available ? 'Disponible' : 'Sin cupo inmediato' }}
               </span>
             </div>
             <div class="product-card__actions">
-              <button mat-button type="button" (click)="addToCart(product)">Agregar</button>
+              @if (authStore.isAuthenticated()) {
+                <button mat-button type="button" [disabled]="!product.available" (click)="addToCart(product)">Agregar</button>
+              } @else {
+                <a mat-button routerLink="/login" [queryParams]="{ redirectUrl: '/catalog' }">Acceder para comprar</a>
+              }
               <a mat-flat-button color="primary" [routerLink]="['/products', product.id]">Ver detalle</a>
             </div>
           </div>

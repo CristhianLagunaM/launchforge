@@ -1,7 +1,7 @@
 import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { firstValueFrom } from 'rxjs';
-import { ProblemDetails } from '../auth/auth.models';
+import { describeHttpError, describeInventoryCapacityConflict, InventoryCapacityConflict } from '../http/http-error.util';
 import { OrdersApiService } from './orders-api.service';
 import { CreateOrderPayload, Order } from './order.models';
 
@@ -12,6 +12,7 @@ interface OrdersState {
   submitting: boolean;
   error: string | null;
   latestCreatedOrder: Order | null;
+  capacityConflict: InventoryCapacityConflict | null;
 }
 
 const initialState: OrdersState = {
@@ -20,7 +21,8 @@ const initialState: OrdersState = {
   loading: false,
   submitting: false,
   error: null,
-  latestCreatedOrder: null
+  latestCreatedOrder: null,
+  capacityConflict: null
 };
 
 export const OrdersStore = signalStore(
@@ -36,7 +38,7 @@ export const OrdersStore = signalStore(
         const orders = await firstValueFrom(ordersApi.listOrders());
         patchState(store, { orders, loading: false });
       } catch (error) {
-        patchState(store, { loading: false, error: extractProblemDetail(error, 'No fue posible cargar órdenes.') });
+        patchState(store, { loading: false, error: describeHttpError(error, 'No fue posible cargar órdenes.') });
       }
     },
     async loadOrder(orderId: string): Promise<void> {
@@ -45,22 +47,27 @@ export const OrdersStore = signalStore(
         const order = await firstValueFrom(ordersApi.getOrder(orderId));
         patchState(store, { selectedOrder: order, loading: false });
       } catch (error) {
-        patchState(store, { loading: false, error: extractProblemDetail(error, 'No fue posible cargar la orden.') });
+        patchState(store, { loading: false, error: describeHttpError(error, 'No fue posible cargar la orden.') });
       }
     },
     async createOrder(payload: CreateOrderPayload, idempotencyKey: string): Promise<Order | null> {
-      patchState(store, { submitting: true, error: null, latestCreatedOrder: null });
+      patchState(store, { submitting: true, error: null, latestCreatedOrder: null, capacityConflict: null });
       try {
         const order = await firstValueFrom(ordersApi.createOrder(payload, idempotencyKey));
         patchState(store, {
           submitting: false,
           latestCreatedOrder: order,
+          capacityConflict: null,
           selectedOrder: order,
           orders: [order, ...store.orders().filter((existing) => existing.id !== order.id)]
         });
         return order;
       } catch (error) {
-        patchState(store, { submitting: false, error: extractProblemDetail(error, 'No fue posible crear la orden.') });
+        patchState(store, {
+          submitting: false,
+          error: describeHttpError(error, 'No fue posible crear la orden.'),
+          capacityConflict: describeInventoryCapacityConflict(error)
+        });
         return null;
       }
     },
@@ -74,7 +81,7 @@ export const OrdersStore = signalStore(
           orders: store.orders().map((existing) => (existing.id === order.id ? order : existing))
         });
       } catch (error) {
-        patchState(store, { submitting: false, error: extractProblemDetail(error, 'No fue posible cancelar la orden.') });
+        patchState(store, { submitting: false, error: describeHttpError(error, 'No fue posible cancelar la orden.') });
       }
     },
     clearSelectedOrder(): void {
@@ -82,11 +89,9 @@ export const OrdersStore = signalStore(
     },
     clearLatestCreatedOrder(): void {
       patchState(store, { latestCreatedOrder: null });
+    },
+    clearCreationFeedback(): void {
+      patchState(store, { error: null, capacityConflict: null });
     }
   }))
 );
-
-function extractProblemDetail(error: unknown, fallback: string): string {
-  const maybeProblem = (error as { error?: ProblemDetails })?.error;
-  return maybeProblem?.detail ?? maybeProblem?.title ?? fallback;
-}

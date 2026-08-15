@@ -22,10 +22,17 @@
         <mat-form-field>
           <mat-label>Operación</mat-label>
           <mat-select formControlName="operation">
-            <mat-option value="INCREASE">Increase</mat-option>
-            <mat-option value="DECREASE">Decrease</mat-option>
-            <mat-option value="RESTORE">Restore</mat-option>
+            <mat-option value="INCREASE">Aumentar capacidad</mat-option>
+            <mat-option value="DECREASE">Disminuir capacidad</mat-option>
+            <mat-option value="RESTORE">Restaurar capacidad</mat-option>
           </mat-select>
+          <mat-hint>
+            @switch (form.controls.operation.value) {
+              @case ('INCREASE') { Agrega nuevos cupos operativos disponibles. }
+              @case ('DECREASE') { Retira cupos disponibles sin crear una orden. }
+              @case ('RESTORE') { Devuelve cupos descontados previamente. }
+            }
+          </mat-hint>
         </mat-form-field>
 
         <mat-form-field>
