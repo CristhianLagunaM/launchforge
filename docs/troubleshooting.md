@@ -1,5 +1,12 @@
 # Troubleshooting
 
+## CI y análisis
+
+- Revisa el primer fallo de `mvn clean verify`: Surefire indica pruebas, Spotless formato, PMD reglas y JaCoCo cobertura.
+- Testcontainers requiere Docker activo; no sustituyas PostgreSQL por H2.
+- En frontend ejecuta separadamente `npm ci`, lint, pruebas sin watch y build.
+- En Actions descarga el artefacto `backend-jacoco` y revisa la versión de Java/Node.
+
 ## 1. `401 Unauthorized`
 
 - verificar que el request admin incluya `Authorization: Bearer <jwt>`
