@@ -8,5 +8,8 @@ CREATE TABLE audit_log (
     ip_address VARCHAR(64) NULL,
     metadata JSONB NULL,
     created_at TIMESTAMPTZ NOT NULL,
-    CONSTRAINT fk_audit_log_actor_user FOREIGN KEY (actor_user_id) REFERENCES users (id)
+
+    CONSTRAINT fk_audit_log_actor_user
+        FOREIGN KEY (actor_user_id)
+        REFERENCES users (id)
 );
