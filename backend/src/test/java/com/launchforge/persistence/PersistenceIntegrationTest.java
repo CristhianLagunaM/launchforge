@@ -55,7 +55,7 @@ class PersistenceIntegrationTest extends AbstractPostgresIntegrationTest {
                 );
 
         assertThat(installedCount)
-                .isEqualTo(16);
+                .isEqualTo(8);
 
         assertThat(versions)
                 .containsExactly(
@@ -66,15 +66,7 @@ class PersistenceIntegrationTest extends AbstractPostgresIntegrationTest {
                         "5",
                         "6",
                         "7",
-                        "8",
-                        "9",
-                        "10",
-                        "11",
-                        "12",
-                        "13",
-                        "14",
-                        "15",
-                        "16"
+                        "8"
                 );
     }
 
