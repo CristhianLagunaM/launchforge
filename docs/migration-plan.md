@@ -232,3 +232,6 @@ Y validar desde cero:
 docker compose down -v
 docker compose up --build
 ```
+## V12 — Reconciliación de reservas
+
+`V12__reconcile_inventory_reservations.sql` normaliza `reserved_quantity` y lo reconstruye exclusivamente a partir de órdenes `CREATED`. Así, una base existente no conserva reservas huérfanas después de cambiar el flujo a pendiente → confirmada.

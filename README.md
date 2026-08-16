@@ -93,6 +93,33 @@ También existen `make up`, `down`, `reset`, `logs`, `logs-backend`, `logs-db`, 
   - `frequent@launchforge.dev` / `launchforge-demo`
 
 Consulta [Architecture](docs/architecture.md), [API](docs/api.md), [Security](docs/security.md), [Testing](docs/testing.md), [Troubleshooting](docs/troubleshooting.md), [F08 Audit](docs/features/F08-audit.md) y [ADR Auditing](docs/decisions/ADR-auditing.md).
-# Quality and CI
 
-La validación técnica de Fase 10 está descrita en [docs/testing.md](docs/testing.md), [docs/quality.md](docs/quality.md) y [docs/ci.md](docs/ci.md). Localmente: `cd backend && mvn clean verify`; `cd frontend && npm ci && npm run lint && npm run test -- --watch=false && npm run build`. Los workflows de GitHub Actions ejecutan estos gates en `main`; no existe despliegue productivo ficticio.
+## Entrega
+
+- Trazabilidad: [requirements-traceability.md](docs/requirements-traceability.md)
+- Guion de demo: [demo-script.md](docs/demo-script.md)
+- Checklist: [delivery-checklist.md](docs/delivery-checklist.md)
+- Calidad y CI: [quality.md](docs/quality.md), [ci.md](docs/ci.md)
+
+Cada push a `main` y cada etiqueta `v*` ejecuta los gates completos y publica imágenes multi-arquitectura en GHCR:
+
+```text
+ghcr.io/cristhianlagunam/launchforge-backend
+ghcr.io/cristhianlagunam/launchforge-frontend
+```
+
+Las etiquetas disponibles son `latest`, `sha-<commit>` y la versión Git, por ejemplo `v1.0.0`. Un host Docker puede desplegar una versión inmutable mediante:
+
+```bash
+IMAGE_TAG=sha-abcdef0 docker compose -f docker-compose.release.yml pull
+IMAGE_TAG=sha-abcdef0 docker compose -f docker-compose.release.yml up -d
+```
+
+El archivo de release exige secretos reales mediante variables de entorno y no publica PostgreSQL ni backend directamente. La automatización cubre Continuous Delivery hasta el registro; el despliegue automático a un proveedor se habilitará cuando exista un entorno de destino.
+
+La gestión administrativa permite listar usuarios, activar/bloquear cuentas y cambiar roles sin exponer contraseñas ni hashes.
+
+Las órdenes siguen el flujo `Pendiente de confirmación → Confirmada → Completada`. Una orden pendiente reserva capacidad; ADMIN confirma desde `/admin/orders`; solo las pendientes pueden cancelarse. Las confirmaciones y cancelaciones exitosas quedan registradas en auditoría.
+# Quality, CI y entrega continua
+
+La validación técnica de Fase 10 está descrita en [docs/testing.md](docs/testing.md), [docs/quality.md](docs/quality.md) y [docs/ci.md](docs/ci.md). Localmente: `cd backend && mvn clean verify`; `cd frontend && npm ci && npm run lint && npm run test -- --watch=false && npm run build`. Los workflows ejecutan estos gates y `release.yml` publica artefactos verificables en GHCR; no se simula un despliegue a infraestructura inexistente.

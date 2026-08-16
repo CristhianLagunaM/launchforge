@@ -32,6 +32,7 @@ Se prueban:
 - `OrdersStore`
 - `AdminDiscountStore`
 - `ReportStore`
+- Dashboard de reportes: agregaciones financieras, estados, capacidad, serie de seis meses y contrato HTTP protegido.
 
 ## Comandos
 
@@ -107,7 +108,8 @@ Así, el resultado no depende del orden de ejecución de JUnit. Los reintentos i
 
 ## Qué valida Fase 5
 
-- creación de órdenes confirmadas
+- creación de órdenes pendientes, reservas, confirmación ADMIN y cancelación con liberación/restauración
+- confirmación auditada con actor ADMIN y rechazo de cancelación sobre órdenes confirmadas/completadas
 - consolidación de items repetidos
 - snapshot de nombre, SKU y precio
 - idempotencia por `Idempotency-Key`

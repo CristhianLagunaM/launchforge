@@ -5,6 +5,7 @@
 Fase 5 implementa:
 
 - creación de órdenes;
+- recepción en estado pendiente y confirmación administrativa;
 - consulta de órdenes;
 - cancelación de órdenes confirmadas;
 - protección transaccional sobre inventario;
@@ -31,7 +32,9 @@ Reglas:
 
 Creación:
 
-`Angular checkout -> OrdersApiService -> OrderController -> CreateOrderUseCase -> TransactionalOrderCreator -> InventoryManagementService + OrderRepository -> PostgreSQL`
+`Angular checkout -> OrdersApiService -> OrderController -> CreateOrderUseCase -> reserva de Inventory + OrderRepository -> PostgreSQL`
+
+La creación devuelve `CREATED` (Pendiente de confirmación). ADMIN revisa todas las órdenes en `GET /api/v1/orders/admin` y confirma con `PATCH /api/v1/orders/{id}/confirm`, momento en que la reserva se consume y la orden pasa a `CONFIRMED` (Confirmada). Después puede marcarla como `COMPLETED` mediante `PATCH /api/v1/orders/{id}/complete`. Solo una orden `CREATED` puede cancelarse; una orden confirmada o completada es definitiva y el backend rechaza cualquier cancelación, incluso desde una pantalla desactualizada.
 
 Consulta:
 
@@ -39,7 +42,7 @@ Consulta:
 
 Cancelación:
 
-`Angular order detail -> OrdersApiService -> OrderController -> CancelOrderUseCase -> InventoryManagementService.restoreCapacity -> PostgreSQL`
+`Angular order detail -> OrdersApiService -> OrderController -> CancelOrderUseCase -> releaseReservation/restoreCapacity -> PostgreSQL`
 
 ## 4. Controller -> Application -> Repository
 

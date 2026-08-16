@@ -111,6 +111,9 @@ Solo `ADMIN`:
 - `GET /api/v1/reports/active-products`
 - `GET /api/v1/reports/top-products`
 - `GET /api/v1/reports/top-customers`
+- `GET /api/v1/reports/dashboard`
+
+`dashboard` consolida ingresos brutos y netos, descuentos, ticket promedio, conteos por estado, capacidad operativa y una serie mensual de seis periodos. Todas las agregaciones se ejecutan en PostgreSQL y requieren rol `ADMIN`.
 
 Los rankings incluyen únicamente órdenes `CONFIRMED` y `COMPLETED`; excluyen `CANCELLED` y `CREATED`. Top productos devuelve máximo cinco filas ordenadas por `quantitySold DESC`, con desempate `name/sku ASC`. Top clientes usa `orderCount DESC` y email ascendente como desempate.
 
