@@ -19,10 +19,10 @@
   } @else {
     @if (reportStore.dashboard(); as dashboard) {
       <div class="kpi-grid">
-        <article class="kpi-card kpi-card--primary"><mat-icon>payments</mat-icon><span>Ingresos netos</span><strong>{{ dashboard.netRevenue | currency:'USD':'symbol':'1.0-0' }}</strong><small>ventas confirmadas y completadas</small></article>
+        <article class="kpi-card kpi-card--primary"><mat-icon>payments</mat-icon><span>Ingresos netos</span><strong>{{ dashboard.netRevenue | currency:'COP':'symbol':'1.0-0' }}</strong><small>ventas confirmadas y completadas</small></article>
         <article class="kpi-card"><mat-icon>receipt_long</mat-icon><span>Órdenes válidas</span><strong>{{ dashboard.ordersByStatus.confirmed + dashboard.ordersByStatus.completed }}</strong><small>de {{ dashboard.totalOrders }} órdenes registradas</small></article>
-        <article class="kpi-card"><mat-icon>monitoring</mat-icon><span>Ticket promedio</span><strong>{{ dashboard.averageTicket | currency:'USD':'symbol':'1.0-0' }}</strong><small>valor medio por orden válida</small></article>
-        <article class="kpi-card kpi-card--amber"><mat-icon>sell</mat-icon><span>Descuentos concedidos</span><strong>{{ dashboard.discountTotal | currency:'USD':'symbol':'1.0-0' }}</strong><small>sobre {{ dashboard.grossRevenue | currency:'USD':'symbol':'1.0-0' }} brutos</small></article>
+        <article class="kpi-card"><mat-icon>monitoring</mat-icon><span>Ticket promedio</span><strong>{{ dashboard.averageTicket | currency:'COP':'symbol':'1.0-0' }}</strong><small>valor medio por orden válida</small></article>
+        <article class="kpi-card kpi-card--amber"><mat-icon>sell</mat-icon><span>Descuentos concedidos</span><strong>{{ dashboard.discountTotal | currency:'COP':'symbol':'1.0-0' }}</strong><small>sobre {{ dashboard.grossRevenue | currency:'COP':'symbol':'1.0-0' }} brutos</small></article>
       </div>
 
       <div class="operations-grid">
@@ -31,7 +31,7 @@
           <mat-card-content class="revenue-chart">
             @for (month of dashboard.monthlyRevenue; track month.period) {
               <div class="revenue-column">
-                <span class="revenue-value">{{ month.revenue | currency:'USD':'symbol':'1.0-0' }}</span>
+                <span class="revenue-value">{{ month.revenue | currency:'COP':'symbol':'1.0-0' }}</span>
                 <div class="revenue-track"><span [style.height.%]="revenueBarHeight(month.revenue)"></span></div>
                 <strong>{{ monthLabel(month.period) }}</strong><small>{{ month.orderCount }} órdenes</small>
               </div>
@@ -89,7 +89,7 @@
             <ng-container matColumnDef="sku"><th mat-header-cell *matHeaderCellDef>SKU</th><td mat-cell *matCellDef="let row">{{ row.sku }}</td></ng-container>
             <ng-container matColumnDef="name"><th mat-header-cell *matHeaderCellDef>Producto</th><td mat-cell *matCellDef="let row">{{ row.name }}</td></ng-container>
             <ng-container matColumnDef="category"><th mat-header-cell *matHeaderCellDef>Categoría</th><td mat-cell *matCellDef="let row">{{ row.category }}</td></ng-container>
-            <ng-container matColumnDef="price"><th mat-header-cell *matHeaderCellDef>Precio</th><td mat-cell *matCellDef="let row">{{ row.price | currency:'USD' }}</td></ng-container>
+            <ng-container matColumnDef="price"><th mat-header-cell *matHeaderCellDef>Precio</th><td mat-cell *matCellDef="let row">{{ row.price | currency:'COP' }}</td></ng-container>
             <tr mat-header-row *matHeaderRowDef="activeProductColumns"></tr>
             <tr mat-row *matRowDef="let row; columns: activeProductColumns"></tr>
           </table>

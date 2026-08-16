@@ -106,7 +106,7 @@
           <p>{{ product.description }}</p>
           <div class="product-card__footer">
             <div>
-              <strong>{{ product.price | currency:'USD':'symbol':'1.2-2' }}</strong>
+              <strong>{{ product.price | currency:'COP':'symbol-narrow':'1.0-0':'es-CO' }}</strong>
               <span [class.available]="product.available" [class.unavailable]="!product.available">
                 <mat-icon>{{ product.available ? 'check_circle' : 'schedule' }}</mat-icon>
                 {{ product.available ? 'Disponible' : 'Sin cupo inmediato' }}
