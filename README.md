@@ -265,7 +265,7 @@ spring.flyway.enabled=true
 spring.jpa.hibernate.ddl-auto=validate
 ```
 
-El repositorio contiene migraciones versionadas desde `V1` hasta `V16`.
+El repositorio contiene migraciones versionadas desde `V1` hasta `V8`.
 
 Hibernate **no modifica automáticamente** el esquema: únicamente valida que las entidades JPA sean compatibles con la estructura creada por Flyway.
 
@@ -281,7 +281,7 @@ docker compose up --build
 ```mermaid
 flowchart LR
     A[Eliminar contenedores y volumen] --> B[PostgreSQL vacío]
-    B --> C[Ejecutar Flyway V1 → V16]
+    B --> C[Ejecutar Flyway V1 → V8]
     C --> D[Validar JPA]
     D --> E[Backend healthy]
     E --> F[Frontend disponible]
@@ -371,9 +371,6 @@ flowchart TD
     D --> Q[quality.md]
     D --> CI[ci.md]
     D --> TR[troubleshooting.md]
-    D --> R[requirements-traceability.md]
-    D --> DC[delivery-checklist.md]
-    D --> DS[demo-script.md]
     D --> DEC[decisions/]
     D --> F[features/]
 ```
