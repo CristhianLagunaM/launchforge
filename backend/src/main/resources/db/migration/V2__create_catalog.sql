@@ -6,8 +6,12 @@ CREATE TABLE categories (
     active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL,
-    CONSTRAINT uk_categories_name UNIQUE (name),
-    CONSTRAINT uk_categories_slug UNIQUE (slug)
+
+    CONSTRAINT uk_categories_name
+        UNIQUE (name),
+
+    CONSTRAINT uk_categories_slug
+        UNIQUE (slug)
 );
 
 CREATE TABLE products (
@@ -23,8 +27,17 @@ CREATE TABLE products (
     updated_at TIMESTAMPTZ NOT NULL,
     created_by UUID NULL,
     updated_by UUID NULL,
-    CONSTRAINT fk_products_category FOREIGN KEY (category_id) REFERENCES categories (id),
-    CONSTRAINT uk_products_sku UNIQUE (sku),
-    CONSTRAINT uk_products_slug UNIQUE (slug),
-    CONSTRAINT chk_products_price_non_negative CHECK (price >= 0)
+
+    CONSTRAINT fk_products_category
+        FOREIGN KEY (category_id)
+        REFERENCES categories (id),
+
+    CONSTRAINT uk_products_sku
+        UNIQUE (sku),
+
+    CONSTRAINT uk_products_slug
+        UNIQUE (slug),
+
+    CONSTRAINT chk_products_price_non_negative
+        CHECK (price >= 0)
 );
