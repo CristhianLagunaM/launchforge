@@ -9,14 +9,14 @@
   </header>
 
   @if (adminProductStore.error()) {
-    <mat-card appearance="outlined" class="error-card">
-      <mat-card-title>Error</mat-card-title>
-      <mat-card-content>{{ adminProductStore.error() }}</mat-card-content>
-    </mat-card>
+  <mat-card appearance="outlined" class="error-card">
+    <mat-card-title>Error</mat-card-title>
+    <mat-card-content>{{ adminProductStore.error() }}</mat-card-content>
+  </mat-card>
   }
 
   @if (adminProductStore.loading() || adminProductStore.saving()) {
-    <mat-progress-bar mode="indeterminate" />
+  <mat-progress-bar mode="indeterminate" />
   }
 
   <div class="admin-grid">
@@ -52,54 +52,45 @@
       </mat-card>
 
       @if (adminProductStore.emptyState()) {
-        <mat-card appearance="outlined" class="empty-card">
-          <mat-card-title>Sin productos</mat-card-title>
-          <mat-card-content>No hay resultados para el filtro actual.</mat-card-content>
-        </mat-card>
+      <mat-card appearance="outlined" class="empty-card">
+        <mat-card-title>Sin productos</mat-card-title>
+        <mat-card-content>No hay resultados para el filtro actual.</mat-card-content>
+      </mat-card>
       }
 
       <div class="admin-list">
         @for (product of adminProductStore.products(); track product.id) {
-          <mat-card appearance="outlined" class="admin-item">
-            <div class="admin-item__content">
-              <div>
-                <h2>{{ product.name }}</h2>
-                <p>{{ product.sku }} · {{ product.category.name }}</p>
-                <p class="muted">Actualizado: {{ product.updatedAt | date:'medium' }}</p>
-              </div>
-              <div class="admin-item__meta">
-                <strong>{{ product.price | currency:'USD':'symbol':'1.2-2' }}</strong>
-                <span [class.active]="product.active" [class.inactive]="!product.active">
-                  {{ product.active ? 'Activo' : 'Inactivo' }}
-                </span>
-              </div>
+        <mat-card appearance="outlined" class="admin-item">
+          <div class="admin-item__content">
+            <div>
+              <h2>{{ product.name }}</h2>
+              <p>{{ product.sku }} · {{ product.category.name }}</p>
+              <p class="muted">Actualizado: {{ product.updatedAt | date:'medium' }}</p>
             </div>
-            <div class="admin-item__actions">
-              <button mat-button type="button" (click)="editProduct(product)">Editar</button>
-              <button mat-button type="button" (click)="adminProductStore.toggleStatus(product)">
-                {{ product.active ? 'Desactivar' : 'Activar' }}
-              </button>
-              <button mat-button type="button" (click)="adminProductStore.deleteProduct(product.id)">Eliminar</button>
+            <div class="admin-item__meta">
+              <strong>{{ product.price | currency:'COP':'symbol-narrow':'1.0-0':'es-CO' }}</strong>
+              <span [class.active]="product.active" [class.inactive]="!product.active">
+                {{ product.active ? 'Activo' : 'Inactivo' }}
+              </span>
             </div>
-          </mat-card>
+          </div>
+          <div class="admin-item__actions">
+            <button mat-button type="button" (click)="editProduct(product)">Editar</button>
+            <button mat-button type="button" (click)="adminProductStore.toggleStatus(product)">
+              {{ product.active ? 'Desactivar' : 'Activar' }}
+            </button>
+            <button mat-button type="button" (click)="adminProductStore.deleteProduct(product.id)">Eliminar</button>
+          </div>
+        </mat-card>
         }
       </div>
 
-      <mat-paginator
-        [length]="adminProductStore.totalElements()"
-        [pageIndex]="adminProductStore.page()"
-        [pageSize]="adminProductStore.size()"
-        [pageSizeOptions]="[5, 10, 20]"
-        (page)="changePage($event)"
-      />
+      <mat-paginator [length]="adminProductStore.totalElements()" [pageIndex]="adminProductStore.page()"
+        [pageSize]="adminProductStore.size()" [pageSizeOptions]="[5, 10, 20]" (page)="changePage($event)" />
     </div>
 
-    <app-product-form
-      [categories]="adminProductStore.categories()"
-      [product]="adminProductStore.selectedProduct()"
-      [saving]="adminProductStore.saving()"
-      (saveProduct)="adminProductStore.saveProduct($event)"
-      (cancelEdit)="adminProductStore.selectProduct(null)"
-    />
+    <app-product-form [categories]="adminProductStore.categories()" [product]="adminProductStore.selectedProduct()"
+      [saving]="adminProductStore.saving()" (saveProduct)="saveProduct($event)"
+      (cancelEdit)="adminProductStore.selectProduct(null)" />
   </div>
 </section>

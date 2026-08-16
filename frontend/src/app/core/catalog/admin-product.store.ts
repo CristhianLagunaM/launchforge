@@ -80,19 +80,40 @@ export const AdminProductStore = signalStore(
       selectProduct(product: Product | null): void {
         patchState(store, { selectedProduct: product, error: null });
       },
-      async saveProduct(payload: ProductUpsertPayload): Promise<void> {
+      async saveProduct(payload: ProductUpsertPayload): Promise<boolean> {
         patchState(store, { saving: true, error: null });
+
         try {
           const selectedProduct = store.selectedProduct();
+
           if (selectedProduct) {
-            await firstValueFrom(catalogApi.updateProduct(selectedProduct.id, payload));
+            await firstValueFrom(
+              catalogApi.updateProduct(selectedProduct.id, payload)
+            );
           } else {
-            await firstValueFrom(catalogApi.createProduct(payload));
+            await firstValueFrom(
+              catalogApi.createProduct(payload)
+            );
           }
-          patchState(store, { saving: false, selectedProduct: null });
+
+          patchState(store, {
+            saving: false,
+            selectedProduct: null
+          });
+
           await loadProducts({ page: 0 });
+
+          return true;
         } catch (error) {
-          patchState(store, { saving: false, error: extractProblemDetail(error, 'No fue posible guardar el producto.') });
+          patchState(store, {
+            saving: false,
+            error: extractProblemDetail(
+              error,
+              'No fue posible guardar el producto.'
+            )
+          });
+
+          return false;
         }
       },
       async toggleStatus(product: Product): Promise<void> {
