@@ -2,19 +2,102 @@
 
 ## Usuarios
 
-ADMIN puede consultar `GET /api/v1/admin/users` y actualizar estado/rol con `PATCH /api/v1/admin/users/{id}`. La operación no recibe ni modifica `passwordHash`, nombre o correo; únicamente activa/bloquea y asigna `ADMIN` o `CUSTOMER`. La autorización se aplica con `@PreAuthorize("hasRole('ADMIN')")`.
+Solo `ADMIN`:
 
-Frontend: `/admin/users`.
+```text
+GET   /api/v1/admin/users
+PATCH /api/v1/admin/users/{id}
+```
 
-## Descuentos en órdenes
+La actualización modifica:
 
-Los descuentos se calculan únicamente al confirmar una orden, no al agregar productos al carrito. La respuesta de la orden contiene `discountTotal`, `total` y `discounts` con código, porcentaje, base, importe y motivo.
+- `enabled`;
+- rol.
 
-Para probarlos:
+No recibe ni expone:
 
-1. Iniciar sesión como `frequent@launchforge.dev` o configurar una regla desde `/admin/discounts`.
-2. Mantener `Habilitado`, un rango UTC que incluya la fecha/hora actual y porcentajes válidos.
-3. Crear una orden nueva; las órdenes históricas no se recalculan.
-4. Revisar el detalle de la orden y `order_discounts` en PostgreSQL.
+- `password`;
+- `passwordHash`.
 
-El motor aplica las estrategias en orden `TIME_RANGE`, `RANDOM_ORDER`, `FREQUENT_CUSTOMER`, usando el total vigente como base de cada descuento sucesivo. `RANDOM_ORDER` además requiere que el proveedor aleatorio resulte ganador.
+La autorización está en:
+
+```java
+@PreAuthorize("hasRole('ADMIN')")
+```
+
+Frontend:
+
+```text
+/admin/users
+```
+
+## Bootstrap del primer ADMIN
+
+El primer administrador no puede depender de sí mismo para administrar roles.
+
+Flujo inicial:
+
+```mermaid
+flowchart LR
+    R[Registro normal] --> C[CUSTOMER]
+    C --> DB[Asignación ADMIN en user_roles]
+    DB --> L[Nuevo login]
+    L --> A[/admin/users]
+```
+
+Los administradores posteriores se gestionan desde la aplicación.
+
+## Descuentos
+
+Los descuentos se calculan **al crear una orden** dentro de `TransactionalOrderCreator`.
+
+No se espera a la confirmación.
+
+```text
+Create order
+ -> reserve inventory
+ -> DiscountEngine
+ -> persist order + discounts
+```
+
+La respuesta contiene:
+
+- `discountTotal`;
+- `total`;
+- `discounts`.
+
+## Base de cálculo
+
+Las reglas combinables utilizan el subtotal original como base.
+
+```text
+subtotal 100
+10% -> 10
+50% -> 50
+5%  -> 5
+total descuento = 65
+```
+
+No se encadena el segundo porcentaje sobre `90`.
+
+## Configuración
+
+`V15` deja las reglas deshabilitadas por defecto.
+
+`ADMIN` puede:
+
+- habilitarlas;
+- definir porcentaje;
+- definir rango;
+- configurar cliente frecuente.
+
+## Prueba
+
+1. crear/promover un `ADMIN`;
+2. configurar descuentos;
+3. crear un usuario `CUSTOMER`;
+4. generar las condiciones necesarias;
+5. crear una nueva orden;
+6. revisar `discounts` y `order_discounts`.
+
+No se utilizan cuentas demo fijas.

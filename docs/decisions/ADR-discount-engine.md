@@ -1,4 +1,4 @@
-# ADR: discount engine strategy pipeline
+# ADR: Discount Engine Strategy Pipeline
 
 ## Status
 
@@ -6,59 +6,59 @@ Accepted
 
 ## Context
 
-LaunchForge necesita aplicar varias reglas de descuento sobre una orden:
+LaunchForge aplica reglas de descuento:
 
-- descuentos por rango temporal;
-- descuentos aleatorios;
-- descuentos por cliente frecuente.
+- rango temporal;
+- orden aleatoria;
+- cliente frecuente.
 
-Las reglas deben ser:
-
-- extensibles;
-- testeables;
-- auditables;
-- configurables desde base de datos;
-- compatibles con persistencia detallada en `order_discounts`.
+Deben ser extensibles, testeables, configurables y trazables.
 
 ## Decision
 
-Se adopta un `DiscountEngine` que ejecuta un pipeline ordenado de `DiscountStrategy`.
+Se adopta `DiscountEngine` con un pipeline ordenado de `DiscountStrategy`.
+
+```mermaid
+flowchart LR
+    E[DiscountEngine] --> S1[TIME_RANGE]
+    E --> S2[RANDOM_ORDER]
+    E --> S3[FREQUENT_CUSTOMER]
+    S1 --> A[DiscountApplication]
+    S2 --> A
+    S3 --> A
+    A --> DB[(order_discounts)]
+```
 
 Cada estrategia:
 
-- declara su `DiscountCode`;
-- decide `isApplicable(...)`;
-- produce un `DiscountApplication` trazable;
-- no consulta porcentajes hardcodeados.
+- declara su código;
+- decide aplicabilidad;
+- usa configuración cargada desde DB;
+- produce una aplicación trazable.
 
-La configuración activa se resuelve mediante `DiscountConfigurationService` y se comparte dentro de la ejecución del motor.
+Los descuentos combinables se calculan sobre el **subtotal original** y sus importes se acumulan.
 
 ## Alternatives
 
-### `if/else` gigante dentro de `OrderService`
+### `if/else` central
 
-Descartado porque:
+Descartado porque mezcla reglas y dificulta extensión/pruebas.
 
-- mezcla reglas, carga de configuración y persistencia;
-- dificulta agregar nuevas reglas sin tocar lógica existente;
-- complica pruebas unitarias enfocadas;
-- reduce trazabilidad del cálculo.
+### Instanciar estrategias manualmente
 
-### Estrategias instanciadas manualmente dentro del motor
-
-Descartado porque rompe inversión de dependencias y vuelve difícil sustituir implementaciones en tests.
+Descartado porque rompe inversión de dependencias.
 
 ## Consequences
 
-Positivas:
+### Positivas
 
-- cumple Open/Closed con cambios localizados por estrategia;
-- permite tests deterministas para random;
-- conserva trazabilidad por descuento aplicado;
-- permite que varias reglas se acumulen sobre el subtotal original sin mezclar la lógica en `OrderService`.
+- Open/Closed;
+- random determinista en tests;
+- reglas configurables;
+- historial persistido.
 
-Costos:
+### Costos
 
-- hay más clases que en una solución ad hoc;
-- requiere mantener una convención clara para `applicationOrder`;
-- la validación de configuración debe ser estricta para evitar estados inconsistentes.
+- más clases;
+- convención de `applicationOrder`;
+- validación estricta de configuración.

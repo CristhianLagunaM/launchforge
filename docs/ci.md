@@ -1,17 +1,101 @@
 # Integración y entrega continua
 
-Los workflows `backend-ci.yml` y `frontend-ci.yml` se ejecutan en push y pull request hacia `main`, con Java 21 y Node 22 explícitos. El backend publica JaCoCo y ejecuta `mvn clean verify`; el frontend ejecuta `npm ci`, lint, pruebas y build.
+LaunchForge usa GitHub Actions para validar backend y frontend y para publicar imágenes versionadas.
 
-## Entrega continua
+```mermaid
+flowchart LR
+    C[Commit / Pull Request] --> B[Backend CI]
+    C --> F[Frontend CI]
+    B -->|green| M[main]
+    F -->|green| M
+    M --> R[release.yml]
+    R --> G[GHCR]
+```
 
-`release.yml` se activa en `main`, etiquetas `v*` y ejecución manual. Antes de publicar repite ambos gates para impedir que una imagen se entregue sin pruebas. Después construye backend y frontend para `linux/amd64` y `linux/arm64`, genera SBOM y provenance, firma una atestación vinculada al digest y publica en GHCR usando el `GITHUB_TOKEN` efímero.
+## Backend CI
+
+`.github/workflows/backend-ci.yml` se ejecuta en `push` y `pull_request` hacia `main`.
+
+Entorno:
+
+- Ubuntu 24.04;
+- Temurin Java 21;
+- cache Maven.
+
+Gate:
+
+```bash
+cd backend
+mvn --batch-mode clean verify
+```
+
+El workflow publica siempre el reporte JaCoCo como artefacto `backend-jacoco`.
+
+## Frontend CI
+
+`.github/workflows/frontend-ci.yml` se ejecuta en `push` y `pull_request` hacia `main`.
+
+Entorno:
+
+- Ubuntu 24.04;
+- Node `22.22.3`;
+- cache npm.
+
+Gates:
+
+```bash
+cd frontend
+npm ci
+npm run lint
+npm run test -- --watch=false
+npm run build
+```
+
+## Estado validado
+
+Para el commit de `main`:
+
+```text
+4a6a7643557d5ab121e3f4978d3be36b7d445aeb
+```
+
+Backend CI y Frontend CI finalizaron correctamente.
+
+## Continuous Delivery
+
+`release.yml` se activa en:
+
+- `main`;
+- tags `v*`;
+- ejecución manual.
+
+Antes de publicar imágenes vuelve a ejecutar los gates de backend y frontend.
+
+Después:
+
+- construye imágenes para `linux/amd64` y `linux/arm64`;
+- genera SBOM;
+- genera provenance;
+- publica atestaciones;
+- publica en GHCR usando `GITHUB_TOKEN`.
+
+Imágenes:
+
+```text
+ghcr.io/cristhianlagunam/launchforge-backend
+ghcr.io/cristhianlagunam/launchforge-frontend
+```
 
 Etiquetas:
 
-- `latest`: último commit válido de `main`.
-- `sha-<commit>`: despliegue inmutable y trazable.
-- `v*`: versión de release creada desde una etiqueta Git.
+- `latest`: último `main` válido;
+- `sha-<commit>`: referencia inmutable;
+- `v*`: versión etiquetada.
 
-`docker-compose.release.yml` consume esas imágenes y exige los secretos en el entorno del host. No contiene `build`, valores locales por defecto para secretos ni exposición directa de PostgreSQL/backend. Esto constituye Continuous Delivery hasta el registro. Continuous Deployment se añadirá cuando exista un destino real y sus GitHub Environment secrets; no se incluye un SSH o proveedor ficticio.
+## Release con Docker Compose
 
-El job `publish` necesita `packages: write`, `attestations: write` e `id-token: write`; no requiere un PAT. En repositorios privados, el host debe autenticarse con `docker login ghcr.io` antes de hacer `pull`.
+`docker-compose.release.yml` consume imágenes ya publicadas y recibe secretos mediante variables de entorno.
+
+La automatización cubre **Continuous Delivery hasta GHCR**.
+
+Continuous Deployment a un proveedor específico queda fuera del alcance actual porque no existe un entorno de destino definido; no se incluye infraestructura ficticia ni credenciales simuladas.

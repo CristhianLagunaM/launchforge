@@ -6,48 +6,60 @@ Accepted
 
 ## Context
 
-Crear una orden modifica más de una agregación persistente:
+Crear una orden modifica:
 
-- `orders`
-- `order_items`
-- `inventory`
+- `orders`;
+- `order_items`;
+- `inventory`;
+- `order_discounts` cuando aplican reglas.
 
-Si la operación no fuera atómica, podrían quedar órdenes creadas sin capacidad descontada o capacidad descontada sin orden persistida.
+Una operación parcial puede dejar capacidad reservada sin orden o una orden sin reserva consistente.
 
 ## Decision
 
-La creación de órdenes se ejecuta dentro de una sola transacción de aplicación en `TransactionalOrderCreator`.
+La creación se ejecuta dentro de una única transacción de aplicación en `TransactionalOrderCreator`.
 
-Dentro de esa transacción se hace:
+Dentro de ella:
 
-1. validación de cliente;
-2. consolidación de items;
-3. carga de productos;
-4. consumo de capacidad;
-5. construcción de snapshots de items;
-6. persistencia de orden e items.
+1. valida cliente y request;
+2. consolida items;
+3. carga productos;
+4. reserva capacidad;
+5. construye snapshots;
+6. calcula descuentos;
+7. persiste orden, items y descuentos.
 
-La cancelación también se ejecuta en una transacción, restaurando capacidad y cambiando el estado de la orden de forma atómica.
+La cancelación de una orden `CREATED` también es transaccional:
+
+1. carga la orden;
+2. valida ownership/rol;
+3. valida estado;
+4. libera reservas;
+5. cambia a `CANCELLED`;
+6. persiste.
+
+La confirmación y el completado tienen sus propias fronteras transaccionales.
 
 ## Consequences
 
-Positivas:
+### Positivas
 
-- evita descuentos parciales de inventario;
-- mantiene consistencia entre orden y capacidad;
-- simplifica rollback ante errores.
+- rollback consistente;
+- evita reservas parciales;
+- protege relación orden/inventario.
 
-Costos:
+### Costos
 
-- la transacción toca varias filas y debe mantenerse corta;
-- el diseño futuro de pagos o integraciones externas no debe ejecutarse dentro de esta misma transacción sin análisis adicional.
+- transacción toca varias filas;
+- debe mantenerse corta;
+- integraciones externas futuras no deberían agregarse sin analizar la frontera.
 
-## Alternatives considered
+## Alternatives
 
-### Crear primero la orden y luego ajustar inventario fuera de transacción
+### Orden e inventario en transacciones separadas
 
-Descartado porque deja ventanas de inconsistencia.
+Descartado por ventanas de inconsistencia.
 
-### Coreografía asíncrona desde esta fase
+### Coreografía asíncrona
 
-Descartada porque Fase 5 aún no requiere orquestación distribuida.
+Descartada porque el dominio actual no requiere arquitectura distribuida.

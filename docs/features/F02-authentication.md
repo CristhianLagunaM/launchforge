@@ -1,65 +1,75 @@
 # Feature: authentication and authorization
 
-## 1. Qué problema resuelve
+## Alcance
 
-Entrega autenticación real con usuarios persistidos, passwords cifradas, JWT stateless y autorización backend por rol.
+- registro;
+- login;
+- JWT;
+- BCrypt;
+- Spring Security stateless;
+- `ADMIN` / `CUSTOMER`;
+- `@PreAuthorize`;
+- frontend auth store, interceptor y guards.
 
-## 2. Alcance
+## Endpoints
 
-Incluye:
+```text
+POST /api/v1/auth/register
+POST /api/v1/auth/login
+```
 
-- `POST /api/v1/auth/register`
-- `POST /api/v1/auth/login`
-- JWT con `sub`, `email`, `roles`, `iat`, `exp`
-- Spring Security stateless
-- BCrypt
-- `@PreAuthorize`
-- manejo consistente de `401` y `403`
-- frontend con login, register, interceptor, guards y `AuthStore`
+## Flujo
 
-No incluye todavía CRUD de productos, inventario, órdenes, descuentos ni reportes.
+```mermaid
+sequenceDiagram
+    participant UI as Angular
+    participant API as AuthController
+    participant UC as Login/Register UseCase
+    participant DB as PostgreSQL
 
-## 3. Flujo backend
+    UI->>API: credenciales / registro
+    API->>UC: request
+    UC->>DB: usuario/roles
+    UC-->>API: usuario seguro + JWT
+    API-->>UI: response
+```
 
-`AuthController -> RegisterUserUseCase/LoginUseCase -> Repository -> PostgreSQL`
+El registro asigna `CUSTOMER`.
 
-En login:
+## Primer administrador
 
-1. Spring Security autentica email/password.
-2. Se carga el usuario persistido.
-3. `JwtService` emite el token firmado.
-4. Se devuelve DTO seguro sin `password_hash`.
+No se seed-ea un administrador listo para autenticarse.
 
-En request autenticada:
+Bootstrap:
 
-1. Angular envía `Authorization: Bearer <token>`.
-2. Spring Security decodifica JWT.
-3. Se derivan autoridades desde `roles`.
-4. `@PreAuthorize` decide autorización.
+```text
+registrar CUSTOMER
+-> asignar ADMIN en user_roles
+-> nuevo login
+-> administrar usuarios desde la UI
+```
 
-## 4. Decisiones
+No crear manualmente hashes de contraseña.
 
-- JWT evita estado de sesión en servidor.
-- BCrypt resiste mejor filtraciones que contraseñas planas o hashing rápido.
-- Guards Angular mejoran UX, pero la autorización real sigue en backend.
-- DTOs separan API de entidades JPA y evitan exponer campos sensibles.
+## JWT
 
-## 5. Pruebas
+Claims:
 
-Backend:
+- `sub`;
+- `email`;
+- `roles`;
+- `iat`;
+- `exp`.
 
-- unit para hashing, JWT y `LoginUseCase`
-- MockMvc para registro, login, duplicados, `401` y `403`
+## Seguridad
 
-Frontend:
+- guards Angular = UX;
+- backend = frontera real;
+- nunca se retorna `password_hash`.
 
-- store
-- interceptor
-- role guard
+## Diagnóstico
 
-## 6. Cómo depurarlo
-
-- `401`: revisar header `Authorization`, expiración y secret
-- `403`: revisar `roles` del JWT y `@PreAuthorize`
-- login fallido: revisar email, password cifrada y `AuthenticationManager`
-- interceptor: revisar si el token existe en store/localStorage
+- `401`: token/header/expiración/secret;
+- `403`: roles/autoridades;
+- login: email, BCrypt, `AuthenticationManager`;
+- rol cambiado: cerrar sesión y emitir token nuevo.

@@ -1,63 +1,252 @@
 # LaunchForge
 
-LaunchForge es una plataforma para comercializar paquetes de desarrollo web. Incluye autenticación JWT, catálogo, inventario concurrente, órdenes idempotentes, descuentos configurables, reportes y auditoría funcional para administradores.
+LaunchForge es una plataforma para comercializar paquetes de desarrollo web. La solución incluye autenticación, gestión de usuarios, catálogo, inventario, órdenes, descuentos, reportes y auditoría administrativa.
 
-## Arquitectura actual
+El objetivo de este README es permitir **configurar, ejecutar y validar el proyecto rápidamente**. La arquitectura, decisiones técnicas, modelo de dominio, seguridad, estrategia de pruebas y demás detalles se encuentran en [`docs/`](docs/).
+
+## Vista rápida
 
 ```mermaid
 flowchart LR
-    B[Browser] -->|HTTP :80| N[Nginx + Angular 21]
-    N -->|/api proxy| API[Spring Boot 3 / Java 21]
-    API -->|JDBC db:5432| DB[(PostgreSQL 17)]
-    API --> F[Flyway]
-    API --> H[Actuator / OpenAPI]
+    U[Usuario] -->|HTTP| N[Nginx + Angular 21]
+    N -->|/api| API[Spring Boot 3 / Java 21]
+    API --> DB[(PostgreSQL 17)]
+    API --> O[OpenAPI / Actuator]
+    F[Flyway] --> DB
 ```
 
-- `frontend`: SPA standalone, routing, TypeScript estricto y Angular Material; Nginx la sirve en producción.
-- `backend`: Spring Boot 3 sobre Java 21 con JPA, Flyway, Security stateless, JWT y BCrypt.
-- `db`: PostgreSQL persistente con migraciones versionadas V1-V11 y datos demo deterministas.
+### Componentes
+
+| Componente | Tecnología | Responsabilidad |
+| --- | --- | --- |
+| Frontend | Angular 21 + Nginx | Interfaz web |
+| Backend | Spring Boot 3 + Java 21 | API, seguridad y lógica de negocio |
+| Base de datos | PostgreSQL 17 | Persistencia |
+| Migraciones | Flyway | Creación y evolución controlada del esquema |
+| Orquestación | Docker Compose | Ejecución reproducible del entorno |
 
 ## Requisitos
 
-- Docker Desktop con Compose, opción recomendada.
-- Para ejecución local: Java 21, Maven 3.9+, Node 22.22.3/24.15+ y npm.
+### Opción recomendada
 
-## Inicio con Docker
+- Docker Desktop
+- Docker Compose
+
+### Ejecución local sin contenedores
+
+- Java 21
+- Maven 3.9+
+- Node.js `^22.22.3`, `^24.15.0` o `>=26.0.0`
+- npm
+
+## 1. Configurar variables de entorno
+
+Crea `.env` a partir del archivo incluido en el repositorio.
+
+### Linux / macOS
 
 ```bash
 cp .env.example .env
+```
+
+### PowerShell
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Los valores de `.env.example` están pensados exclusivamente para desarrollo local.
+
+> Para cualquier entorno compartido cambia `POSTGRES_PASSWORD`, `SPRING_DATASOURCE_PASSWORD` y `JWT_SECRET`.
+
+Con el `.env.example` actual se utilizan estos puertos:
+
+```text
+Frontend:   8088
+Backend:    8080
+PostgreSQL: 55432
+```
+
+Puedes cambiarlos directamente en `.env`.
+
+## 2. Levantar la aplicación
+
+```bash
 docker compose up --build
 ```
 
-En PowerShell: `Copy-Item .env.example .env`.
+El arranque sigue este flujo:
 
-Servicios:
-
-- Frontend: <http://localhost> por defecto, o `http://localhost:${FRONTEND_HOST_PORT}` si cambias el puerto.
-- Catálogo público: <http://localhost/products> por defecto.
-- Backend health: <http://localhost:8080/actuator/health> por defecto, o `http://localhost:${BACKEND_HOST_PORT}/actuator/health`.
-- Swagger UI: <http://localhost:8080/swagger-ui/index.html> por defecto, o `http://localhost:${BACKEND_HOST_PORT}/swagger-ui/index.html`.
-- OpenAPI JSON: <http://localhost:8080/v3/api-docs> por defecto, o `http://localhost:${BACKEND_HOST_PORT}/v3/api-docs`.
-- PostgreSQL: `localhost:5432` por defecto, o `localhost:${DB_HOST_PORT}`.
-
-Si un puerto ya está ocupado en tu máquina, ajusta `.env` antes de levantar Compose. Ejemplo:
-
-```bash
-DB_HOST_PORT=5433
-BACKEND_HOST_PORT=8081
-FRONTEND_HOST_PORT=8088
+```mermaid
+flowchart TD
+    A[docker compose up --build] --> B[PostgreSQL]
+    B -->|healthy| C[Spring Boot]
+    C --> D[Flyway aplica migraciones]
+    D --> E[Hibernate valida el esquema]
+    E -->|backend healthy| F[Nginx + Angular]
+    F --> G[Aplicación disponible]
 ```
 
-Los valores de `.env.example` son solo para desarrollo; cambia la contraseña en cualquier entorno compartido.
+Los servicios no dependen únicamente del orden de creación de los contenedores: Compose utiliza healthchecks para esperar a que PostgreSQL y backend estén realmente disponibles.
 
-## Ejecución local
+## 3. URLs de desarrollo
 
-Primero inicia PostgreSQL, por ejemplo `docker compose up -d db`, y conserva la URL local por defecto de `application.yml`.
+Si utilizaste `.env.example` sin modificar los puertos:
+
+| Servicio | URL |
+| --- | --- |
+| Aplicación | <http://localhost:8088> |
+| Catálogo público | <http://localhost:8088/products> |
+| Backend | <http://localhost:8080> |
+| Health | <http://localhost:8080/actuator/health> |
+| Swagger UI | <http://localhost:8080/swagger-ui/index.html> |
+| OpenAPI JSON | <http://localhost:8080/v3/api-docs> |
+| PostgreSQL | `localhost:55432` |
+
+Si modificas `FRONTEND_HOST_PORT`, `BACKEND_HOST_PORT` o `DB_HOST_PORT`, utiliza los puertos definidos en tu `.env`.
+
+## 4. Configurar el primer administrador
+
+La instalación **no incluye usuarios demo ni un administrador preconfigurado**.
+
+El registro normal de la aplicación crea usuarios con el rol `CUSTOMER`. Para habilitar el primer administrador:
+
+```mermaid
+flowchart LR
+    A[Registrar usuario desde la aplicación] --> B[Usuario CUSTOMER]
+    B --> C[Asignar ADMIN una sola vez en PostgreSQL]
+    C --> D[Cerrar sesión]
+    D --> E[Iniciar sesión nuevamente]
+    E --> F[Administración habilitada]
+```
+
+### Paso 1. Registrar el usuario
+
+Crea la cuenta desde el flujo normal de registro de LaunchForge.
+
+Esto garantiza que la contraseña sea procesada por la aplicación mediante BCrypt y que el usuario se cree con la estructura esperada.
+
+### Paso 2. Entrar a PostgreSQL
+
+Si conservaste los valores de `.env.example`:
+
+```bash
+docker compose exec db psql -U launchforge -d launchforge
+```
+
+Si cambiaste `POSTGRES_USER` o `POSTGRES_DB`, utiliza esos valores.
+
+### Paso 3. Verificar el usuario
+
+Sustituye `admin@ejemplo.com` por el correo registrado:
+
+```sql
+SELECT
+    u.id,
+    u.email,
+    u.enabled,
+    r.name AS role
+FROM users u
+LEFT JOIN user_roles ur ON ur.user_id = u.id
+LEFT JOIN roles r ON r.id = ur.role_id
+WHERE LOWER(u.email) = LOWER('admin@ejemplo.com');
+```
+
+### Paso 4. Asignar el rol `ADMIN`
+
+La relación de roles se almacena en `user_roles`; no existe una columna `role` dentro de `users`.
+
+Ejecuta:
+
+```sql
+BEGIN;
+
+DELETE FROM user_roles
+WHERE user_id = (
+    SELECT id
+    FROM users
+    WHERE LOWER(email) = LOWER('admin@ejemplo.com')
+);
+
+INSERT INTO user_roles (user_id, role_id)
+SELECT u.id, r.id
+FROM users u
+CROSS JOIN roles r
+WHERE LOWER(u.email) = LOWER('admin@ejemplo.com')
+  AND r.name = 'ADMIN';
+
+COMMIT;
+```
+
+Verifica el resultado:
+
+```sql
+SELECT
+    u.email,
+    u.enabled,
+    r.name AS role
+FROM users u
+JOIN user_roles ur ON ur.user_id = u.id
+JOIN roles r ON r.id = ur.role_id
+WHERE LOWER(u.email) = LOWER('admin@ejemplo.com');
+```
+
+Resultado esperado:
+
+```text
+admin@ejemplo.com | true | ADMIN
+```
+
+Después del cambio, **cierra sesión e inicia sesión nuevamente** para generar un JWT con el rol actualizado.
+
+> Este procedimiento solo es necesario para el bootstrap del primer administrador. A partir de ese momento, la gestión de usuarios, estados y roles se realiza desde las funcionalidades administrativas de LaunchForge.
+
+## 5. Validar los contenedores
+
+```bash
+docker compose ps
+```
+
+El estado esperado es:
+
+```mermaid
+flowchart LR
+    DB[(db)] -->|healthy| API[backend]
+    API -->|healthy| FE[frontend]
+```
+
+También puedes comprobar directamente el backend:
+
+```text
+http://localhost:8080/actuator/health
+```
+
+Respuesta esperada:
+
+```json
+{
+  "status": "UP"
+}
+```
+
+## 6. Ejecución local
+
+Si necesitas trabajar sin ejecutar backend y frontend dentro de Docker, puedes utilizar únicamente PostgreSQL desde Compose.
+
+### Base de datos
+
+```bash
+docker compose up -d db
+```
+
+### Backend
 
 ```bash
 cd backend
 mvn spring-boot:run
 ```
+
+### Frontend
 
 ```bash
 cd frontend
@@ -65,61 +254,147 @@ npm ci
 npm start
 ```
 
-Angular 21 requiere Node 22.22.3 o Node 24.15.0. El contenedor usa Node 24.15.0 y NgRx Signals 21 compatible.
+## 7. Base de datos y migraciones
 
-## Builds y tests
+Flyway es responsable de crear y evolucionar el esquema.
+
+La aplicación utiliza:
+
+```properties
+spring.flyway.enabled=true
+spring.jpa.hibernate.ddl-auto=validate
+```
+
+El repositorio contiene migraciones versionadas desde `V1` hasta `V16`.
+
+Hibernate **no modifica automáticamente** el esquema: únicamente valida que las entidades JPA sean compatibles con la estructura creada por Flyway.
+
+### Validar instalación desde cero
+
+Para comprobar que el proyecto es reproducible sobre una base completamente limpia:
+
+```bash
+docker compose down -v
+docker compose up --build
+```
+
+```mermaid
+flowchart LR
+    A[Eliminar contenedores y volumen] --> B[PostgreSQL vacío]
+    B --> C[Ejecutar Flyway V1 → V16]
+    C --> D[Validar JPA]
+    D --> E[Backend healthy]
+    E --> F[Frontend disponible]
+```
+
+> `docker compose down -v` elimina los datos locales almacenados en el volumen de PostgreSQL.
+
+## 8. Builds, tests y calidad
+
+### Verificación del backend
+
+Desde la raíz:
 
 ```bash
 mvn -f backend/pom.xml clean verify
-cd frontend && npm ci && npm run build
-cd frontend && npm test -- --watch=false
+```
+
+O:
+
+```bash
+cd backend
+mvn clean verify
+```
+
+### Verificación del frontend
+
+```bash
+cd frontend
+npm ci
+npm run lint
+npm test -- --watch=false
+npm run build
+```
+
+### Validar Compose
+
+```bash
 docker compose config
 ```
 
-También existen `make up`, `down`, `reset`, `logs`, `logs-backend`, `logs-db`, `test` y `build`.
+### Makefile
 
-## Base de datos
-
-`spring.flyway.enabled=true` y `ddl-auto=validate`. Flyway administra el esquema con migraciones V1-V11; Hibernate valida el mapeo JPA contra PostgreSQL en cada arranque.
-
-## Decisiones y alcance
-
-- Un monolito modular evita complejidad distribuida prematura.
-- Nginx entrega archivos estáticos y resuelve rutas SPA; además deja preparado el proxy `/api`.
-- Compose ordena el arranque por salud real: DB, backend y frontend.
-- Credenciales demo actuales:
-  - `admin@launchforge.dev` / `launchforge-demo`
-  - `customer@launchforge.dev` / `launchforge-demo`
-  - `frequent@launchforge.dev` / `launchforge-demo`
-
-Consulta [Architecture](docs/architecture.md), [API](docs/api.md), [Security](docs/security.md), [Testing](docs/testing.md), [Troubleshooting](docs/troubleshooting.md), [F08 Audit](docs/features/F08-audit.md) y [ADR Auditing](docs/decisions/ADR-auditing.md).
-
-## Entrega
-
-- Trazabilidad: [requirements-traceability.md](docs/requirements-traceability.md)
-- Guion de demo: [demo-script.md](docs/demo-script.md)
-- Checklist: [delivery-checklist.md](docs/delivery-checklist.md)
-- Calidad y CI: [quality.md](docs/quality.md), [ci.md](docs/ci.md)
-
-Cada push a `main` y cada etiqueta `v*` ejecuta los gates completos y publica imágenes multi-arquitectura en GHCR:
+También están disponibles:
 
 ```text
-ghcr.io/cristhianlagunam/launchforge-backend
-ghcr.io/cristhianlagunam/launchforge-frontend
+make up
+make down
+make reset
+make logs
+make logs-backend
+make logs-db
+make test
+make build
 ```
 
-Las etiquetas disponibles son `latest`, `sha-<commit>` y la versión Git, por ejemplo `v1.0.0`. Un host Docker puede desplegar una versión inmutable mediante:
+## 9. Checklist rápido
 
-```bash
-IMAGE_TAG=sha-abcdef0 docker compose -f docker-compose.release.yml pull
-IMAGE_TAG=sha-abcdef0 docker compose -f docker-compose.release.yml up -d
+Antes de considerar el entorno listo:
+
+```text
+[ ] .env creado
+[ ] docker compose up --build finaliza correctamente
+[ ] db aparece healthy
+[ ] backend aparece healthy
+[ ] frontend responde
+[ ] /actuator/health devuelve UP
+[ ] usuario registrado
+[ ] primer ADMIN configurado si es una instalación nueva
+[ ] login correcto
+[ ] catálogo accesible
+[ ] Swagger accesible
+[ ] tests backend verdes
+[ ] lint, tests y build frontend verdes
 ```
 
-El archivo de release exige secretos reales mediante variables de entorno y no publica PostgreSQL ni backend directamente. La automatización cubre Continuous Delivery hasta el registro; el despliegue automático a un proveedor se habilitará cuando exista un entorno de destino.
+## Documentación
 
-La gestión administrativa permite listar usuarios, activar/bloquear cuentas y cambiar roles sin exponer contraseñas ni hashes.
+La documentación técnica ampliada se encuentra en [`docs/`](docs/).
 
-Las órdenes siguen el flujo `Pendiente de confirmación → Confirmada → Completada`. Una orden pendiente reserva capacidad; ADMIN confirma desde `/admin/orders`; solo las pendientes pueden cancelarse. Las confirmaciones y cancelaciones exitosas quedan registradas en auditoría.
-# Quality, CI y entrega continua
+```mermaid
+flowchart TD
+    D[docs/] --> A[architecture.md]
+    D --> DM[domain-model.md]
+    D --> API[api.md]
+    D --> S[security.md]
+    D --> T[testing.md]
+    D --> Q[quality.md]
+    D --> CI[ci.md]
+    D --> TR[troubleshooting.md]
+    D --> R[requirements-traceability.md]
+    D --> DC[delivery-checklist.md]
+    D --> DS[demo-script.md]
+    D --> DEC[decisions/]
+    D --> F[features/]
+```
 
-La validación técnica de Fase 10 está descrita en [docs/testing.md](docs/testing.md), [docs/quality.md](docs/quality.md) y [docs/ci.md](docs/ci.md). Localmente: `cd backend && mvn clean verify`; `cd frontend && npm ci && npm run lint && npm run test -- --watch=false && npm run build`. Los workflows ejecutan estos gates y `release.yml` publica artefactos verificables en GHCR; no se simula un despliegue a infraestructura inexistente.
+Documentos principales:
+
+- [Arquitectura](docs/architecture.md)
+- [Modelo de dominio](docs/domain-model.md)
+- [API](docs/api.md)
+- [Seguridad](docs/security.md)
+- [Pruebas](docs/testing.md)
+- [Calidad](docs/quality.md)
+- [Integración continua](docs/ci.md)
+- [Troubleshooting](docs/troubleshooting.md)
+- [Trazabilidad de requisitos](docs/requirements-traceability.md)
+- [Checklist de entrega](docs/delivery-checklist.md)
+- [Guion de demostración](docs/demo-script.md)
+
+Las decisiones y funcionalidades específicas se documentan adicionalmente en:
+
+```text
+docs/decisions/
+docs/features/
+```

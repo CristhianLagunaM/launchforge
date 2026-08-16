@@ -1,15 +1,33 @@
 # API
 
+La API utiliza el prefijo `/api/v1`. Swagger se encuentra disponible en `/swagger-ui/index.html` y el contrato OpenAPI en `/v3/api-docs`.
+
 ## Authentication
 
 - `POST /api/v1/auth/register`
 - `POST /api/v1/auth/login`
 
+El registro crea usuarios con rol `CUSTOMER`. La creación inicial del primer `ADMIN` se realiza mediante el procedimiento de bootstrap documentado en el README; la administración posterior se hace mediante los endpoints administrativos.
+
+## Admin users
+
+Solo `ADMIN`:
+
+- `GET /api/v1/admin/users`
+- `PATCH /api/v1/admin/users/{id}`
+
+El `PATCH` permite cambiar:
+
+- estado `enabled`;
+- rol (`ADMIN` o `CUSTOMER`).
+
+No permite modificar contraseña, hash, nombre o correo.
+
 ## Categories
 
 - `GET /api/v1/categories`
 
-Devuelve categorías activas para usuarios anónimos. Un admin autenticado puede recibir también categorías inactivas cuando aplique la lógica del backend.
+Devuelve categorías activas para usuarios anónimos. Un `ADMIN` autenticado puede recibir categorías inactivas cuando corresponda a la lógica del backend.
 
 ## Products
 
@@ -18,22 +36,41 @@ Devuelve categorías activas para usuarios anónimos. Un admin autenticado puede
 - `GET /api/v1/products`
 - `GET /api/v1/products/{id}`
 
-### ADMIN
+### Administración de productos
 
 - `POST /api/v1/products`
 - `PUT /api/v1/products/{id}`
 - `PATCH /api/v1/products/{id}/status`
 - `DELETE /api/v1/products/{id}`
 
+### Query params soportados
+
+- `name`
+- `sku`
+- `category`
+- `minPrice`
+- `maxPrice`
+- `active`
+- `available`
+- `page`
+- `size`
+- `sort`
+
+Ejemplo:
+
+```text
+GET /api/v1/products?name=web&category=WEB&minPrice=100&maxPrice=5000&active=true&page=0&size=20&sort=name,asc
+```
+
 ## Inventory
 
-### ADMIN
+Solo `ADMIN`:
 
 - `GET /api/v1/inventory`
 - `GET /api/v1/inventory/{productId}`
 - `PATCH /api/v1/inventory/{productId}`
 
-`PATCH` body:
+Ejemplo de `PATCH`:
 
 ```json
 {
@@ -54,16 +91,38 @@ Sort fields soportados:
 
 ## Orders
 
-Autenticados:
+### CUSTOMER
 
 - `POST /api/v1/orders`
 - `GET /api/v1/orders`
 - `GET /api/v1/orders/{id}`
 - `PATCH /api/v1/orders/{id}/cancel`
 
-`POST /api/v1/orders` acepta el header opcional `Idempotency-Key`.
+### Administración de órdenes
 
-Body:
+- `GET /api/v1/orders/admin`
+- `GET /api/v1/orders/{id}`
+- `PATCH /api/v1/orders/{id}/cancel`
+- `PATCH /api/v1/orders/{id}/confirm`
+- `PATCH /api/v1/orders/{id}/complete`
+
+Reglas:
+
+- `CUSTOMER` crea órdenes y consulta únicamente las propias;
+- `ADMIN` puede consultar todas;
+- solo órdenes `CREATED` pueden cancelarse;
+- `CREATED -> CONFIRMED` requiere `ADMIN`;
+- `CONFIRMED -> COMPLETED` requiere `ADMIN`.
+
+### Crear orden
+
+`POST /api/v1/orders` acepta opcionalmente:
+
+```text
+Idempotency-Key: <value>
+```
+
+Body actual:
 
 ```json
 {
@@ -72,21 +131,46 @@ Body:
       "productId": "22222222-2222-2222-2222-222222222221",
       "quantity": 1
     }
-  ]
+  ],
+  "requirementDescription": "Necesito una plataforma web para gestionar solicitudes.",
+  "projectObjective": "Centralizar el proceso y reducir tiempos operativos.",
+  "contactEmail": "cliente@ejemplo.com",
+  "contactPhone": "+57 3000000000",
+  "desiredDeliveryDate": "2026-10-30",
+  "referencesUrl": "https://example.com/reference"
 }
 ```
 
-La respuesta de detalle incluye:
+Validaciones relevantes:
 
-- `subtotal`
-- `discountTotal`
-- `total`
-- `items[]`
-- `discounts[]` con `code`, `percentage`, `baseAmount`, `amount`, `reason`, `applicationOrder`
+- `items`: obligatorio y no vacío;
+- `requirementDescription`: obligatorio, máximo 3000 caracteres;
+- `projectObjective`: obligatorio, máximo 1000;
+- `contactEmail`: obligatorio, email válido, máximo 180;
+- `contactPhone`: opcional, máximo 40;
+- `desiredDeliveryDate`: opcional;
+- `referencesUrl`: opcional, máximo 2000.
+
+La respuesta contiene, entre otros:
+
+- `subtotal`;
+- `discountTotal`;
+- `total`;
+- `items[]`;
+- `discounts[]`.
+
+Cada descuento incluye información como:
+
+- `code`;
+- `percentage`;
+- `baseAmount`;
+- `amount`;
+- `reason`;
+- `applicationOrder`.
 
 ## Discount configuration
 
-### ADMIN
+Solo `ADMIN`:
 
 - `GET /api/v1/discount-configurations`
 - `PATCH /api/v1/discount-configurations/{code}`
@@ -95,14 +179,14 @@ Casos de uso:
 
 - habilitar/deshabilitar una regla;
 - ajustar porcentaje;
-- ajustar `startAt/endAt`;
-- ajustar `minimumOrders/lookbackMonths`.
+- configurar `startAt/endAt`;
+- configurar `minimumOrders/lookbackMonths`.
 
-Notas de autorización:
+Reglas disponibles:
 
-- `CUSTOMER` puede crear y cancelar sus propias órdenes;
-- `ADMIN` puede consultar órdenes;
-- clientes autenticados no pueden consultar órdenes de otros clientes.
+- `TIME_RANGE`;
+- `RANDOM_ORDER`;
+- `FREQUENT_CUSTOMER`.
 
 ## Reports
 
@@ -113,52 +197,66 @@ Solo `ADMIN`:
 - `GET /api/v1/reports/top-customers`
 - `GET /api/v1/reports/dashboard`
 
-`dashboard` consolida ingresos brutos y netos, descuentos, ticket promedio, conteos por estado, capacidad operativa y una serie mensual de seis periodos. Todas las agregaciones se ejecutan en PostgreSQL y requieren rol `ADMIN`.
+`dashboard` consolida métricas financieras, estados de órdenes, capacidad operativa y evolución mensual.
 
-Los rankings incluyen únicamente órdenes `CONFIRMED` y `COMPLETED`; excluyen `CANCELLED` y `CREATED`. Top productos devuelve máximo cinco filas ordenadas por `quantitySold DESC`, con desempate `name/sku ASC`. Top clientes usa `orderCount DESC` y email ascendente como desempate.
+Los rankings consideran únicamente órdenes:
 
-El backend devuelve DTOs preparados; el frontend no calcula sumas ni rankings.
+```text
+CONFIRMED
+COMPLETED
+```
 
-El frontend consume rutas relativas `/api/v1`; Nginx las reenvía al backend en Compose. El cliente interpreta Problem Details y diferencia especialmente 401, 403, validación y conflictos 409.
+y excluyen:
+
+```text
+CREATED
+CANCELLED
+```
+
+Top productos limita a cinco filas y usa desempate estable por nombre/SKU. Top clientes usa conteo de órdenes y desempate por email.
 
 ## Audit
 
-Solo ADMIN:
+Solo `ADMIN`:
 
-- GET /api/v1/audit
+- `GET /api/v1/audit`
 
-Filtros opcionales: action, resourceType, actor (UUID o email), from, to, page y size. La respuesta es paginada, ordenada por createdAt descendente y de solo lectura. Todas las respuestas propagan X-Correlation-Id; un valor enviado por el cliente debe tener máximo 100 caracteres y usar letras, números, punto, guion o guion bajo.
+Filtros opcionales:
 
-## Query params soportados en catálogo
-
-- `name`
-- `sku`
-- `category`
-- `minPrice`
-- `maxPrice`
-- `active`
-- `available`
+- `action`
+- `resourceType`
+- `actor`
+- `from`
+- `to`
 - `page`
 - `size`
-- `sort`
 
-Ejemplo:
+La respuesta es paginada, ordenada por fecha descendente y de solo lectura.
+
+## Correlation ID
+
+Las respuestas propagan `X-Correlation-Id`.
+
+Un valor proporcionado por el cliente debe cumplir:
 
 ```text
-GET /api/v1/products?name=web&category=WEB&minPrice=100&maxPrice=5000&active=true&page=0&size=20&sort=name,asc
+[A-Za-z0-9._-]{1,100}
 ```
+
+Si falta o es inválido, el backend genera un UUID.
 
 ## Errores
 
-La API responde `application/problem+json`.
+La API utiliza `application/problem+json`.
 
-Casos esperados:
+Casos habituales:
 
-- `400` validación o filtros inválidos
-- `401` sin autenticación
-- `403` sin rol suficiente
-- `404` recurso inexistente
-- `409` conflicto de SKU/slug
-- `409` inventario insuficiente o conflicto optimista de inventario
-- `409` orden ya cancelada, producto inactivo o conflicto de idempotencia
-- `409` configuración inválida que produciría un cálculo inconsistente
+- `400`: validación o filtros/configuración inválidos;
+- `401`: autenticación ausente o inválida;
+- `403`: rol insuficiente o acceso a recurso ajeno;
+- `404`: recurso inexistente;
+- `409`: SKU/slug duplicado;
+- `409`: inventario insuficiente;
+- `409`: conflicto optimista de inventario;
+- `409`: conflicto de idempotencia;
+- `409`: transición de orden no permitida.

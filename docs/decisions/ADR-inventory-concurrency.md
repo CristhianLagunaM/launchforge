@@ -6,44 +6,47 @@ Accepted
 
 ## Context
 
-LaunchForge vende capacidad operativa, no stock físico. Cuando varias operaciones intentan consumir el mismo cupo, existe riesgo de race condition y sobreasignación.
+LaunchForge vende capacidad operativa. Varias operaciones concurrentes pueden intentar reservar o ajustar el mismo cupo.
 
-El backend debe funcionar en múltiples instancias, por lo que los locks en memoria no son una solución suficiente.
+Locks en memoria no son suficientes para múltiples instancias.
 
 ## Decision
 
-Se adopta optimistic locking sobre `inventory` mediante la columna `version` y `@Version` en JPA.
+Se adopta optimistic locking sobre `inventory` mediante:
 
-Además:
+```java
+@Version
+private Long version;
+```
 
-- las invariantes viven dentro de `Inventory`
-- `PATCH /api/v1/inventory/{productId}` exige la versión actual del cliente
-- los conflictos se traducen a `409 Conflict`
+`PATCH /api/v1/inventory/{productId}` recibe la versión conocida por el cliente.
+
+Los conflictos se traducen a `409 Conflict`.
 
 ## Consequences
 
-Positivas:
+### Positivas
 
-- consistente con múltiples instancias backend
-- sin infraestructura adicional
-- simple de operar en PostgreSQL + JPA
-- falla de forma explícita cuando una vista queda obsoleta
+- funciona con múltiples instancias;
+- sin infraestructura adicional;
+- integrado con JPA/PostgreSQL;
+- detecta explícitamente vistas obsoletas.
 
-Costos:
+### Costos
 
-- el cliente debe recargar y reintentar ante `409`
-- en escenarios de altísima contención podría requerirse evaluar locking pesimista
+- cliente debe recargar/reintentar tras `409`;
+- alta contención podría justificar locking pesimista futuro.
 
-## Alternatives considered
+## Alternatives
 
 ### `synchronized`
 
-Descartado porque solo protege una JVM.
+Descartado: solo protege una JVM.
 
-### Redis o locking distribuido
+### Redis/lock distribuido
 
-Descartado porque Fase 4 no lo justifica y agrega complejidad operativa innecesaria.
+Descartado: complejidad no justificada.
 
 ### Pessimistic locking por defecto
 
-Descartado por ahora. Aumenta contención y complejidad sin evidencia de necesidad en este punto del proyecto.
+Descartado mientras no exista evidencia de alta contención.

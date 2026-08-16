@@ -6,14 +6,9 @@ Accepted
 
 ## Context
 
-El checkout puede reenviar la misma petición por:
+Un checkout puede repetirse por doble clic, retry, refresh o timeout.
 
-- doble clic;
-- refresh;
-- reintento del navegador;
-- timeouts entre frontend y backend.
-
-Sin idempotencia, esos reintentos podrían crear órdenes duplicadas y consumir capacidad más de una vez.
+Sin idempotencia podría crear órdenes duplicadas y reservar capacidad dos veces.
 
 ## Decision
 
@@ -21,29 +16,33 @@ Sin idempotencia, esos reintentos podrían crear órdenes duplicadas y consumir 
 
 La llave se evalúa por cliente:
 
-- si ya existe una orden para `(customer_id, idempotency_key)`, se retorna la misma orden;
-- PostgreSQL impone unicidad con un índice parcial;
-- el caso concurrente se resuelve consultando la orden creada por la petición competidora.
+```text
+(customer_id, idempotency_key)
+```
+
+PostgreSQL impone unicidad mediante índice parcial.
+
+Si la orden ya existe, el backend retorna la existente.
 
 ## Consequences
 
-Positivas:
+### Positivas
 
-- checkout tolera reintentos seguros;
-- evita órdenes duplicadas por reenvíos del cliente;
-- reduce riesgo de descontar capacidad dos veces por la misma intención.
+- retry seguro;
+- evita duplicados;
+- protege inventario.
 
-Costos:
+### Costos
 
-- el cliente debe preservar la llave durante el intento de checkout;
-- el backend debe manejar explícitamente la carrera de inserción.
+- frontend debe conservar la llave mientras la intención no cambie;
+- backend debe resolver carreras de inserción.
 
-## Alternatives considered
+## Alternatives
 
 ### Sin idempotencia
 
 Descartado por riesgo de duplicados.
 
-### Hash implícito del payload
+### Hash automático del payload
 
-Descartado porque distintos payloads similares no representan necesariamente la misma intención del usuario.
+Descartado porque payloads similares no necesariamente representan la misma intención.

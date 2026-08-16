@@ -1,8 +1,8 @@
-# LaunchForge — Plan inicial de migraciones Flyway
+# LaunchForge — Migraciones Flyway
 
 ## Objetivo
 
-Este documento define el orden de migraciones iniciales.
+Flyway es la única fuente de verdad para crear y evolucionar el esquema de PostgreSQL.
 
 Ruta:
 
@@ -10,228 +10,265 @@ Ruta:
 backend/src/main/resources/db/migration/
 ```
 
-## Migraciones
+```mermaid
+flowchart LR
+    V1[V1 Identity] --> V2[V2 Catalog]
+    V2 --> V3[V3 Inventory]
+    V3 --> V4[V4 Orders]
+    V4 --> V5[V5 Discounts]
+    V5 --> V6[V6 Audit]
+    V6 --> V7[V7 Indexes]
+    V7 --> V8[V8 Seed histórico]
+    V8 --> V9[V9 Search indexes]
+    V9 --> V10[V10 Random range]
+    V10 --> V11[V11 Discount alignment]
+    V11 --> V12[V12 Reservation reconciliation]
+    V12 --> V13[V13 Reset + product catalog]
+    V13 --> V14[V14 Inventory initialization]
+    V14 --> V15[V15 Discount configuration]
+    V15 --> V16[V16 Order requirements]
+```
 
-### V1__create_identity.sql
+## Regla de evolución
+
+Una migración compartida **no se edita**.
+
+Todo cambio posterior se expresa mediante una nueva versión incremental.
+
+```text
+NO modificar V1..V16 para corregir una base existente.
+Crear V17__... cuando aparezca el siguiente cambio.
+```
+
+## V1 — Identity
+
+`V1__create_identity.sql`
 
 Crea:
 
-```text
-users
-roles
-user_roles
-```
+- `users`;
+- `roles`;
+- `user_roles`.
+
+Roles base:
+
+- `ADMIN`;
+- `CUSTOMER`.
+
+No crea un administrador de aplicación listo para usar. El bootstrap del primer administrador se realiza después del registro normal, asignando el rol mediante PostgreSQL tal como se documenta en el README.
+
+## V2 — Catalog
+
+`V2__create_catalog.sql`
+
+Crea:
+
+- `categories`;
+- `products`.
+
+Incluye unicidad para nombres/slugs/SKU y protección de precio no negativo.
+
+## V3 — Inventory
+
+`V3__create_inventory.sql`
+
+Crea `inventory` con:
+
+- `available_quantity`;
+- `reserved_quantity`;
+- `version`.
+
+Incluye restricciones de cantidades no negativas y relación 1:1 con producto.
+
+## V4 — Orders
+
+`V4__create_orders.sql`
+
+Crea:
+
+- `orders`;
+- `order_items`.
 
 Incluye:
 
-```text
-PK
-FK
-UNIQUE users.email
-UNIQUE roles.name
-seed ADMIN
-seed CUSTOMER
-```
+- `order_number` único;
+- valores monetarios no negativos;
+- cantidad positiva;
+- estados `CREATED`, `CONFIRMED`, `CANCELLED`, `COMPLETED`;
+- idempotencia por `(customer_id, idempotency_key)` cuando la llave existe.
 
-### V2__create_catalog.sql
+## V5 — Discounts
 
-Crea:
-
-```text
-categories
-products
-```
-
-Incluye:
-
-```text
-UNIQUE category.name
-UNIQUE category.slug
-UNIQUE product.sku
-UNIQUE product.slug
-CHECK product.price >= 0
-FK product.category_id -> categories.id
-```
-
-### V3__create_inventory.sql
+`V5__create_discounts.sql`
 
 Crea:
 
-```text
-inventory
-```
+- `discount_configuration`;
+- `order_discounts`.
 
-Incluye:
+Códigos de reglas:
 
-```text
-UNIQUE product_id
-CHECK available_quantity >= 0
-CHECK reserved_quantity >= 0
-version
-FK inventory.product_id -> products.id
-```
+- `TIME_RANGE`;
+- `RANDOM_ORDER`;
+- `FREQUENT_CUSTOMER`.
 
-### V4__create_orders.sql
+## V6 — Audit
 
-Crea:
+`V6__create_audit.sql`
 
-```text
-orders
-order_items
-```
+Crea `audit_log` con:
 
-Incluye:
+- actor;
+- acción;
+- recurso;
+- correlation ID;
+- IP;
+- metadata JSONB;
+- fecha.
 
-```text
-UNIQUE order_number
-CHECK monetary values >= 0
-CHECK quantity > 0
-partial UNIQUE(customer_id, idempotency_key)
-CHECK status IN (CREATED, CONFIRMED, CANCELLED, COMPLETED)
-```
+## V7 — Indexes
 
-### V5__create_discounts.sql
+`V7__create_indexes.sql`
 
-Crea:
+Añade índices orientados a consultas de:
 
-```text
-discount_configuration
-order_discounts
-```
+- catálogo;
+- órdenes;
+- items;
+- descuentos;
+- auditoría.
 
-Seed:
+## V8 — Seed histórico inicial
 
-```text
-TIME_RANGE = 10%
-RANDOM_ORDER = 50%
-FREQUENT_CUSTOMER = 5%
-```
+`V8__seed_demo_data.sql`
 
-Incluye:
+Fue parte del baseline inicial y aportó datos reproducibles para desarrollo y pruebas.
 
-```text
-UNIQUE discount_configuration.code
-CHECK percentage between 0 and 100
-CHECK minimum_orders > 0 when present
-CHECK lookback_months > 0 when present
-CHECK start_at <= end_at when both exist
-```
+Las migraciones posteriores pueden transformar o reemplazar esos datos; no debe asumirse que las cuentas históricas de V8 siguen disponibles en el estado final de una base nueva.
 
-### V6__create_audit.sql
+## V9 — Product search indexes
 
-Crea:
+`V9__create_product_search_indexes.sql`
+
+Añade índices para:
+
+- `products.price`;
+- `inventory.available_quantity`.
+
+## V10 — Random discount range
+
+`V10__configure_random_discount_range.sql`
+
+Ajusta la configuración temporal de `RANDOM_ORDER`.
+
+## V11 — Discount seed alignment
+
+`V11__align_discount_seed_with_accumulative_rules.sql`
+
+Alinea datos históricos con la regla final de descuentos acumulables sobre el subtotal original.
+
+## V12 — Reservation reconciliation
+
+`V12__reconcile_inventory_reservations.sql`
+
+Normaliza `reserved_quantity` y reconstruye reservas a partir de órdenes `CREATED`, evitando reservas huérfanas al evolucionar el flujo pendiente/confirmada.
+
+## V13 — Reset de datos y catálogo final
+
+`V13__reset_demo_data_and_seed_products.sql`
+
+Esta migración:
+
+1. trunca datos funcionales previos;
+2. reinicia identidades de catálogos secuenciales;
+3. elimina usuarios históricos de seed;
+4. reconstruye categorías;
+5. carga el catálogo final de productos.
+
+Tablas afectadas por el reset:
 
 ```text
 audit_log
-```
-
-Incluye:
-
-```text
-FK actor_user_id -> users.id
-metadata JSONB
-```
-
-### V7__create_indexes.sql
-
-Índices para:
-
-```text
-products.active
-products.category_id
-products.name
-orders.customer_id
-orders.created_at
-orders.status
-orders(customer_id, created_at)
-order_items.order_id
-order_items.product_id
-order_discounts.order_id
-order_discounts.code
-audit_log.actor_user_id
-audit_log.action
-audit_log.created_at
-audit_log(resource_type, resource_id)
-```
-
-### V8__seed_demo_data.sql
-
-Crea:
-
-```text
-usuarios demo
-productos demo
-inventario
-órdenes históricas
-order_items
 order_discounts
-audit_log mínimo
-datos necesarios para Top 5
-cliente frecuente
+order_items
+orders
+inventory
+discount_configuration
+user_roles
+users
+products
+categories
 ```
 
-Notas:
+Como consecuencia, una base construida hasta `V16` **no depende de usuarios demo**.
+
+## V14 — Inicialización de inventario
+
+`V14__initialize_product_inventory.sql`
+
+Crea una fila de inventario para todo producto que aún no la tenga:
 
 ```text
-Passwords demo almacenadas con BCrypt
-Fechas seed deterministas en UTC
-Usuario frecuente con >= 5 órdenes CONFIRMED/COMPLETED en los últimos 12 meses
+available_quantity = 0
+reserved_quantity  = 0
+version            = 0
 ```
 
-## Regla
+El `ADMIN` puede ajustar después la capacidad desde la aplicación.
 
-Después de aplicar V1-V8 y compartirlas:
+## V15 — Configuración final de descuentos
+
+`V15__restore_discount_configuration.sql`
+
+Restablece las tres configuraciones:
+
+| Code | Porcentaje | Estado inicial | Parámetros |
+|---|---:|---|---|
+| `TIME_RANGE` | 10% | deshabilitado | rango configurable |
+| `RANDOM_ORDER` | 50% | deshabilitado | rango configurable |
+| `FREQUENT_CUSTOMER` | 5% | deshabilitado | 5 órdenes / 12 meses |
+
+Las reglas se habilitan y configuran posteriormente desde administración.
+
+## V16 — Requerimientos de orden
+
+`V16__add_order_requirements.sql`
+
+Añade a `orders`:
 
 ```text
-NO EDITARLAS
+requirement_description TEXT
+project_objective TEXT
+contact_email VARCHAR(180)
+contact_phone VARCHAR(40)
+desired_delivery_date DATE
+references_url TEXT
 ```
 
-Los siguientes cambios deben ser:
-
-```text
-V9__...
-V10__...
-V11__...
-```
-
-No corregir historia editando scripts ya aplicados. Corregir con nueva migración incremental.
-
-### V11__align_discount_seed_with_accumulative_rules.sql
-
-Alinea los datos demo históricos con la regla acumulable sobre subtotal original:
-
-```text
-ajusta orders.discount_total y orders.total
-ajusta RANDOM_ORDER en order_discounts
-agrega FREQUENT_CUSTOMER a la orden demo principal
-actualiza metadata de audit_log asociada
-```
-
-### V9__create_product_search_indexes.sql
-
-Índices adicionales para catálogo:
-
-```text
-products.price
-inventory.available_quantity
-```
+Estos campos permiten que la orden represente no solo productos seleccionados sino el contexto comercial del proyecto solicitado.
 
 ## Verificación
 
-Después de cada migración ejecutar:
+Consultar:
 
 ```sql
-SELECT *
+SELECT
+    installed_rank,
+    version,
+    description,
+    script,
+    checksum,
+    installed_on,
+    success
 FROM flyway_schema_history
 ORDER BY installed_rank;
 ```
 
-Y validar desde cero:
+Para validar todo el historial desde cero:
 
 ```bash
 docker compose down -v
 docker compose up --build
 ```
-## V12 — Reconciliación de reservas
 
-`V12__reconcile_inventory_reservations.sql` normaliza `reserved_quantity` y lo reconstruye exclusivamente a partir de órdenes `CREATED`. Así, una base existente no conserva reservas huérfanas después de cambiar el flujo a pendiente → confirmada.
+> `down -v` elimina el volumen local de PostgreSQL y debe utilizarse únicamente cuando se desea reconstruir una base de desarrollo.

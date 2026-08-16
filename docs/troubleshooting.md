@@ -1,72 +1,138 @@
 # Troubleshooting
 
-## CI y análisis
+## 1. Diagnóstico general
 
-- Revisa el primer fallo de `mvn clean verify`: Surefire indica pruebas, Spotless formato, PMD reglas y JaCoCo cobertura.
-- Testcontainers requiere Docker activo; no sustituyas PostgreSQL por H2.
-- En frontend ejecuta separadamente `npm ci`, lint, pruebas sin watch y build.
-- En Actions descarga el artefacto `backend-jacoco` y revisa la versión de Java/Node.
+```bash
+docker compose config
+docker compose ps
+docker compose logs db
+docker compose logs backend
+docker compose logs frontend
+```
 
-## 1. `401 Unauthorized`
+Con `.env.example`:
 
-- verificar que el request admin incluya `Authorization: Bearer <jwt>`
-- revisar expiración del token
-- confirmar que el interceptor frontend siga registrado
+```text
+Frontend:   http://localhost:8088
+Backend:    http://localhost:8080
+PostgreSQL: localhost:55432
+```
 
-## 2. `403 Forbidden`
+Dentro de Compose:
 
-- revisar roles dentro del JWT
-- confirmar `ROLE_ADMIN` en backend
-- probar el mismo endpoint con un token del admin demo
+```text
+backend -> db:5432
+frontend/nginx -> backend:8080
+```
 
-## 3. `404 Product not found`
+## 2. Reset local
 
-- confirmar UUID correcto
-- si el request es público, verificar que el producto siga activo
-- revisar si la UI usa un id viejo después de editar/eliminar
-
-## 4. `409 Conflict`
-
-- consultar productos por `sku` o `slug`
-- revisar si la edición intenta reutilizar un valor ya existente
-- en inventario, revisar si la capacidad disponible alcanzaba
-- si el mensaje habla de versión obsoleta, recargar la fila antes de reintentar
-
-## 5. Búsqueda vacía o inesperada
-
-- validar `minPrice <= maxPrice`
-- revisar `category` por nombre o slug
-- recordar que catálogo público fuerza `active=true`
-- revisar `available=true` contra `inventory.available_quantity`
-
-## 6. Docker Compose no levanta
-
-- `docker compose ps`
-- `docker compose logs backend`
-- `docker compose logs frontend`
-- `docker compose logs db`
-
-Si cambiaste migraciones o seed, reinicio limpio local:
+Si necesitas reconstruir la base de desarrollo:
 
 ```bash
 docker compose down -v
 docker compose up --build
 ```
 
-## 7. Conflicto optimista en inventario
+> `down -v` elimina los datos locales de PostgreSQL.
 
-- revisar `version` devuelta por `GET /api/v1/inventory/{productId}`
-- confirmar que el `PATCH` envía esa misma versión
-- si otra operación modificó la fila, el backend responderá `409`
-- recargar inventario y reintentar con la versión nueva
+## 3. CI y análisis
 
-## 8. Inventario insuficiente
+Backend:
 
-- consultar `available_quantity` en PostgreSQL
-- verificar si otro ajuste o consumo concurrente ya descontó capacidad
-- revisar que no se esté intentando `DECREASE` por encima del disponible
+```bash
+cd backend
+mvn clean verify
+```
 
-## 9. Diagnóstico SQL rápido
+Frontend:
+
+```bash
+cd frontend
+npm ci
+npm run lint
+npm test -- --watch=false
+npm run build
+```
+
+Testcontainers requiere Docker activo.
+
+## 4. `401 Unauthorized`
+
+- revisar `Authorization: Bearer <jwt>`;
+- verificar expiración;
+- comprobar `JWT_SECRET`;
+- revisar interceptor frontend;
+- iniciar sesión nuevamente si el rol cambió después de emitir el token.
+
+## 5. `403 Forbidden`
+
+- inspeccionar roles del JWT;
+- confirmar `ROLE_ADMIN`/`ROLE_CUSTOMER`;
+- revisar `@PreAuthorize`;
+- comprobar ownership para órdenes.
+
+### Primer ADMIN
+
+Si todavía no existe administrador, seguir el bootstrap del README:
+
+```text
+registro CUSTOMER -> asignar ADMIN en user_roles -> nuevo login
+```
+
+## 6. PostgreSQL no conecta
+
+```bash
+docker compose ps
+docker compose logs db
+docker compose exec db pg_isready -U launchforge -d launchforge
+```
+
+Con `.env.example`, desde el host PostgreSQL está publicado en `55432`; dentro de Compose el backend siempre usa `db:5432`.
+
+## 7. Flyway falla
+
+Consultar:
+
+```sql
+SELECT *
+FROM flyway_schema_history
+ORDER BY installed_rank;
+```
+
+No:
+
+- editar una migración ya aplicada;
+- deshabilitar Flyway;
+- cambiar Hibernate a `ddl-auto=update`.
+
+Corregir mediante una nueva migración.
+
+## 8. Hibernate `validate` falla
+
+Comparar:
+
+- entidad JPA;
+- última migración;
+- nombre/tipo/nullability de columna.
+
+La solución es alinear modelo y esquema, no habilitar generación automática.
+
+## 9. `404 Product not found`
+
+- revisar UUID;
+- verificar `active`;
+- comprobar si la UI conserva un ID anterior.
+
+## 10. `409` de catálogo
+
+- revisar SKU;
+- revisar slug;
+- comprobar duplicados antes de reintentar.
+
+## 11. Inventario insuficiente
+
+Consultar:
 
 ```sql
 SELECT
@@ -82,114 +148,147 @@ JOIN products p ON p.id = i.product_id
 ORDER BY p.name;
 ```
 
-## 10. `409` al crear orden
+## 12. Conflicto optimista
 
-- revisar `Idempotency-Key`
-- revisar si el producto sigue activo
-- consultar `inventory.available_quantity`
-- verificar si el cliente reintentó un checkout anterior
+- consultar versión vigente;
+- recargar la fila;
+- reintentar con nueva versión.
 
-## 11. Descuento no aplicado
+No ocultar el `409` con reintentos infinitos.
 
-- revisar `discount_configuration.enabled`
-- validar `start_at` y `end_at` para reglas temporales
-- confirmar que el backend esté usando el rango vigente en UTC
-- revisar el detalle de la orden y `order_discounts`
+## 13. `409` al crear orden
 
-## 12. Cliente frecuente no recibe descuento
+Revisar:
 
-- ejecutar un `COUNT(*)` sobre órdenes del cliente
-- contar solo `CONFIRMED` y `COMPLETED`
-- validar `minimum_orders` y `lookback_months`
-- confirmar que `CANCELLED` no esté entrando en el conteo
+- producto activo;
+- capacidad disponible;
+- `Idempotency-Key`;
+- si la misma intención ya creó una orden.
 
-## 13. `RANDOM_ORDER` difícil de probar
+## 14. Cancelación rechazada
 
-- en producción depende de `RandomProvider`
-- en tests debe inyectarse una implementación determinista
-- no usar `new Random()` dentro de la estrategia
+Solo `CREATED` puede cancelarse.
 
-## 14. Total de orden no coincide
+```text
+CREATED   -> CANCELLED : válido
+CONFIRMED -> CANCELLED : inválido
+COMPLETED -> CANCELLED : inválido
+```
 
-- verificar que cada descuento se calcule sobre el subtotal original
-- revisar `application_order`
-- comprobar escala `2` y `HALF_UP`
-- comparar `orders.discount_total` con la suma de `order_discounts.amount`
+Al cancelar `CREATED`, se libera la reserva.
 
-## 15. Configuración admin falla con `400`
+## 15. Requerimientos de orden rechazados
 
-- revisar `percentage` entre `0` y `100`
-- validar `startAt <= endAt`
-- para `FREQUENT_CUSTOMER`, confirmar `minimumOrders` y `lookbackMonths`
-- para descuentos temporales, confirmar ambos extremos del rango
+`POST /orders` exige:
 
-## 16. Orden histórica parece cambiar después de editar descuentos
+- `requirementDescription`;
+- `projectObjective`;
+- `contactEmail`;
+- al menos un item.
 
-- la fuente correcta es `order_discounts`, no `discount_configuration`
-- consultar el desglose persistido por `order_id`
-- verificar que la UI no esté recalculando porcentajes localmente
+Revisar límites definidos en `CreateOrderRequest`.
 
-## 17. No aparecen órdenes del cliente
+## 16. Descuento no aplicado
 
-- confirmar que el JWT pertenezca al usuario correcto
-- revisar si la UI está consultando `/api/v1/orders` ya autenticada
-- validar en backend que la orden se creó para ese `customer_id`
+- revisar `discount_configuration.enabled`;
+- revisar rango UTC;
+- revisar porcentaje;
+- para frecuente, contar solo `CONFIRMED/COMPLETED`;
+- revisar `minimum_orders` y `lookback_months`;
+- consultar `order_discounts`.
 
-## 18. `403` al consultar detalle de orden
+## 17. Total no coincide
 
-- un `CUSTOMER` solo puede ver órdenes propias
-- probar el mismo id con un token `ADMIN`
-- validar el `customer_id` de la orden en PostgreSQL
+Cada regla se calcula sobre el subtotal original.
+
+Comparar:
+
+```sql
+SELECT
+    code,
+    percentage,
+    base_amount,
+    amount,
+    application_order
+FROM order_discounts
+WHERE order_id = '<uuid>'
+ORDER BY application_order;
+```
+
+La suma de `amount` debe corresponder a `orders.discount_total`.
+
+## 18. Orden histórica cambia visualmente
+
+La fuente histórica es:
+
+```text
+order_items
+order_discounts
+```
+
+No se debe recalcular con el precio ni la configuración actual.
 
 ## 19. Idempotencia no evita duplicados
 
-- confirmar que el cliente reusa exactamente la misma `Idempotency-Key`
-- revisar la restricción única de `orders(customer_id, idempotency_key)`
-- inspeccionar la tabla `flyway_schema_history` para confirmar que la migración base está aplicada
+- confirmar que el frontend reutiliza exactamente la misma llave;
+- verificar la restricción por `(customer_id, idempotency_key)`;
+- comprobar que cambiar el carrito genere una intención nueva.
 
-## 20. Reportes vacíos o con ranking inesperado
+## 20. Reportes vacíos
 
-- confirmar que existan órdenes `CONFIRMED` o `COMPLETED`;
-- verificar que `CANCELLED` y `CREATED` no entren en la consulta;
-- comparar la API con el SQL documentado en `F07-reports.md`;
-- revisar que el desempate sea nombre/SKU para productos y email para clientes;
-- confirmar que el JWT tenga autoridad `ROLE_ADMIN`.
+- confirmar existencia de `CONFIRMED`/`COMPLETED`;
+- `CREATED` y `CANCELLED` no cuentan en rankings;
+- comprobar rol `ADMIN`.
 
 ## 21. Reportes lentos
 
-- ejecutar `EXPLAIN (ANALYZE, BUFFERS)` con cardinalidad representativa;
-- comprobar uso de `idx_orders_status` y PK en joins;
-- no agregar índices solo porque una tabla aparece en la consulta;
-- revisar estimaciones frente a filas reales antes de crear una migración;
-- nunca editar `V7__create_indexes.sql` ya compartida.
+Usar:
 
-## 22. No aparece un evento de auditoría
+```sql
+EXPLAIN (ANALYZE, BUFFERS)
+...
+```
 
-- confirmar que la acción terminó con commit;
-- verificar Transactional y LogAction en el caso de uso;
-- buscar directamente por correlation_id;
-- recordar que GET ordinarios y acciones fallidas no generan eventos de éxito.
+No añadir índices sin medir cardinalidad y plan.
 
-## 23. Actor o correlation ID ausente
+## 22. Auditoría ausente
 
-- actor_user_id NULL es válido para registro público, seed y proceso técnico;
-- comprobar un subject UUID válido en el JWT;
-- revisar X-Correlation-Id en la respuesta;
-- valores inválidos o mayores a 100 caracteres se reemplazan.
+- comprobar que la operación terminó con commit;
+- revisar `@LogAction`;
+- buscar por `correlation_id`;
+- recordar que una operación fallida no genera evento de éxito.
 
-## 24. IP distinta a la esperada
+## 23. Correlation ID
 
-Se registra la IP de la conexión y no se confía en X-Forwarded-For. Detrás de un proxy puede aparecer la IP del proxy hasta configurar explícitamente proxies confiables.
+Debe cumplir:
 
-## 25. Datos sensibles en auditoría
+```text
+[A-Za-z0-9._-]{1,100}
+```
 
-- buscar password, token, jwt o secret en metadata;
-- AuditMetadataFactory debe conservar una lista permitida;
-- no añadir Authorization, JWT ni cuerpos completos a MDC o metadata.
-## Frontend: peer dependencies
+Valores inválidos se sustituyen por UUID.
 
-Si `npm ci` falla, no usar `--force` o `--legacy-peer-deps` como solución permanente. Alinear los majors de Angular, Material, CLI y NgRx. La combinación vigente es Angular 21, NgRx Signals 21 y TypeScript 5.9.
+## 24. Frontend: peer dependencies
 
-## Checkout o conflicto de inventario
+No usar como solución permanente:
 
-En Network, un retry idéntico debe conservar `Idempotency-Key`; modificar el carrito debe generar otra. Ante 409 de inventario, la interfaz recarga la fila para obtener la versión vigente antes del próximo intento.
+```text
+--force
+--legacy-peer-deps
+```
+
+La combinación actual es Angular 21, NgRx Signals 21 y TypeScript 5.9.
+
+## 25. Puerto ocupado
+
+Si aparece `failed to bind host port`:
+
+- cambiar el puerto en `.env`; o
+- liberar el puerto en el sistema operativo.
+
+Después:
+
+```bash
+docker compose config
+docker compose up --build
+```

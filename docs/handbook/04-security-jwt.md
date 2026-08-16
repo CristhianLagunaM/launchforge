@@ -1,40 +1,54 @@
 # Security y JWT en LaunchForge
 
-## Claims mínimos
+## Claims
 
-Cada token incluye:
+- `sub`;
+- `email`;
+- `roles`;
+- `iat`;
+- `exp`.
 
-- `sub`: UUID del usuario
-- `email`
-- `roles`
-- `iat`
-- `exp`
+## Stateless
 
-## Por qué JWT
-
-- elimina sesión de servidor
-- escala mejor horizontalmente
-- simplifica frontend SPA + API
-
-## Por qué stateless
-
-Cada request trae su contexto de autenticación. El backend no depende de `HttpSession`.
+Cada request contiene su contexto mediante JWT. El backend no depende de `HttpSession`.
 
 ## Roles
 
-- `ADMIN`
-- `CUSTOMER`
+```text
+ADMIN
+CUSTOMER
+```
 
-Las autoridades Spring se proyectan como `ROLE_ADMIN` y `ROLE_CUSTOMER`.
+Spring:
+
+```text
+ROLE_ADMIN
+ROLE_CUSTOMER
+```
+
+## Registro y bootstrap
+
+Registro -> `CUSTOMER`.
+
+Primer `ADMIN`:
+
+```text
+registrar -> user_roles ADMIN -> nuevo login
+```
+
+Administración posterior desde `/api/v1/admin/users`.
 
 ## 401 vs 403
 
-- `401`: token ausente, inválido o expirado
-- `403`: token válido pero sin permisos suficientes
+- 401: token inválido/ausente/expirado;
+- 403: token válido sin autoridad o acceso permitido.
 
-## Riesgos a evitar
+## Riesgos
 
-- passwords sin hashing
-- secretos versionados
-- confiar solo en guards frontend
-- guardar JWT o passwords en `audit_log.metadata`
+Evitar:
+
+- password sin hashing;
+- secretos versionados;
+- confiar solo en guards frontend;
+- JWT/password en auditoría;
+- crear hashes manuales en DB para bootstrap.
