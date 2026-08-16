@@ -1,16 +1,32 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  ViewChild,
+  inject
+} from '@angular/core';
+
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { PageEvent, MatPaginatorModule } from '@angular/material/paginator';
+import {
+  MatPaginatorModule,
+  PageEvent
+} from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
+
 import { AdminProductStore } from '../../../core/catalog/admin-product.store';
-import { Product } from '../../../core/catalog/catalog.models';
+import {
+  Product,
+  ProductUpsertPayload
+} from '../../../core/catalog/catalog.models';
+
 import { ProductFormComponent } from './product-form.component';
 
 @Component({
@@ -35,7 +51,11 @@ import { ProductFormComponent } from './product-form.component';
 })
 export class AdminProductsPageComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
+
   readonly adminProductStore = inject(AdminProductStore);
+
+  @ViewChild(ProductFormComponent)
+  private productForm!: ProductFormComponent;
 
   readonly filtersForm = this.formBuilder.nonNullable.group({
     name: [''],
@@ -48,12 +68,28 @@ export class AdminProductsPageComponent implements OnInit {
     await this.adminProductStore.loadProducts();
   }
 
+  async saveProduct(
+    payload: ProductUpsertPayload
+  ): Promise<void> {
+    const success =
+      await this.adminProductStore.saveProduct(payload);
+
+    if (success) {
+      this.productForm.resetForm();
+    }
+  }
+
   async search(): Promise<void> {
+    const filters = this.filtersForm.getRawValue();
+
     await this.adminProductStore.loadProducts({
       filters: {
-        name: this.filtersForm.getRawValue().name || undefined,
-        sku: this.filtersForm.getRawValue().sku || undefined,
-        active: this.filtersForm.getRawValue().active === '' ? null : this.filtersForm.getRawValue().active === 'true'
+        name: filters.name || undefined,
+        sku: filters.sku || undefined,
+        active:
+          filters.active === ''
+            ? null
+            : filters.active === 'true'
       },
       page: 0
     });
@@ -72,5 +108,6 @@ export class AdminProductsPageComponent implements OnInit {
 
   newProduct(): void {
     this.adminProductStore.selectProduct(null);
+    this.productForm?.resetForm();
   }
 }

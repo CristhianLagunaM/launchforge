@@ -25,7 +25,7 @@
               <p>{{ item.sku }}</p>
             </div>
             <div class="cart-item__meta">
-              <strong>{{ item.price | currency:'USD':'symbol':'1.2-2' }}</strong>
+              <strong>{{ item.price | currency:'COP':'symbol-narrow':'1.0-0':'es-CO' }}</strong>
               <div class="cart-item__actions">
                 <button mat-icon-button type="button" [attr.aria-label]="'Reducir cantidad de ' + item.name" (click)="cartStore.updateQuantity(item.productId, item.quantity - 1)">
                   <mat-icon>remove</mat-icon>
@@ -46,7 +46,7 @@
       <mat-card-title>Resumen</mat-card-title>
       <mat-card-content>
         <p><strong>Productos:</strong> {{ cartStore.itemCount() }}</p>
-        <p><strong>Subtotal:</strong> {{ cartStore.subtotal() | currency:'USD':'symbol':'1.2-2' }}</p>
+        <p><strong>Subtotal:</strong> {{ cartStore.subtotal() | currency:'COP':'symbol-narrow':'1.0-0':'es-CO' }}</p>
       </mat-card-content>
       <mat-card-actions>
         <button mat-button type="button" (click)="cartStore.clearCart()">Vaciar carrito</button>
