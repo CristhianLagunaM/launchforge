@@ -1,6 +1,6 @@
 <section class="auth-page">
   <aside class="auth-panel">
-    <p class="auth-kicker">Launch your next idea</p>
+    <p class="auth-kicker">Activa tu próxima idea</p>
     <h1>Tu próxima entrega comienza aquí.</h1>
     <p>
       Accede a tu espacio para descubrir soluciones, preparar tu compra y seguir cada proyecto.
@@ -23,12 +23,12 @@
       }
 
       <form [formGroup]="form" (ngSubmit)="submit()">
-        <mat-form-field class="full-width">
+        <mat-form-field appearance="outline" class="full-width">
           <mat-label>Email</mat-label>
           <input matInput type="email" formControlName="email" autocomplete="email" />
         </mat-form-field>
 
-        <mat-form-field class="full-width">
+        <mat-form-field appearance="outline" class="full-width">
           <mat-label>Contraseña</mat-label>
           <input
             matInput

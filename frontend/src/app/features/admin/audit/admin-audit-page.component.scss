@@ -5,6 +5,10 @@
 .actions { display: flex; gap: .5rem; padding-top: .5rem; }
 .table-scroll { overflow-x: auto; }
 table { min-width: 70rem; width: 100%; }
-td code { font-size: .75rem; overflow-wrap: anywhere; white-space: normal; }
+th { background: var(--lf-surface); }
+th, td { border-bottom-color: var(--lf-border); }
+tbody tr { transition: background-color 150ms ease; }
+tbody tr:hover { background: var(--lf-interactive); }
+td code { color: var(--lf-muted); font-family: monospace; font-size: .75rem; overflow-wrap: anywhere; white-space: normal; }
 .state { padding: 1.5rem; }
 .error { border-color: var(--mat-sys-error); }

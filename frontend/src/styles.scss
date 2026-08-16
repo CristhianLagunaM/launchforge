@@ -1,10 +1,21 @@
 @use '@angular/material' as mat;
 
 html {
-  @include mat.theme((color: (theme-type: dark, primary: mat.$cyan-palette, tertiary: mat.$violet-palette), typography: 'Segoe UI', density: 0));
+  @include mat.theme((color: (theme-type: dark, primary: mat.$cyan-palette, tertiary: mat.$cyan-palette), typography: 'Segoe UI', density: 0));
   color-scheme: dark;
-  font-family: 'Segoe UI', Arial, sans-serif;
-  background: #060910;
+  font-family: 'Segoe UI Variable', 'Segoe UI', Arial, sans-serif;
+  background: #0b0b0c;
+}
+
+:root {
+  --lf-bg: #0b0b0c;
+  --lf-surface: #121214;
+  --lf-interactive: #1a1a1e;
+  --lf-border: #222226;
+  --lf-text: #f4f4f5;
+  --lf-muted: #8e8e93;
+  --lf-meta: #52525b;
+  --lf-cyan: #72e7ff;
 }
 
 * {
@@ -17,24 +28,25 @@ html, body {
 }
 
 body {
-  color: #edf7ff;
+  color: var(--lf-text);
   background:
-    linear-gradient(rgba(75, 225, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(75, 225, 255, 0.025) 1px, transparent 1px),
-    #060910;
+    linear-gradient(rgba(142, 142, 147, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(142, 142, 147, 0.025) 1px, transparent 1px),
+    var(--lf-bg);
   background-size: 48px 48px;
 }
 
 button, input, select, textarea { font-family: inherit; }
 
 a {
-  color: #72e7ff;
+  color: var(--lf-muted);
   text-decoration: none;
 }
 
-::selection { background: #7b4dff; color: white; }
+::selection { background: rgba(114, 231, 255, 0.28); color: white; }
 
 a:hover {
+  color: var(--lf-text);
   text-decoration: underline;
 }
 
@@ -43,3 +55,48 @@ a:hover {
   --mat-snack-bar-supporting-text-color: #e8fbff;
   --mat-snack-bar-button-color: #72e7ff;
 }
+
+mat-card { background: var(--lf-surface) !important; border-color: var(--lf-border) !important; box-shadow:none !important; }
+input:not(.mat-mdc-input-element), select:not(.mat-mdc-select), textarea:not(.mat-mdc-input-element) { background:var(--lf-interactive); border:1px solid var(--lf-border); border-radius:6px; color:var(--lf-text); }
+input::placeholder, textarea::placeholder { color:var(--lf-meta); }
+input:focus, select:focus, textarea:focus { border-color:var(--lf-muted); box-shadow:none; outline:none; }
+.mat-mdc-form-field { --mdc-filled-text-field-container-color: var(--lf-interactive); --mdc-filled-text-field-focus-active-indicator-color: var(--lf-muted); --mdc-filled-text-field-hover-active-indicator-color: var(--lf-muted); --mdc-filled-text-field-input-text-color: var(--lf-text); --mdc-filled-text-field-label-text-color: var(--lf-muted); }
+.mat-mdc-text-field-wrapper { border-radius: 6px 6px 0 0 !important; }
+.mat-mdc-input-element { background: transparent !important; border: 0 !important; border-radius: 0 !important; }
+.mat-mdc-button:not(:disabled) { color: var(--lf-muted) !important; }
+.mat-mdc-button:hover:not(:disabled) { color: var(--lf-text) !important; }
+.mat-mdc-unelevated-button:not(:disabled) { background: var(--lf-text) !important; color: #0b0b0c !important; }
+.mat-mdc-outlined-button:not(:disabled) { border-color: #3a3a3f !important; color: var(--lf-text) !important; }
+.mat-mdc-button-base { border-radius: 6px !important; }
+.mat-mdc-card-title { letter-spacing: -.02em; }
+
+app-login .auth-form-card .mat-mdc-form-field,
+app-register .auth-form-card .mat-mdc-form-field {
+  --mdc-outlined-text-field-container-shape: 6px;
+  --mdc-outlined-text-field-outline-color: #3a3a3f;
+  --mdc-outlined-text-field-hover-outline-color: #67676d;
+  --mdc-outlined-text-field-focus-outline-color: #8e8e93;
+  --mdc-outlined-text-field-input-text-color: var(--lf-text);
+  --mdc-outlined-text-field-label-text-color: var(--lf-muted);
+}
+
+app-login .auth-form-card .mat-mdc-text-field-wrapper,
+app-register .auth-form-card .mat-mdc-text-field-wrapper {
+  background: var(--lf-interactive);
+  border-radius: 6px;
+}
+
+app-login .auth-form-card input:-webkit-autofill,
+app-login .auth-form-card input:-webkit-autofill:hover,
+app-login .auth-form-card input:-webkit-autofill:focus,
+app-register .auth-form-card input:-webkit-autofill,
+app-register .auth-form-card input:-webkit-autofill:hover,
+app-register .auth-form-card input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--lf-interactive) inset !important;
+  -webkit-text-fill-color: var(--lf-text) !important;
+  caret-color: var(--lf-text);
+}
+.shell-nav a:not(.active-link), .main-header nav a:not(.active-link) { color:var(--lf-muted) !important; }
+.shell-nav a:hover, .main-header nav a:hover { color:var(--lf-text) !important; }
+.shell-nav .active-link, .main-header nav .active-link { background:var(--lf-interactive) !important; color:var(--lf-text) !important; border-bottom:1px solid var(--lf-cyan); }
+button.mat-mdc-button, a.mat-mdc-button { transition:color 150ms ease, background-color 150ms ease, border-color 150ms ease; }

@@ -14,6 +14,7 @@
     @if (inventory) {
       <div class="inventory-form__meta">
         <p><strong>SKU:</strong> {{ inventory.sku }}</p>
+        <p><strong>En stock total:</strong> {{ inventory.availableQuantity + inventory.reservedQuantity }}</p>
         <p><strong>Disponible:</strong> {{ inventory.availableQuantity }}</p>
         <p><strong>Reservado:</strong> {{ inventory.reservedQuantity }}</p>
       </div>

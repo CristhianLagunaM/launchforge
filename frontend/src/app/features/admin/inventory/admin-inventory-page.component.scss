@@ -28,22 +28,22 @@
 
 .inventory-list {
   display: grid;
-  gap: 1rem;
+  gap: .6rem;
 }
 
 .inventory-item {
-  border-color: #c7d1e4;
+  border-color: var(--lf-border);
 }
 
 .inventory-item--selected {
-  border-color: #274690;
-  box-shadow: 0 0 0 1px #274690 inset;
+  border-color: rgba(114, 231, 255, .55);
+  box-shadow: none;
 }
 
 .inventory-item__button {
   display: block;
   height: auto;
-  min-height: 6.75rem;
+  min-height: 5.5rem;
   width: 100%;
   justify-content: stretch;
   padding: 0;
@@ -56,11 +56,12 @@
   display: grid;
   gap: 1rem;
   grid-template-columns: minmax(0, 1fr) auto;
-  padding: 1rem 1.25rem;
+  padding: .75rem 1rem;
   width: 100%;
 }
 
 .inventory-item__content h2 {
+  color: var(--lf-text);
   font-size: 1.1rem;
   line-height: 1.3;
   margin: 0 0 0.35rem;
@@ -85,7 +86,7 @@
 }
 
 .muted {
-  color: #5b6475;
+  color: var(--lf-meta);
 }
 
 .error-card {
