@@ -85,6 +85,26 @@ public class Inventory extends AbstractUuidEntity {
         increase(quantity);
     }
 
+    public void reserve(int quantity) {
+        validatePositiveQuantity(quantity);
+        if (availableQuantity < quantity) throw new InsufficientInventoryException(product.getId(), availableQuantity, quantity);
+        availableQuantity -= quantity;
+        reservedQuantity += quantity;
+    }
+
+    public void confirmReservation(int quantity) {
+        validatePositiveQuantity(quantity);
+        if (reservedQuantity < quantity) throw new IllegalStateException("Not enough reserved capacity.");
+        reservedQuantity -= quantity;
+    }
+
+    public void releaseReservation(int quantity) {
+        validatePositiveQuantity(quantity);
+        if (reservedQuantity < quantity) throw new IllegalStateException("Not enough reserved capacity.");
+        reservedQuantity -= quantity;
+        availableQuantity += quantity;
+    }
+
     public Integer getAvailableQuantity() {
         return availableQuantity;
     }

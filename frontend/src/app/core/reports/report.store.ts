@@ -3,12 +3,13 @@ import { patchState, signalStore, withComputed, withMethods, withState } from '@
 import { firstValueFrom } from 'rxjs';
 import { ProblemDetails } from '../auth/auth.models';
 import { ReportApiService } from './report-api.service';
-import { ActiveProductReport, TopCustomerReport, TopProductReport } from './report.models';
+import { ActiveProductReport, DashboardReport, TopCustomerReport, TopProductReport } from './report.models';
 
 interface ReportState {
   activeProducts: ActiveProductReport[];
   topProducts: TopProductReport[];
   topCustomers: TopCustomerReport[];
+  dashboard: DashboardReport | null;
   loading: boolean;
   error: string | null;
 }
@@ -17,6 +18,7 @@ const initialState: ReportState = {
   activeProducts: [],
   topProducts: [],
   topCustomers: [],
+  dashboard: null,
   loading: false,
   error: null
 };
@@ -30,23 +32,26 @@ export const ReportStore = signalStore(
       && !store.error()
       && store.activeProducts().length === 0
       && store.topProducts().length === 0
-      && store.topCustomers().length === 0)
+      && store.topCustomers().length === 0
+      && store.dashboard() === null)
   })),
   withMethods((store, reportApi = inject(ReportApiService)) => ({
     async load(): Promise<void> {
       patchState(store, { loading: true, error: null });
       try {
-        const [activeProducts, topProducts, topCustomers] = await Promise.all([
+        const [activeProducts, topProducts, topCustomers, dashboard] = await Promise.all([
           firstValueFrom(reportApi.activeProducts()),
           firstValueFrom(reportApi.topProducts()),
-          firstValueFrom(reportApi.topCustomers())
+          firstValueFrom(reportApi.topCustomers()),
+          firstValueFrom(reportApi.dashboard())
         ]);
-        patchState(store, { activeProducts, topProducts, topCustomers, loading: false });
+        patchState(store, { activeProducts, topProducts, topCustomers, dashboard, loading: false });
       } catch (error) {
         patchState(store, {
           activeProducts: [],
           topProducts: [],
           topCustomers: [],
+          dashboard: null,
           loading: false,
           error: extractProblemDetail(error)
         });
@@ -59,4 +64,3 @@ function extractProblemDetail(error: unknown): string {
   const problem = (error as { error?: ProblemDetails })?.error;
   return problem?.detail ?? problem?.title ?? 'No fue posible cargar los reportes.';
 }
-

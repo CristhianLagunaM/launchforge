@@ -40,8 +40,10 @@ public class CancelOrderUseCase {
         validateCancelableStatus(order);
 
         order.cancel();
-        for (OrderItem item : order.getItems()) {
-            inventoryManagementService.restoreCapacity(item.getProduct().getId(), item.getQuantity());
+        if (order.getStatus() == OrderStatus.CREATED) {
+            for (OrderItem item : order.getItems()) {
+                inventoryManagementService.releaseReservation(item.getProduct().getId(), item.getQuantity());
+            }
         }
 
         return orderMapper.toResponse(orderRepository.saveAndFlush(order));
@@ -70,10 +72,10 @@ public class CancelOrderUseCase {
                     "orders/already-cancelled"
             );
         }
-        if (order.getStatus() != OrderStatus.CONFIRMED) {
+        if (order.getStatus() != OrderStatus.CREATED) {
             throw new ApiConflictException(
                     "Invalid cancellation",
-                    "Only confirmed orders can be cancelled.",
+                    "Solo se pueden cancelar órdenes pendientes de confirmación. Las órdenes confirmadas o completadas son definitivas.",
                     "orders/invalid-cancel-status"
             );
         }

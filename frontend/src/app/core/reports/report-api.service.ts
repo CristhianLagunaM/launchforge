@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { ActiveProductReport, TopCustomerReport, TopProductReport } from './report.models';
+import { ActiveProductReport, DashboardReport, TopCustomerReport, TopProductReport } from './report.models';
 
 @Injectable({ providedIn: 'root' })
 export class ReportApiService {
@@ -18,5 +18,8 @@ export class ReportApiService {
   topCustomers() {
     return this.httpClient.get<TopCustomerReport[]>(`${this.reportsUrl}/top-customers`);
   }
-}
 
+  dashboard() {
+    return this.httpClient.get<DashboardReport>(`${this.reportsUrl}/dashboard`);
+  }
+}
