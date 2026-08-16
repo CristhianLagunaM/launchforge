@@ -388,9 +388,6 @@ Documentos principales:
 - [Calidad](docs/quality.md)
 - [Integración continua](docs/ci.md)
 - [Troubleshooting](docs/troubleshooting.md)
-- [Trazabilidad de requisitos](docs/requirements-traceability.md)
-- [Checklist de entrega](docs/delivery-checklist.md)
-- [Guion de demostración](docs/demo-script.md)
 
 Las decisiones y funcionalidades específicas se documentan adicionalmente en:
 

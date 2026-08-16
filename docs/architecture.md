@@ -205,10 +205,10 @@ Los rankings consideran únicamente órdenes `CONFIRMED` y `COMPLETED`.
 
 ```mermaid
 flowchart LR
-    U[Use case mutable] -->|@Transactional + @LogAction| A[AuditAspect]
-    A --> M[AuditMetadataFactory]
-    M --> W[AuditWriter MANDATORY]
-    W --> DB[(audit_log)]
+    U["Use case mutable"] -->|"@Transactional + @LogAction"| A["AuditAspect"]
+    A --> M["AuditMetadataFactory"]
+    M --> W["AuditWriter MANDATORY"]
+    W --> DB[("audit_log")]
 ```
 
 La transacción de negocio envuelve el aspecto; un evento de éxito se confirma o revierte junto con la operación.
@@ -219,9 +219,9 @@ La transacción de negocio envuelve el aspecto; un evento de éxito se confirma 
 
 ```mermaid
 flowchart LR
-    UI[Angular] -->|Bearer JWT| SEC[Spring Security]
-    SEC -->|claims + roles| API[Controllers]
-    API -->|@PreAuthorize| USE[Use cases]
+    UI["Angular"] -->|"Bearer JWT"| SEC["Spring Security"]
+    SEC -->|"claims + roles"| API["Controllers"]
+    API -->|"@PreAuthorize"| USE["Use cases"]
 ```
 
 - autenticación stateless;
