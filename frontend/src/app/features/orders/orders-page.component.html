@@ -37,7 +37,7 @@
             <p>{{ order.items.length }} item(s)</p>
           </div>
           <div class="order-card__meta">
-            <strong>{{ order.total | currency:'USD':'symbol':'1.2-2' }}</strong>
+            <strong>{{ order.total | currency:'COP':'symbol-narrow':'1.0-0':'es-CO' }}</strong>
             <a mat-button [routerLink]="['/orders', order.id]">Ver detalle</a>
           </div>
         </div>
