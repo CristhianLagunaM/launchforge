@@ -1,36 +1,52 @@
 # Spring Boot en LaunchForge
 
-## Fase 2
+## Rol
 
-Spring Boot expone autenticación en `/api/v1/auth` y protege recursos con Spring Security stateless.
+Spring Boot expone la API, ejecuta casos de uso, aplica seguridad y coordina persistencia.
 
 ## Flujo de login
 
 1. `AuthController` recibe DTO.
-2. `LoginUseCase` delega en `AuthenticationManager`.
-3. `DatabaseUserDetailsService` carga usuario desde PostgreSQL.
-4. `BCryptPasswordEncoder` compara password.
+2. `LoginUseCase` delega autenticación.
+3. `DatabaseUserDetailsService` carga usuario.
+4. BCrypt valida password.
 5. `JwtService` firma el token.
-6. Se responde `AuthResponse`.
+6. se devuelve DTO seguro.
+
+## Flujo general
+
+```text
+Controller
+ -> Application / Use Case
+ -> Repository
+ -> PostgreSQL
+```
 
 ## Puntos importantes
 
-- No se retornan entidades JPA.
-- No se expone `password_hash`.
-- `ProblemDetail` normaliza errores.
-- `@EnableMethodSecurity` habilita `@PreAuthorize`.
+- controllers no retornan entidades JPA;
+- `password_hash` nunca sale de backend;
+- Problem Details normaliza errores;
+- `@EnableMethodSecurity` habilita `@PreAuthorize`;
+- `@Transactional` define fronteras de negocio;
+- auditoría AOP es transversal.
 
-## Beans críticos
+## Beans críticos de seguridad
 
-- `PasswordEncoder`
-- `AuthenticationManager`
-- `JwtEncoder`
-- `JwtDecoder`
-- `SecurityFilterChain`
+- `PasswordEncoder`;
+- `AuthenticationManager`;
+- `JwtEncoder`;
+- `JwtDecoder`;
+- `SecurityFilterChain`.
 
-## Qué revisar si falla
+## Diagnóstico
 
-- propiedades `JWT_SECRET` y `JWT_EXPIRATION_SECONDS`
-- roles seed en DB
-- `UserDetailsService`
-- `JwtAuthenticationConverter`
+Revisar:
+
+- `JWT_SECRET`;
+- `JWT_EXPIRATION_SECONDS`;
+- roles en DB;
+- `UserDetailsService`;
+- `JwtAuthenticationConverter`;
+- `@PreAuthorize`;
+- logs de Spring Security.

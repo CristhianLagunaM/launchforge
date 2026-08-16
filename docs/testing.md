@@ -1,175 +1,246 @@
 # Testing
 
-## Evidencia de calidad
+## Objetivo
 
-La suite se clasifica en unitarias, integración con PostgreSQL/Testcontainers y contratos REST con MockMvc. El porcentaje de cobertura válido es exclusivamente el generado por JaCoCo después de `mvn clean verify`; no se afirma 80% sin revisar ese reporte.
+La suite valida reglas de negocio, persistencia PostgreSQL, contratos HTTP, seguridad y comportamiento crítico del frontend.
+
+```mermaid
+flowchart LR
+    U[Unit] --> V[mvn clean verify]
+    I[Integration + PostgreSQL] --> V
+    M[MockMvc] --> V
+    F[Vitest / Frontend] --> N[npm test]
+    N --> CI[Frontend CI]
+    V --> BI[Backend CI]
+```
 
 ## Backend
 
-Se cubren tres niveles:
+Se utilizan tres niveles principales:
 
-- unit tests para lógica de catálogo
-- integration tests con PostgreSQL/Testcontainers para búsqueda y paginación
-- MockMvc para contrato HTTP, seguridad y validaciones
-- unit tests para invariantes de inventario
-- integración concurrente real para `inventory.version`
-- unit tests para creación, idempotencia y cancelación de órdenes
-- MockMvc para endpoints de órdenes y ownership
-- unit tests del `DiscountEngine`
-- integration tests de descuentos con PostgreSQL/Testcontainers
-- MockMvc para configuración admin de descuentos
-- integration tests PostgreSQL para las tres queries de reportes
-- MockMvc para autorización y contrato de reportes
+### Unitarias
+
+Cubren:
+
+- lógica de catálogo;
+- invariantes de inventario;
+- creación/cancelación/confirmación/completado de órdenes;
+- idempotencia;
+- `DiscountEngine`;
+- estrategias de descuento;
+- mappers y servicios donde corresponde.
+
+### Integración PostgreSQL/Testcontainers
+
+Cubren:
+
+- ejecución Flyway;
+- compatibilidad esquema/JPA;
+- constraints;
+- catálogo y búsqueda;
+- optimistic locking real;
+- descuentos;
+- reportes;
+- auditoría.
+
+No se sustituye PostgreSQL por H2.
+
+### MockMvc
+
+Valida:
+
+- contratos REST;
+- validaciones;
+- autenticación;
+- autorización;
+- ownership;
+- Problem Details;
+- endpoints administrativos.
 
 ## Frontend
 
-Se prueban:
+La suite cubre stores y piezas críticas, incluyendo:
 
-- `CatalogStore`
-- interceptor y guards de auth existentes
-- formulario de producto
-- `CartStore`
-- `OrdersStore`
-- `AdminDiscountStore`
-- `ReportStore`
-- Dashboard de reportes: agregaciones financieras, estados, capacidad, serie de seis meses y contrato HTTP protegido.
+- `AuthStore`;
+- guards e interceptor;
+- `CatalogStore`;
+- formulario de producto;
+- `CartStore`;
+- `OrdersStore`;
+- inventario;
+- descuentos administrativos;
+- `ReportStore`;
+- auditoría;
+- estados `loading/error/empty/success`.
 
 ## Comandos
 
-Backend:
+### Backend
 
 ```bash
 cd backend
-mvn test
-mvn clean package
+mvn clean verify
 ```
 
-Frontend:
+Para iteración rápida:
+
+```bash
+mvn test
+```
+
+El gate final es `clean verify`.
+
+### Frontend
 
 ```bash
 cd frontend
-npm test -- --watch=false
+npm ci
 npm run lint
+npm test -- --watch=false
 npm run build
 ```
 
-Compose:
+### Compose
 
 ```bash
 docker compose up --build
 ```
 
-## Qué valida Fase 3
+## Catálogo
 
-- CRUD de productos
-- seguridad pública vs admin
-- filtros de búsqueda en DB
-- paginación
-- sorting
-- conflicto de SKU/slug
-- DTOs y formularios
+Se valida:
 
-## Qué valida Fase 4
+- CRUD;
+- acceso público vs `ADMIN`;
+- filtros en base de datos;
+- paginación;
+- sorting;
+- SKU/slug duplicados;
+- productos activos/inactivos;
+- disponibilidad.
 
-- endpoints admin de inventario
-- operaciones `increase`, `decrease`, `restore`
-- rechazo de inventario insuficiente
-- rechazo de versión obsoleta
-- optimistic locking real con dos transacciones concurrentes sobre stock `1`
+## Inventario
 
-## Prueba concurrente
+Se valida:
 
-La prueba de concurrencia no usa solo mocks.
+- lectura/ajuste administrativo;
+- `INCREASE`, `DECREASE`, `RESTORE`;
+- rechazo por capacidad insuficiente;
+- rechazo de versión obsoleta;
+- optimistic locking con transacciones reales.
 
-Usa:
+### Escenario concurrente
 
-- PostgreSQL real vía Testcontainers
-- dos transacciones reales
-- misma fila `inventory`
-- mismo `version`
+1. dos transacciones leen la misma fila y versión;
+2. ambas intentan modificarla;
+3. una persiste;
+4. la segunda falla;
+5. el inventario nunca queda negativo.
 
-Resultado esperado:
+## Órdenes
 
-- una operación consume el único cupo
-- la otra falla por optimistic locking
-- el stock final queda en `0`
-- nunca queda negativo
+Se valida:
 
-### Aislamiento de fixtures mutables
+- creación `CREATED`;
+- consolidación de items repetidos;
+- snapshot comercial;
+- requerimientos del proyecto;
+- `Idempotency-Key`;
+- rechazo de producto inactivo;
+- rechazo de capacidad insuficiente;
+- ownership;
+- reserva de inventario;
+- confirmación `CREATED -> CONFIRMED`;
+- completado `CONFIRMED -> COMPLETED`;
+- cancelación exclusiva de `CREATED`;
+- liberación de reserva en cancelación;
+- rechazo de cancelación para `CONFIRMED`/`COMPLETED`.
 
-Las pruebas que modifican inventario u órdenes preparan un estado conocido y restauran los datos compartidos cuando corresponde:
+### Validación manual recomendada
 
-- los tests HTTP eliminan únicamente las órdenes creadas con su prefijo reservado de idempotencia;
-- la prueba concurrente restaura el inventario demo al finalizar;
-- las entidades nuevas dejan UUID y versión sin asignar para que JPA las reconozca como nuevas;
-- la versión esperada se consulta en PostgreSQL después de preparar el escenario concurrente.
-
-Así, el resultado no depende del orden de ejecución de JUnit. Los reintentos idempotentes también se consultan y transforman a DTO dentro de una transacción de solo lectura, manteniendo disponibles las relaciones lazy durante el mapeo.
-
-## Qué valida Fase 5
-
-- creación de órdenes pendientes, reservas, confirmación ADMIN y cancelación con liberación/restauración
-- confirmación auditada con actor ADMIN y rechazo de cancelación sobre órdenes confirmadas/completadas
-- consolidación de items repetidos
-- snapshot de nombre, SKU y precio
-- idempotencia por `Idempotency-Key`
-- rechazo de producto inactivo
-- rechazo por capacidad insuficiente
-- ownership de lectura
-- cancelación con restauración de capacidad
-
-## Qué valida Fase 6
-
-- cálculo acumulable sobre subtotal original con orden de trazabilidad `TIME_RANGE -> RANDOM_ORDER -> FREQUENT_CUSTOMER`
-- query `COUNT` para cliente frecuente
-- `RANDOM_ORDER` testeable sin aleatoriedad real
-- persistencia de `order_discounts`
-- conservación histórica del desglose aunque cambie la configuración
-- edición admin de `discount_configuration`
-
-## Validación manual recomendada para descuentos
-
-1. autenticar `frequent@launchforge.dev`;
-2. crear una orden dentro de un rango activo;
-3. verificar el detalle y el arreglo `discounts`;
-4. editar una regla desde `/admin/discounts`;
-5. crear otra orden y comparar el nuevo cálculo;
-6. ejecutar la consulta SQL sobre `order_discounts`;
-7. cambiar la configuración y confirmar que una orden histórica no se alteró.
-
-## Validación manual recomendada para órdenes
-
-1. autenticar un `CUSTOMER`;
+1. registrar/autenticar un `CUSTOMER`;
 2. crear una orden con `Idempotency-Key`;
-3. repetir el mismo `POST` con la misma llave;
-4. listar órdenes del cliente;
-5. consultar detalle;
-6. cancelar una orden confirmada;
-7. verificar en SQL que la capacidad fue restaurada.
+3. repetir el POST con la misma llave;
+4. confirmar que no se crea una segunda orden;
+5. consultar inventario y verificar reserva;
+6. cancelar mientras siga `CREATED`;
+7. comprobar que `reserved_quantity` disminuye y la capacidad se libera.
 
-## Qué valida Fase 7
+## Descuentos
 
-- productos inactivos excluidos;
-- suma de cantidades por producto en PostgreSQL;
-- solo estados `CONFIRMED/COMPLETED`;
-- `CANCELLED` excluidas;
-- límite cinco con más de cinco candidatos;
+Se valida:
+
+- orden `TIME_RANGE -> RANDOM_ORDER -> FREQUENT_CUSTOMER`;
+- configuración en DB;
+- acumulación sobre subtotal original;
+- `COUNT` de cliente frecuente;
+- random determinista mediante `RandomProvider`;
+- persistencia de `order_discounts`;
+- conservación histórica;
+- edición administrativa.
+
+### Validación manual
+
+1. crear un usuario normal;
+2. configurar reglas desde `/admin/discounts`;
+3. preparar condiciones de elegibilidad cuando sea necesario;
+4. crear una orden;
+5. inspeccionar `discountTotal`, `total` y `discounts`;
+6. consultar `order_discounts`;
+7. modificar la configuración y confirmar que la orden histórica no cambia.
+
+No se depende de cuentas demo predefinidas.
+
+## Reportes
+
+Se valida:
+
+- productos inactivos excluidos del reporte de activos;
+- `SUM(quantity)` para top productos;
+- `COUNT(order)` para top clientes;
+- solo `CONFIRMED/COMPLETED`;
+- `CREATED/CANCELLED` excluidas de rankings;
+- límite cinco;
 - desempates deterministas;
-- conteo de órdenes por cliente;
-- `ADMIN 200`, `CUSTOMER 403`, anónimo `401`;
-- estados loading/error y mapping del store frontend.
+- `ADMIN 200`;
+- `CUSTOMER 403`;
+- anónimo `401`;
+- dashboard financiero/operativo.
 
-Los tests de repository reemplazan el seed dentro de una transacción y crean datos controlados; no dependen de los rankings demo.
+## Auditoría
 
-## Qué valida Fase 8
+Se valida:
 
-- PRODUCT_UPDATED, INVENTORY_ADJUSTED y ORDER_CANCELLED generan eventos;
-- actor y correlation ID corresponden al request;
-- metadata contiene solo detalles permitidos;
-- rollback no conserva una auditoría de éxito;
-- consulta admin con filtros y paginación;
-- ADMIN 200, CUSTOMER 403 y anónimo 401;
-- carga paginada y error de AuditStore.
-- La suite frontend cubre autenticación, catálogo, carrito, órdenes, inventario, reportes, auditoría, guards, interceptor y formularios, incluyendo estados loading/error/empty/success.
-- El carrito verifica reutilización de `Idempotency-Key` para retry e invalidación cuando cambia la intención.
-- Antes de lint, tests y build se ejecuta `npm ci` sin ignorar peer dependencies.
+- eventos de negocio instrumentados;
+- actor;
+- correlation ID;
+- metadata permitida;
+- rollback sin evento de éxito;
+- filtros;
+- paginación;
+- autorización.
+
+## Fixtures mutables
+
+Las pruebas que modifican inventario u órdenes deben preparar un estado conocido y limpiar/restaurar únicamente sus datos.
+
+Los tests no deben depender del orden de ejecución.
+
+## CI
+
+Backend CI ejecuta:
+
+```text
+mvn clean verify
+```
+
+Frontend CI ejecuta:
+
+```text
+npm ci
+npm run lint
+npm run test -- --watch=false
+npm run build
+```
+
+Ambos workflows están verdes para el `main` validado durante la actualización de esta documentación.

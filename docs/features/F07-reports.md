@@ -2,28 +2,34 @@
 
 ## Alcance
 
-Fase 7 implementa tres reportes de solo lectura, protegidos con rol `ADMIN`:
+Solo `ADMIN`:
 
 - `GET /api/v1/reports/active-products`
 - `GET /api/v1/reports/top-products`
 - `GET /api/v1/reports/top-customers`
 - `GET /api/v1/reports/dashboard`
 
-No incluye auditoría ni introduce el rol `AUDITOR`.
+## Flujo
 
-## Flujo técnico
+```text
+AdminReportsPage
+ -> ReportStore
+ -> ReportApiService
+ -> ReportController
+ -> ReportQueryService
+ -> ReportRepository
+ -> PostgreSQL
+```
 
-`AdminReportsPageComponent -> ReportStore -> ReportApiService -> ReportController -> ReportQueryService -> ReportRepository -> PostgreSQL`
+## Productos activos
 
-El controller aplica `@PreAuthorize("hasRole('ADMIN')")`. El guard Angular evita navegación improductiva, pero Spring Security es la frontera de autorización.
+Filtra:
 
-## Definición de reportes
+```text
+products.active = true
+```
 
-### Productos activos
-
-Lee `products JOIN categories`, filtra `products.active = true` y ordena por nombre y SKU. Devuelve `id`, `sku`, `name`, `category` y `price` mediante `ActiveProductProjection` y `ActiveProductReport`.
-
-### Top 5 productos vendidos
+## Top 5 productos
 
 ```sql
 SELECT p.id, p.sku, p.name, SUM(oi.quantity) AS quantity_sold
@@ -36,17 +42,7 @@ ORDER BY quantity_sold DESC, p.name ASC, p.sku ASC
 LIMIT 5;
 ```
 
-`CANCELLED` y `CREATED` se excluyen en el `WHERE`. El desempate estable usa nombre y SKU ascendentes. La respuesta usa `TopProductProjection` y `TopProductReport`; el frontend recibe el ranking ya preparado.
-
-## Dashboard operativo
-
-`dashboard` entrega una vista consolidada sin cargar órdenes en memoria. Una consulta usa agregaciones con `FILTER` para calcular subtotal vendido, ingresos netos, descuentos, ticket promedio y conteos `CREATED`, `CONFIRMED`, `COMPLETED` y `CANCELLED`. Subconsultas agregan capacidad disponible, reservada y productos activos sin cupo.
-
-La evolución de seis meses se genera en PostgreSQL mediante `generate_series`. Un `LEFT JOIN` conserva los meses sin ventas con valor cero. Solo `CONFIRMED` y `COMPLETED` contribuyen a ingresos y tendencia. La respuesta incluye `generatedAt` desde un `Clock` UTC inyectable.
-
-El frontend presenta cuatro KPI financieros, barras mensuales, distribución de estados, alertas de capacidad y los rankings existentes. Angular transforma únicamente proporciones visuales; no recalcula métricas financieras ni reglas de negocio.
-
-### Top 5 clientes
+## Top 5 clientes
 
 ```sql
 SELECT u.id, u.email, u.first_name, u.last_name, COUNT(o.id) AS order_count
@@ -58,43 +54,36 @@ ORDER BY order_count DESC, u.email ASC
 LIMIT 5;
 ```
 
-El desempate estable usa email ascendente. Se usan `TopCustomerProjection` y `TopCustomerReport`.
+## Dashboard
 
-## Por qué SQL nativo y projections
+Agrega en PostgreSQL:
 
-Los rankings requieren `SUM`, `COUNT`, `GROUP BY`, orden y límite. SQL nativo expresa directamente esas operaciones PostgreSQL y permite `LIMIT 5` sin cargar entidades. Las interface projections materializan únicamente las columnas del contrato; no existe N+1 ni navegación lazy.
+- subtotal vendido;
+- ingresos netos;
+- descuentos;
+- ticket promedio;
+- conteo por estado;
+- capacidad disponible;
+- capacidad reservada;
+- productos activos sin cupo;
+- serie mensual de seis periodos.
 
-No se usa `findAll`, filtrado, grouping, sorting o limit en Java/Angular. El pequeño mapeo projection → record no realiza cálculos de reporte.
+Solo `CONFIRMED` y `COMPLETED` contribuyen a ventas/tendencias.
 
-## Índices y plan observado
+## SQL vs Java
 
-Las migraciones existentes ya aportan:
+Se usa SQL/projections porque `SUM`, `COUNT`, `GROUP BY`, filtros y `LIMIT` pertenecen al motor de base de datos.
 
-- `idx_orders_status`, usado para seleccionar `CONFIRMED/COMPLETED`;
-- `idx_order_items_product_id`, útil al crecer la relación item/product;
-- `idx_orders_customer_id`, útil al crecer la relación order/customer;
-- PK de `products`, `users` y `orders`, usadas en joins.
+No se hace `findAll()` para agrupar en memoria.
 
-`EXPLAIN (ANALYZE, BUFFERS)` se ejecutó sobre el seed local: 8 productos, 8 usuarios, 12 órdenes y 20 items. Resultado observado:
+## Seguridad
 
-- activos: `Hash Join` y `Seq Scan` por cardinalidad pequeña; ~0.91 ms;
-- top productos: `Bitmap Index Scan on idx_orders_status`, agregación y `LIMIT`; ~1.30 ms;
-- top clientes: `Bitmap Index Scan on idx_orders_status`, agregación y `LIMIT`; ~0.58 ms.
-
-Los `Seq Scan` sobre tablas diminutas son una decisión razonable del planner. No se agregó migración: la evidencia no justifica otro índice todavía. En producción debe repetirse `EXPLAIN ANALYZE` con cardinalidad representativa antes de diseñar un índice compuesto.
-
-## Frontend
-
-`/admin/reports` es una ruta lazy dentro del árbol protegido por `roleGuard` para `ADMIN`. `ReportStore` ejecuta las tres lecturas y mantiene estados `loading`, `error`, `empty` y `success`. Angular Material presenta tablas responsivas; no recalcula sumas ni ordena rankings.
-
-## Pruebas
-
-`ReportRepositoryIntegrationTest` crea datos controlados en PostgreSQL/Testcontainers y verifica activos, inactivos, suma, exclusión de canceladas, más de cinco candidatos, límite y empates. `ReportControllerMockMvcTest` cubre `ADMIN 200`, `CUSTOMER 403`, anónimo `401` y campos de respuesta. `report.store.spec.ts` cubre loading, mapping y error.
+- `ADMIN`: 200;
+- `CUSTOMER`: 403;
+- anónimo: 401.
 
 ## Validación manual
 
-1. Iniciar `docker compose up --build`.
-2. Autenticar `admin@launchforge.dev` y abrir `/admin/reports`.
-3. Comparar cada tabla con las consultas anteriores en `psql`.
-4. Confirmar que un customer recibe `403` y una petición sin token recibe `401`.
-5. Ejecutar `EXPLAIN (ANALYZE, BUFFERS)` antes de afirmar mejoras de índices.
+Crear datos reales desde la aplicación, confirmar/completar órdenes y comparar la API con consultas SQL.
+
+No se depende de un admin demo.

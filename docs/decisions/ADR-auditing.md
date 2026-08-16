@@ -10,29 +10,50 @@ Las acciones mutables deben dejar trazabilidad homogénea sin mezclar persistenc
 
 ## Decision
 
-Se adopta LogAction con Spring AOP. El Aspect registra exclusivamente resultados exitosos, obtiene contexto seguro, genera metadata mediante una lista permitida y delega en AuditWriter.
+Se adopta `@LogAction` con Spring AOP.
 
-AuditWriter exige una transacción existente con propagación MANDATORY. La transacción de negocio envuelve al Aspect, por lo que negocio y evento confirman o revierten juntos.
+El Aspect:
 
-## AOP transversal
+1. deja ejecutar el caso de uso;
+2. registra únicamente resultados exitosos;
+3. obtiene actor y contexto del request;
+4. genera metadata mediante una lista permitida;
+5. delega en `AuditWriter`.
 
-Ventajas:
+`AuditWriter` exige una transacción existente con propagación `MANDATORY`. La transacción de negocio envuelve al Aspect, por lo que negocio y evento confirman o revierten juntos.
+
+```mermaid
+flowchart LR
+    U[Use case] -->|@LogAction| A[AuditAspect]
+    A --> M[Metadata allow-list]
+    M --> W[AuditWriter MANDATORY]
+    W --> DB[(audit_log)]
+```
+
+## Consequences
+
+### Positivas
 
 - contrato declarativo uniforme;
-- elimina llamadas repetidas;
-- centraliza protección de datos, correlation ID e IP;
-- mantiene una semántica transaccional.
+- menos llamadas repetidas;
+- protección centralizada de datos;
+- correlation ID e IP homogéneos;
+- consistencia transaccional.
 
-Costos:
+### Costos
 
 - flujo menos visible que una llamada directa;
-- el orden de advisors AOP/transacción debe probarse;
-- las expresiones de resource ID deben ser simples y testeadas.
+- el orden AOP/transacción debe estar cubierto por pruebas;
+- expresiones de `resourceId` deben mantenerse simples.
 
-## Llamadas manuales a AuditService
+## Alternatives
 
-Son explícitas y personalizables, pero repiten código, facilitan omisiones y mezclan una preocupación transversal con negocio.
+### Auditoría manual en cada service
+
+Descartada porque aumenta duplicación, omisiones y acoplamiento.
 
 ## Límites
 
-AOP no decide reglas ni estados. Solo registra el resultado calculado. Los GET comunes no se auditan y la metadata nunca serializa argumentos completos.
+AOP no decide reglas de negocio ni estados. Solo registra el resultado.
+
+GET ordinarios no se auditan y la metadata no serializa argumentos completos.

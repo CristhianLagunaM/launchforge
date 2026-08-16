@@ -1,30 +1,6 @@
-# LaunchForge — Modelo de datos y estrategia de migraciones
+# LaunchForge — Modelo de datos
 
-## 1. Objetivo
-
-Este documento define el modelo de datos base de LaunchForge antes de iniciar la implementación.
-
-Debe ser la referencia para:
-
-- entidades JPA;
-- migraciones Flyway;
-- DTOs;
-- repositorios;
-- reportes;
-- pruebas de integración;
-- documentación de arquitectura;
-- debugging;
-- sustentación técnica.
-
-Regla principal:
-
-> El modelo no debe crecer por comodidad del framework. Cada tabla debe representar una necesidad real del dominio.
-
----
-
-# 2. Principios de modelado
-
-Se aplican los siguientes principios:
+## 1. Principios
 
 1. PostgreSQL es la fuente persistente de verdad.
 2. Flyway controla la evolución del esquema.
@@ -33,17 +9,13 @@ Se aplican los siguientes principios:
 5. Los precios históricos de una orden se preservan.
 6. Inventario no puede quedar negativo.
 7. Las órdenes son consistentes transaccionalmente.
-8. Los descuentos aplicados deben quedar trazables.
-9. Los reportes deben resolverse mediante agregaciones SQL.
-10. Los datos auditables deben poder reconstruir quién hizo qué.
-11. No utilizar JSON como reemplazo de un modelo relacional cuando existe estructura conocida.
-12. JSONB solo se utilizará para metadata realmente flexible.
+8. Los descuentos aplicados quedan trazables.
+9. Los reportes usan agregaciones SQL.
+10. La auditoría permite reconstruir acciones relevantes.
+11. JSONB se utiliza únicamente para metadata flexible.
+12. Los roles se normalizan en tablas relacionales.
 
----
-
-# 3. Módulos del dominio
-
-El modelo se divide en:
+## 2. Módulos
 
 ```text
 Identity
@@ -54,32 +26,12 @@ Discounts
 Audit
 ```
 
-Relación conceptual:
-
-```text
-User
-  │
-  ├── Role
-  │
-  └── Order
-        │
-        ├── OrderItem ─── Product ─── Category
-        │                     │
-        │                     └── Inventory
-        │
-        └── OrderDiscount ─── DiscountConfiguration
-```
-
----
-
-# 4. Diagrama lógico
+## 3. Diagrama lógico
 
 ```mermaid
 erDiagram
-
     USERS ||--o{ USER_ROLES : has
     ROLES ||--o{ USER_ROLES : assigned
-
     USERS ||--o{ ORDERS : creates
 
     CATEGORIES ||--o{ PRODUCTS : contains
@@ -94,181 +46,103 @@ erDiagram
     USERS ||--o{ AUDIT_LOG : actor
 ```
 
----
+## 4. Identity
 
-# 5. Identity
-
-## 5.1 users
-
-Propósito:
-
-Representa usuarios autenticables de la plataforma.
-
-Campos:
+### `users`
 
 | Campo | Tipo | Regla |
 |---|---|---|
-| id | UUID | PK |
-| email | VARCHAR(255) | UNIQUE, NOT NULL |
-| password_hash | VARCHAR(255) | NOT NULL |
-| first_name | VARCHAR(120) | NOT NULL |
-| last_name | VARCHAR(120) | NOT NULL |
-| enabled | BOOLEAN | NOT NULL DEFAULT true |
-| created_at | TIMESTAMPTZ | NOT NULL |
-| updated_at | TIMESTAMPTZ | NOT NULL |
-| created_by | UUID | NULL |
-| updated_by | UUID | NULL |
+| `id` | UUID | PK |
+| `email` | VARCHAR(255) | UNIQUE, NOT NULL |
+| `password_hash` | VARCHAR(255) | NOT NULL |
+| `first_name` | VARCHAR(120) | NOT NULL |
+| `last_name` | VARCHAR(120) | NOT NULL |
+| `enabled` | BOOLEAN | NOT NULL |
+| `created_at` | TIMESTAMPTZ | NOT NULL |
+| `updated_at` | TIMESTAMPTZ | NOT NULL |
+| `created_by` | UUID | NULL |
+| `updated_by` | UUID | NULL |
 
-Decisión:
+No se almacena contraseña en texto plano.
 
-Usar UUID para usuarios y recursos públicos reduce dependencia de IDs secuenciales expuestos externamente.
-
-No almacenar:
-
-```text
-password
-plain_password
-```
-
----
-
-## 5.2 roles
-
-Campos:
+### `roles`
 
 | Campo | Tipo |
 |---|---|
-| id | SMALLSERIAL |
-| name | VARCHAR(50) UNIQUE |
-| description | VARCHAR(255) |
+| `id` | SMALLSERIAL |
+| `name` | VARCHAR(50) UNIQUE |
+| `description` | VARCHAR(255) |
 
-Valores iniciales:
+Valores base:
 
 ```text
 ADMIN
 CUSTOMER
 ```
 
-Posible extensión futura:
+### `user_roles`
 
-```text
-AUDITOR
-MANAGER
-```
-
----
-
-## 5.3 user_roles
-
-Tabla N:M.
-
-Campos:
+Relación N:M.
 
 | Campo | Tipo |
 |---|---|
-| user_id | UUID |
-| role_id | SMALLINT |
+| `user_id` | UUID |
+| `role_id` | SMALLINT |
 
-PK compuesta:
+PK:
 
 ```text
 (user_id, role_id)
 ```
 
-No guardar roles como texto separado por comas dentro de `users`.
+El registro normal asigna `CUSTOMER`. La promoción inicial a `ADMIN` modifica esta relación; `users` no contiene una columna `role`.
 
----
+## 5. Catalog
 
-# 6. Catálogo
-
-## 6.1 categories
-
-Campos:
+### `categories`
 
 | Campo | Tipo |
 |---|---|
-| id | BIGSERIAL |
-| name | VARCHAR(120) UNIQUE |
-| slug | VARCHAR(140) UNIQUE |
-| description | VARCHAR(500) |
-| active | BOOLEAN |
-| created_at | TIMESTAMPTZ |
-| updated_at | TIMESTAMPTZ |
+| `id` | BIGSERIAL |
+| `name` | VARCHAR(120) |
+| `slug` | VARCHAR(140) |
+| `description` | VARCHAR(500) |
+| `active` | BOOLEAN |
+| `created_at` | TIMESTAMPTZ |
+| `updated_at` | TIMESTAMPTZ |
 
-Ejemplos:
-
-```text
-WEB
-ECOMMERCE
-SAAS
-DESIGN
-INTEGRATIONS
-MAINTENANCE
-```
-
----
-
-## 6.2 products
-
-Representa servicios/paquetes vendibles.
-
-Campos:
+### `products`
 
 | Campo | Tipo | Regla |
 |---|---|---|
-| id | UUID | PK |
-| sku | VARCHAR(50) | UNIQUE |
-| name | VARCHAR(180) | NOT NULL |
-| slug | VARCHAR(200) | UNIQUE |
-| description | TEXT | NOT NULL |
-| category_id | BIGINT | FK |
-| price | NUMERIC(19,2) | >= 0 |
-| active | BOOLEAN | DEFAULT true |
-| created_at | TIMESTAMPTZ | NOT NULL |
-| updated_at | TIMESTAMPTZ | NOT NULL |
-| created_by | UUID | NULL |
-| updated_by | UUID | NULL |
+| `id` | UUID | PK |
+| `sku` | VARCHAR(50) | UNIQUE |
+| `name` | VARCHAR(180) | NOT NULL |
+| `slug` | VARCHAR(200) | UNIQUE |
+| `description` | TEXT | NOT NULL |
+| `category_id` | BIGINT | FK |
+| `price` | NUMERIC(19,2) | >= 0 |
+| `active` | BOOLEAN | DEFAULT true |
+| auditoría técnica | varios | timestamps/actor |
 
-Constraint:
+`stock` no pertenece a `products`; la capacidad pertenece a `inventory`.
 
-```sql
-CHECK (price >= 0)
-```
+## 6. Inventory
 
-No almacenar:
-
-```text
-stock
-```
-
-dentro de esta tabla.
-
-La responsabilidad de stock/capacidad pertenece a `inventory`.
-
----
-
-# 7. Inventario
-
-## 7.1 inventory
-
-En LaunchForge el inventario representa capacidad operativa disponible.
-
-Relación:
+### `inventory`
 
 ```text
 Product 1 ─── 1 Inventory
 ```
 
-Campos:
-
 | Campo | Tipo |
 |---|---|
-| id | UUID |
-| product_id | UUID UNIQUE |
-| available_quantity | INTEGER |
-| reserved_quantity | INTEGER |
-| version | BIGINT |
-| updated_at | TIMESTAMPTZ |
+| `id` | UUID |
+| `product_id` | UUID UNIQUE |
+| `available_quantity` | INTEGER |
+| `reserved_quantity` | INTEGER |
+| `version` | BIGINT |
+| `updated_at` | TIMESTAMPTZ |
 
 Constraints:
 
@@ -277,20 +151,20 @@ CHECK (available_quantity >= 0)
 CHECK (reserved_quantity >= 0)
 ```
 
-`version` se utiliza para optimistic locking.
+`version` se mapea con `@Version`.
 
-Entidad JPA:
+### Semántica
 
-```java
-@Version
-private Long version;
+```mermaid
+flowchart LR
+    A[Capacidad disponible] -->|crear orden| R[Capacidad reservada]
+    R -->|confirmar| C[Capacidad consumida]
+    R -->|cancelar CREATED| A
 ```
 
----
+La capacidad operativa visible antes de una venta se reparte entre disponible y reservada.
 
-# 8. Estados de orden
-
-Usar enum persistido como texto:
+## 7. Order status
 
 ```text
 CREATED
@@ -299,34 +173,44 @@ CANCELLED
 COMPLETED
 ```
 
-No usar ordinal del enum.
+Se persiste como texto, no como ordinal.
 
-Motivo:
+Transiciones:
 
-Cambiar el orden del enum en Java no debe alterar el significado almacenado.
+```mermaid
+stateDiagram-v2
+    [*] --> CREATED
+    CREATED --> CONFIRMED
+    CREATED --> CANCELLED
+    CONFIRMED --> COMPLETED
+```
 
----
+No existe transición `CONFIRMED -> CANCELLED` en la implementación actual.
 
-# 9. Orders
+## 8. Orders
 
-## 9.1 orders
-
-Campos:
+### `orders`
 
 | Campo | Tipo | Regla |
 |---|---|---|
-| id | UUID | PK |
-| order_number | VARCHAR(40) | UNIQUE |
-| customer_id | UUID | FK users |
-| status | VARCHAR(30) | NOT NULL |
-| subtotal | NUMERIC(19,2) | >= 0 |
-| discount_total | NUMERIC(19,2) | >= 0 |
-| total | NUMERIC(19,2) | >= 0 |
-| idempotency_key | VARCHAR(120) | NULL |
-| created_at | TIMESTAMPTZ | NOT NULL |
-| updated_at | TIMESTAMPTZ | NOT NULL |
+| `id` | UUID | PK |
+| `order_number` | VARCHAR(40) | UNIQUE |
+| `customer_id` | UUID | FK users |
+| `status` | VARCHAR(30) | NOT NULL |
+| `subtotal` | NUMERIC(19,2) | >= 0 |
+| `discount_total` | NUMERIC(19,2) | >= 0 |
+| `total` | NUMERIC(19,2) | >= 0 |
+| `idempotency_key` | VARCHAR(120) | NULL |
+| `requirement_description` | TEXT | requerido por API |
+| `project_objective` | TEXT | requerido por API |
+| `contact_email` | VARCHAR(180) | requerido por API |
+| `contact_phone` | VARCHAR(40) | opcional |
+| `desired_delivery_date` | DATE | opcional |
+| `references_url` | TEXT | opcional |
+| `created_at` | TIMESTAMPTZ | NOT NULL |
+| `updated_at` | TIMESTAMPTZ | NOT NULL |
 
-Constraints:
+Protecciones monetarias:
 
 ```sql
 CHECK (subtotal >= 0)
@@ -335,483 +219,182 @@ CHECK (total >= 0)
 CHECK (discount_total <= subtotal)
 ```
 
-Índice/constraint importante:
+Idempotencia:
 
 ```text
 (customer_id, idempotency_key) UNIQUE
 ```
 
-cuando `idempotency_key` no es NULL.
+cuando la llave no es nula.
 
-En PostgreSQL puede resolverse mediante índice parcial.
+## 9. Order items
 
----
-
-# 10. Order Items
-
-## 10.1 order_items
-
-Campos:
+### `order_items`
 
 | Campo | Tipo |
 |---|---|
-| id | UUID |
-| order_id | UUID |
-| product_id | UUID |
-| product_name | VARCHAR(180) |
-| sku | VARCHAR(50) |
-| quantity | INTEGER |
-| unit_price | NUMERIC(19,2) |
-| subtotal | NUMERIC(19,2) |
+| `id` | UUID |
+| `order_id` | UUID |
+| `product_id` | UUID |
+| `product_name` | VARCHAR(180) |
+| `sku` | VARCHAR(50) |
+| `quantity` | INTEGER |
+| `unit_price` | NUMERIC(19,2) |
+| `subtotal` | NUMERIC(19,2) |
 
-Constraints:
-
-```sql
-CHECK (quantity > 0)
-CHECK (unit_price >= 0)
-CHECK (subtotal >= 0)
-```
-
-## Por qué duplicar product_name y sku
-
-La orden debe conservar un snapshot comercial mínimo.
-
-Si posteriormente:
+Snapshot comercial:
 
 ```text
-"E-commerce Basic"
+product_name
+sku
+unit_price
 ```
 
-cambia a:
+se copian en el item para que una modificación futura del catálogo no altere el historial de la orden.
 
-```text
-"E-commerce Starter"
-```
+## 10. Discount configuration
 
-la orden histórica debe seguir mostrando lo comprado originalmente.
-
-No depender únicamente del nombre actual del producto.
-
----
-
-# 11. Descuentos
-
-## 11.1 discount_configuration
-
-Representa reglas configurables de descuento.
-
-Campos:
+### `discount_configuration`
 
 | Campo | Tipo |
 |---|---|
-| id | UUID |
-| code | VARCHAR(80) UNIQUE |
-| type | VARCHAR(80) |
-| enabled | BOOLEAN |
-| percentage | NUMERIC(5,2) |
-| start_at | TIMESTAMPTZ NULL |
-| end_at | TIMESTAMPTZ NULL |
-| minimum_orders | INTEGER NULL |
-| lookback_months | INTEGER NULL |
-| created_at | TIMESTAMPTZ |
-| updated_at | TIMESTAMPTZ |
-| updated_by | UUID NULL |
+| `id` | UUID |
+| `code` | VARCHAR(80) UNIQUE |
+| `type` | VARCHAR(80) |
+| `enabled` | BOOLEAN |
+| `percentage` | NUMERIC(5,2) |
+| `start_at` | TIMESTAMPTZ NULL |
+| `end_at` | TIMESTAMPTZ NULL |
+| `minimum_orders` | INTEGER NULL |
+| `lookback_months` | INTEGER NULL |
+| `created_at` | TIMESTAMPTZ |
+| `updated_at` | TIMESTAMPTZ |
+| `updated_by` | UUID NULL |
 
-Valores seed:
+Reglas actuales:
 
 ```text
-TIME_RANGE
-RANDOM_ORDER
-FREQUENT_CUSTOMER
+TIME_RANGE       10%
+RANDOM_ORDER     50%
+FREQUENT_CUSTOMER 5%
 ```
 
-Ejemplo:
+`V15` las deja deshabilitadas inicialmente para que la configuración comercial sea explícita.
+
+## 11. Order discounts
+
+### `order_discounts`
+
+| Campo | Tipo |
+|---|---|
+| `id` | UUID |
+| `order_id` | UUID |
+| `discount_configuration_id` | UUID NULL |
+| `code` | VARCHAR(80) |
+| `percentage` | NUMERIC(5,2) |
+| `amount` | NUMERIC(19,2) |
+| `base_amount` | NUMERIC(19,2) |
+| `reason` | VARCHAR(500) |
+| `application_order` | INTEGER |
+
+La persistencia detallada permite responder:
+
+- qué regla aplicó;
+- qué porcentaje;
+- sobre qué base;
+- cuánto descontó;
+- en qué orden se explicó.
+
+### Regla de cálculo
+
+Cada descuento aplicable utiliza el **subtotal original** como base.
+
+Ejemplo subtotal `100`:
 
 ```text
-TIME_RANGE
-percentage = 10
-enabled = true
+TIME_RANGE        10% -> base 100 -> amount 10
+RANDOM_ORDER      50% -> base 100 -> amount 50
+FREQUENT_CUSTOMER  5% -> base 100 -> amount 5
 
-RANDOM_ORDER
-percentage = 50
-enabled = true
+discount_total = 65
+total = 35
+```
 
-FREQUENT_CUSTOMER
-percentage = 5
+`application_order` conserva el orden de trazabilidad, no una base decreciente.
+
+## 12. Frequent customer
+
+No se almacena un booleano derivado en `users`.
+
+La elegibilidad se calcula desde órdenes:
+
+```text
+status IN (CONFIRMED, COMPLETED)
+created_at dentro de lookback
+COUNT >= minimum_orders
+```
+
+Configuración base:
+
+```text
 minimum_orders = 5
 lookback_months = 12
 ```
 
----
+`CREATED` y `CANCELLED` no cuentan.
 
-# 12. order_discounts
+## 13. Random order
 
-Toda regla aplicada debe quedar registrada.
+La selección usa un `RandomProvider` inyectable.
 
-Campos:
+Esto permite:
 
-| Campo | Tipo |
-|---|---|
-| id | UUID |
-| order_id | UUID |
-| discount_configuration_id | UUID NULL |
-| code | VARCHAR(80) |
-| percentage | NUMERIC(5,2) |
-| amount | NUMERIC(19,2) |
-| base_amount | NUMERIC(19,2) |
-| reason | VARCHAR(500) |
-| application_order | INTEGER |
+- implementación real en producción;
+- comportamiento determinista en pruebas.
 
-Ejemplo:
+El resultado aplicado queda registrado en `order_discounts`.
 
-```text
-TIME_RANGE
-10%
-base 100.00
-amount 10.00
-application_order 1
-```
+## 14. Audit
 
-Luego:
-
-```text
-RANDOM_ORDER
-50%
-base 90.00
-amount 45.00
-application_order 2
-```
-
-Esto permite reconstruir exactamente el cálculo.
-
----
-
-# 13. Por qué no guardar descuentos únicamente como discount_total
-
-Guardar solo:
-
-```text
-discount_total
-```
-
-impide responder:
-
-```text
-¿Qué descuentos aplicaron?
-¿En qué orden?
-¿Sobre qué base?
-¿Por qué?
-```
-
-Por eso:
-
-```text
-orders.discount_total
-```
-
-es el agregado rápido, mientras:
-
-```text
-order_discounts
-```
-
-preserva trazabilidad.
-
----
-
-# 14. Cliente frecuente
-
-No crear inicialmente una columna:
-
-```text
-users.frequent_customer
-```
-
-porque se volvería dato derivado susceptible de quedar desactualizado.
-
-La regla debe calcularse mediante órdenes históricas.
-
-Definición inicial:
-
-```text
->= 5 órdenes CONFIRMED o COMPLETED
-durante los últimos 12 meses
-```
-
-Estos valores provienen de:
-
-```text
-discount_configuration
-```
-
-y no del código hardcodeado.
-
----
-
-# 15. Pedido aleatorio
-
-No almacenar un booleano arbitrario en `orders` como fuente de decisión.
-
-El resultado sí puede quedar reflejado mediante:
-
-```text
-order_discounts.code = RANDOM_ORDER
-```
-
-La selección debe ocurrir mediante:
-
-```text
-RandomProvider
-```
-
-inyectable.
-
-Así los tests son deterministas.
-
-Regla de cálculo adoptada:
-
-```text
-si coinciden varias reglas,
-los porcentajes se acumulan sobre el subtotal original
-```
-
-`application_order` se conserva para trazabilidad y orden de explicación del cálculo.
-
----
-
-# 16. Auditoría
-
-## 16.1 audit_log
-
-Campos:
+### `audit_log`
 
 | Campo | Tipo |
 |---|---|
-| id | UUID |
-| actor_user_id | UUID NULL |
-| action | VARCHAR(100) |
-| resource_type | VARCHAR(100) |
-| resource_id | VARCHAR(100) NULL |
-| correlation_id | VARCHAR(100) NULL |
-| ip_address | VARCHAR(64) NULL |
-| metadata | JSONB NULL |
-| created_at | TIMESTAMPTZ |
+| `id` | UUID |
+| `actor_user_id` | UUID NULL |
+| `action` | VARCHAR(100) |
+| `resource_type` | VARCHAR(100) |
+| `resource_id` | VARCHAR(100) NULL |
+| `correlation_id` | VARCHAR(100) NULL |
+| `ip_address` | VARCHAR(64) NULL |
+| `metadata` | JSONB NULL |
+| `created_at` | TIMESTAMPTZ |
 
-Ejemplos de `action`:
+JSONB se utiliza únicamente para metadata variable y controlada.
 
-```text
-USER_ROLE_CHANGED
-PRODUCT_CREATED
-PRODUCT_UPDATED
-PRODUCT_DELETED
-INVENTORY_ADJUSTED
-ORDER_CREATED
-ORDER_CANCELLED
-DISCOUNT_CONFIGURATION_UPDATED
-```
+Nunca debe almacenar:
 
-JSONB se permite aquí porque `metadata` puede variar según el evento.
+- password;
+- `password_hash`;
+- JWT;
+- secretos;
+- payloads completos sin filtrar.
 
-No utilizar metadata JSONB para reemplazar columnas fundamentales.
+## 15. Eliminación de productos
 
----
-
-# 17. ¿Tabla separada para idempotency?
-
-Para este challenge se prefiere inicialmente:
-
-```text
-orders.idempotency_key
-```
-
-con índice único parcial:
-
-```text
-(customer_id, idempotency_key)
-```
-
-Ventajas:
-
-```text
-menos tablas
-regla simple
-suficiente para creación de órdenes
-```
-
-Crear tabla separada `idempotency_request` solo si se requiere:
-
-```text
-almacenar respuesta completa
-TTL
-estado PROCESSING/COMPLETED
-idempotencia para múltiples operaciones
-```
-
-No sobrearquitecturar inicialmente.
-
----
-
-# 18. Eliminación de productos
-
-Preferir:
-
-```text
-soft business deletion
-```
-
-mediante:
+Se prioriza desactivación de negocio:
 
 ```text
 active = false
 ```
 
-para productos que ya poseen órdenes.
+cuando el producto tiene historial comercial.
 
-No eliminar físicamente productos referenciados por historial comercial.
+Un producto nunca utilizado puede eliminarse físicamente si la implementación y las FK lo permiten.
 
-El endpoint DELETE puede implementar una desactivación de negocio documentada.
+## 16. Reportes
 
-Si se decide soportar borrado físico, solamente para productos nunca utilizados.
-
----
-
-# 19. Cancelación de órdenes
-
-Cancelar una orden NO significa borrarla.
-
-Cambio:
-
-```text
-CONFIRMED → CANCELLED
-```
-
-Debe conservarse:
-
-```text
-order
-order_items
-order_discounts
-```
-
-y devolver capacidad al inventario si el flujo de negocio ya la había consumido.
-
-La operación debe ser transaccional.
-
----
-
-# 20. Historial de estado de orden
-
-Para el challenge base NO es obligatorio crear:
-
-```text
-order_status_history
-```
-
-porque `audit_log` puede cubrir eventos de cambio de estado.
-
-Crear tabla dedicada solamente si posteriormente se requiere:
-
-```text
-timeline funcional
-SLA
-duración por estado
-reportes de transición
-```
-
-Evitar duplicación prematura.
-
----
-
-# 21. Constraints críticas
-
-Además de validaciones Java, PostgreSQL debe proteger invariantes básicas.
-
-Ejemplos:
-
-```sql
-CHECK (price >= 0)
-CHECK (available_quantity >= 0)
-CHECK (reserved_quantity >= 0)
-CHECK (quantity > 0)
-CHECK (subtotal >= 0)
-CHECK (discount_total >= 0)
-CHECK (total >= 0)
-```
-
-La aplicación valida primero.
-
-La DB actúa como última línea de defensa.
-
----
-
-# 22. Índices mínimos
-
-## users
-
-```text
-UNIQUE(email)
-```
-
-## products
-
-```text
-UNIQUE(sku)
-UNIQUE(slug)
-INDEX(active)
-INDEX(category_id)
-INDEX(name)
-INDEX(price)
-```
-
-Para búsqueda parcial por nombre se puede evaluar `pg_trgm` únicamente si se justifica.
-
-No agregar extensión inicialmente si `ILIKE` es suficiente para el challenge.
-
-## inventory
-
-```text
-UNIQUE(product_id)
-INDEX(available_quantity)
-```
-
-## orders
-
-```text
-UNIQUE(order_number)
-INDEX(customer_id)
-INDEX(created_at)
-INDEX(status)
-INDEX(customer_id, created_at)
-```
-
-## order_items
-
-```text
-INDEX(order_id)
-INDEX(product_id)
-```
-
-## order_discounts
-
-```text
-INDEX(order_id)
-INDEX(code)
-```
-
-## audit_log
-
-```text
-INDEX(actor_user_id)
-INDEX(action)
-INDEX(created_at)
-INDEX(resource_type, resource_id)
-```
-
----
-
-# 23. Reportes y soporte del modelo
-
-## Productos activos
+### Productos activos
 
 Fuente:
 
@@ -825,11 +408,7 @@ Filtro:
 active = true
 ```
 
----
-
-## Top 5 productos vendidos
-
-Fuente:
+### Top 5 productos vendidos
 
 ```text
 order_items
@@ -837,7 +416,7 @@ JOIN orders
 JOIN products
 ```
 
-Considerar únicamente:
+Estados válidos:
 
 ```text
 CONFIRMED
@@ -850,18 +429,14 @@ Agregación:
 SUM(order_items.quantity)
 ```
 
----
-
-## Top 5 clientes frecuentes
-
-Fuente:
+### Top 5 clientes
 
 ```text
 orders
 JOIN users
 ```
 
-Considerar:
+Estados válidos:
 
 ```text
 CONFIRMED
@@ -874,680 +449,25 @@ Agregación:
 COUNT(orders.id)
 ```
 
----
+## 17. Constraints e índices
 
-# 24. Regla sobre órdenes canceladas
+La aplicación valida primero y PostgreSQL funciona como última línea de defensa.
 
-Las órdenes:
+Índices relevantes cubren:
 
-```text
-CANCELLED
-```
+- email;
+- SKU/slug;
+- activo/categoría/nombre/precio;
+- disponibilidad;
+- customer/status/fecha de órdenes;
+- items;
+- descuentos;
+- auditoría.
 
-NO deben contar para:
+Para cambios futuros se debe medir con `EXPLAIN (ANALYZE, BUFFERS)` antes de introducir índices adicionales.
 
-```text
-Top 5 productos vendidos
-Top 5 clientes frecuentes
-FrequentCustomerDiscountStrategy
-```
+## 18. Estrategia de migración
 
-Documentar esta decisión.
+El modelo final corresponde al resultado acumulado de `V1` a `V16`.
 
----
-
-# 25. Búsqueda de productos
-
-Filtros soportados:
-
-```text
-name
-sku
-category
-minPrice
-maxPrice
-active
-available
-```
-
-No crear tablas adicionales para búsqueda.
-
-Implementar mediante:
-
-```text
-Specification
-Criteria API
-```
-
-o mecanismo equivalente.
-
----
-
-# 26. Optimistic locking
-
-El campo:
-
-```text
-inventory.version
-```
-
-debe mapear:
-
-```java
-@Version
-```
-
-Flujo:
-
-```text
-TX A lee version = 5
-TX B lee version = 5
-
-TX A actualiza
-version = 6
-
-TX B intenta actualizar version = 5
-0 rows affected
-OptimisticLockingFailure
-```
-
-La aplicación debe convertir el conflicto esperado a:
-
-```text
-HTTP 409 CONFLICT
-```
-
-cuando corresponda.
-
----
-
-# 27. Frontera transaccional de CreateOrder
-
-Conceptualmente:
-
-```text
-BEGIN
-
-validar usuario
-cargar productos
-validar inventario
-actualizar inventario
-crear order
-crear order_items
-calcular descuentos
-crear order_discounts
-actualizar totales
-
-COMMIT
-```
-
-Ante excepción:
-
-```text
-ROLLBACK
-```
-
-No distribuir este flujo en transacciones independientes sin justificación.
-
----
-
-# 28. Frontera transaccional de CancelOrder
-
-Conceptualmente:
-
-```text
-BEGIN
-
-cargar order
-validar estado
-marcar CANCELLED
-devolver inventario
-auditar
-
-COMMIT
-```
-
-Ante error:
-
-```text
-ROLLBACK
-```
-
----
-
-# 29. Dinero
-
-PostgreSQL:
-
-```text
-NUMERIC(19,2)
-```
-
-Java:
-
-```text
-BigDecimal
-```
-
-Regla de redondeo:
-
-```text
-RoundingMode.HALF_UP
-```
-
-No realizar aritmética monetaria con:
-
-```text
-double
-float
-```
-
----
-
-# 30. Timestamps
-
-Utilizar:
-
-```text
-TIMESTAMPTZ
-```
-
-en PostgreSQL.
-
-Java:
-
-```text
-Instant
-```
-
-o:
-
-```text
-OffsetDateTime
-```
-
-de manera consistente.
-
-Preferencia:
-
-```text
-Instant en backend
-UTC en persistencia
-```
-
-Frontend convierte a zona local para presentación.
-
----
-
-# 31. UUID
-
-Preferir UUID generado por aplicación o PostgreSQL, pero elegir una sola estrategia.
-
-Recomendación:
-
-```text
-UUID generado en Java
-```
-
-para no depender de extensiones PostgreSQL únicamente para IDs.
-
-No mezclar UUID y BIGINT sin criterio.
-
-Excepciones aceptables:
-
-```text
-roles
-categories
-```
-
-pueden utilizar IDs pequeños/secuenciales porque son catálogos internos.
-
----
-
-# 32. Migraciones definitivas iniciales
-
-## V1__create_identity.sql
-
-Crear:
-
-```text
-users
-roles
-user_roles
-```
-
-Seed estructural:
-
-```text
-ADMIN
-CUSTOMER
-```
-
----
-
-## V2__create_catalog.sql
-
-Crear:
-
-```text
-categories
-products
-```
-
-Seed estructural de categorías.
-
----
-
-## V3__create_inventory.sql
-
-Crear:
-
-```text
-inventory
-```
-
-Incluye:
-
-```text
-version
-constraints
-```
-
----
-
-## V4__create_orders.sql
-
-Crear:
-
-```text
-orders
-order_items
-```
-
-Incluir índice parcial para idempotencia.
-
----
-
-## V5__create_discounts.sql
-
-Crear:
-
-```text
-discount_configuration
-order_discounts
-```
-
-Seed estructural:
-
-```text
-TIME_RANGE
-RANDOM_ORDER
-FREQUENT_CUSTOMER
-```
-
----
-
-## V6__create_audit.sql
-
-Crear:
-
-```text
-audit_log
-```
-
----
-
-## V7__create_indexes.sql
-
-Agregar índices de rendimiento no cubiertos por UNIQUE/PK.
-
----
-
-## V8__seed_demo_data.sql
-
-Crear datos demo reproducibles.
-
----
-
-# 33. Seed demo esperado
-
-## Usuarios
-
-```text
-admin@launchforge.dev
-customer@launchforge.dev
-frequent@launchforge.dev
-client1@launchforge.dev
-client2@launchforge.dev
-client3@launchforge.dev
-client4@launchforge.dev
-client5@launchforge.dev
-```
-
----
-
-## Productos
-
-```text
-LF-WEB-001 Landing Page
-LF-WEB-002 Web Corporativa
-LF-ECO-001 E-commerce
-LF-SAA-001 MVP SaaS
-LF-SEO-001 SEO Inicial
-LF-UX-001 UI/UX Pack
-LF-INT-001 Integración WhatsApp
-LF-MNT-001 Mantenimiento
-```
-
----
-
-## Inventario
-
-Ejemplo:
-
-```text
-Landing Page               8
-Web Corporativa            5
-E-commerce                 3
-MVP SaaS                   2
-SEO Inicial               10
-UI/UX Pack                 6
-Integración WhatsApp      10
-Mantenimiento             20
-```
-
----
-
-## Órdenes históricas
-
-Crear suficientes órdenes para que:
-
-```text
-frequent@launchforge.dev
-```
-
-cumpla:
-
-```text
->= 5 órdenes CONFIRMED/COMPLETED en 12 meses
-```
-
-Crear distribución suficiente para mostrar:
-
-```text
-Top 5 productos
-Top 5 clientes
-```
-
-No crear órdenes al azar durante startup.
-
-El seed debe ser determinista.
-
----
-
-# 34. Descuentos demo
-
-Configurar inicialmente:
-
-```text
-TIME_RANGE
-10%
-
-RANDOM_ORDER
-50%
-
-FREQUENT_CUSTOMER
-5%
-```
-
-La ventana temporal demo debe poder parametrizarse sin recompilar.
-
-Para evitar que la demo caduque, NO es buena idea dejar una fecha fija cercana dentro del seed definitivo.
-
-Opciones aceptables:
-
-1. endpoint/admin UI para actualizar rango;
-2. migración seed con ventana amplia claramente documentada;
-3. configuración inicial modificable antes de demo.
-
-Preferencia:
-
-```text
-crear configuración y permitir editarla desde admin
-```
-
----
-
-# 35. Auditoría y datos personales
-
-No guardar en `audit_log.metadata`:
-
-```text
-password
-password_hash
-JWT
-secret
-```
-
-Metadata permitida:
-
-```json
-{
-  "previousStatus": "ACTIVE",
-  "newStatus": "INACTIVE"
-}
-```
-
-o:
-
-```json
-{
-  "previousQuantity": 3,
-  "newQuantity": 5
-}
-```
-
----
-
-# 36. Integridad referencial
-
-Política general:
-
-```text
-ON DELETE RESTRICT
-```
-
-para datos de negocio históricos.
-
-Ejemplos:
-
-```text
-Product usado en OrderItem → no borrar físicamente
-User con Orders → no borrar físicamente
-```
-
-Para relaciones auxiliares:
-
-```text
-user_roles
-```
-
-puede utilizarse:
-
-```text
-ON DELETE CASCADE
-```
-
-cuando eliminar la asociación sea correcto.
-
----
-
-# 37. Borrado de usuarios
-
-No borrar físicamente usuarios con historial.
-
-Usar:
-
-```text
-enabled = false
-```
-
-como desactivación.
-
-Motivos:
-
-```text
-órdenes históricas
-auditoría
-integridad
-```
-
----
-
-# 38. Qué NO modelar todavía
-
-No crear inicialmente:
-
-```text
-payments
-invoices
-shipping
-addresses
-suppliers
-coupons
-shopping_cart persistence
-notifications
-event_store
-outbox
-sagas
-```
-
-porque el challenge no lo exige.
-
-El carrito puede ser estado frontend hasta checkout.
-
-Agregar nuevas tablas únicamente ante requisito concreto.
-
----
-
-# 39. Decisiones de modelado críticas
-
-El proyecto adopta estas decisiones y su justificación debe permanecer explícita:
-
-```text
-¿Por qué OrderItem guarda unit_price?
-¿Por qué OrderDiscount existe además de discount_total?
-¿Por qué FrequentCustomer no es boolean en users?
-¿Por qué inventory está separado de products?
-¿Por qué inventory tiene @Version?
-¿Por qué CANCELLED no borra la orden?
-¿Por qué productos se desactivan en vez de eliminarse?
-¿Por qué UUID en recursos principales?
-¿Por qué NUMERIC y BigDecimal?
-¿Por qué TIMESTAMPTZ?
-¿Por qué Flyway controla schema?
-¿Por qué Hibernate solo valida?
-```
-
----
-
-# 40. Queries de diagnóstico obligatorias
-
-## Ver inventario
-
-```sql
-SELECT
-    p.sku,
-    p.name,
-    i.available_quantity,
-    i.reserved_quantity,
-    i.version
-FROM inventory i
-JOIN products p ON p.id = i.product_id
-ORDER BY p.name;
-```
-
-## Ver últimas órdenes
-
-```sql
-SELECT
-    order_number,
-    customer_id,
-    status,
-    subtotal,
-    discount_total,
-    total,
-    created_at
-FROM orders
-ORDER BY created_at DESC
-LIMIT 20;
-```
-
-## Ver descuentos de una orden
-
-```sql
-SELECT
-    code,
-    percentage,
-    base_amount,
-    amount,
-    application_order,
-    reason
-FROM order_discounts
-WHERE order_id = :order_id
-ORDER BY application_order;
-```
-
-## Ver clientes frecuentes
-
-```sql
-SELECT
-    customer_id,
-    COUNT(*) AS valid_orders
-FROM orders
-WHERE status IN ('CONFIRMED', 'COMPLETED')
-  AND created_at >= NOW() - INTERVAL '12 months'
-GROUP BY customer_id
-ORDER BY valid_orders DESC;
-```
-
----
-
-# 41. Definition of Done del modelo
-
-El modelo se considera estable para iniciar desarrollo cuando:
-
-```text
-tablas definidas
-PK definidas
-FK definidas
-constraints definidas
-índices definidos
-estados definidos
-reglas de borrado definidas
-modelo soporta reportes
-modelo soporta descuentos
-modelo soporta auditoría
-modelo soporta concurrencia
-modelo soporta idempotencia
-migraciones mapeadas
-seed planificado
-```
-
----
-
-# 42. Regla de cambio del modelo
-
-Antes de crear o modificar una entidad JPA, migración o repository:
-
-1. revisar este documento;
-2. verificar si la tabla/campo ya está definido;
-3. no agregar columnas por conveniencia sin documentarlo;
-4. si se requiere cambiar el modelo:
-   - explicar la necesidad;
-   - actualizar este documento;
-   - crear nueva migración;
-   - actualizar tests;
-   - actualizar documentación de feature.
-
-No modificar silenciosamente el modelo.
+Las migraciones no se reescriben después de compartirse. El siguiente cambio de esquema debe introducir una nueva migración.

@@ -1,35 +1,69 @@
 # Angular en LaunchForge
 
-## Fase 2
+Angular 21 implementa la SPA con Angular Material y NgRx Signals 21.
 
-Angular 21 implementa autenticación con formularios reactivos, interceptor HTTP, guards funcionales y NgRx Signals 21. Se usa esta combinación porque es la línea estable con peer dependencies compatibles y reproducibles mediante `npm ci`.
+## Organización
 
-## Piezas principales
+```text
+core/
+shared/
+features/
+```
 
-- `AuthStore` con NgRx Signal Store
-- `AuthApiService`
-- `authInterceptor`
-- `authGuard`
-- `roleGuard`
-- pantallas `/login` y `/register`
-- layout autenticado `/app`
+## Auth
+
+- `AuthStore`;
+- `AuthApiService`;
+- `authInterceptor`;
+- `authGuard`;
+- `roleGuard`;
+- login/register;
+- sesión persistida.
 
 ## Flujo
 
-1. Usuario envía formulario.
-2. Componente llama método del store.
-3. Store usa `AuthApiService`.
-4. Backend responde JWT + usuario seguro.
-5. Store persiste sesión en `localStorage`.
-6. Interceptor agrega bearer token a requests futuras.
+```mermaid
+sequenceDiagram
+    participant C as Component
+    participant S as Signal Store
+    participant A as ApiService
+    participant B as Backend
 
-## Regla de seguridad
+    C->>S: action
+    S->>A: HTTP
+    A->>B: request
+    B-->>A: response
+    A-->>S: data/error
+    S-->>C: signal state
+```
 
-Los guards Angular solo controlan navegación. No sustituyen la autorización backend.
+## Seguridad
 
-## Qué revisar si falla
+Los guards solo mejoran UX.
 
-- token persistido
-- interceptor registrado en `provideHttpClient`
-- rutas protegidas y `route.data.roles`
-- respuestas `401/403`
+El backend decide autorización.
+
+## Checkout
+
+- `Idempotency-Key` se conserva para retry;
+- cambiar intención genera una nueva;
+- validaciones del backend se muestran mediante Problem Details;
+- requerimientos comerciales se envían junto con items.
+
+## Verificación
+
+```bash
+npm ci
+npm run lint
+npm test -- --watch=false
+npm run build
+```
+
+## Diagnóstico
+
+- sesión/token;
+- interceptor;
+- route guards;
+- roles;
+- respuestas 401/403/409;
+- errores de peer dependencies.

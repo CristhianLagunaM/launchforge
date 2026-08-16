@@ -1,37 +1,92 @@
 # Docker en LaunchForge
 
-## Ciclo de Compose
+## Compose
 
-`docker compose up --build` construye backend y frontend, crea la red y el volumen, y arranca `db → backend → frontend`. `down` elimina contenedores/red pero conserva `postgres_data`; `down -v` elimina también el volumen y es un reset irreversible de datos locales.
+```text
+db -> backend -> frontend
+```
 
-## Red y puertos
+`docker compose up --build`:
 
-Compose crea la red interna `launchforge`. DNS interno resuelve nombres de servicio: backend conecta a `db:5432` y Nginx reenvía `/api` a `backend:8080`. `localhost` dentro de backend sería el propio contenedor backend, no PostgreSQL. Los puertos publicados por defecto son 80, 8080 y 5432, pero puedes cambiarlos con `FRONTEND_HOST_PORT`, `BACKEND_HOST_PORT` y `DB_HOST_PORT` en `.env`.
+1. crea red/volumen;
+2. inicia PostgreSQL;
+3. espera `pg_isready`;
+4. inicia backend;
+5. espera Actuator;
+6. inicia frontend.
 
-## Healthchecks y orden
+## Puertos
 
-PostgreSQL ejecuta `pg_isready` cada 5 segundos. Esto verifica que acepta conexiones; un proceso iniciado no implica un servicio listo. `depends_on.condition: service_healthy` retrasa backend hasta que DB esté healthy. Backend se comprueba con `wget --spider http://localhost:8080/actuator/health`, disponible en Alpine. Frontend espera backend healthy.
+Con `.env.example`:
 
-`depends_on` controla el orden inicial, no reinicia automáticamente un consumidor si su dependencia falla después. La aplicación aún debe tolerar fallos transitorios.
+```text
+Frontend   8088 -> 80
+Backend    8080 -> 8080
+PostgreSQL 55432 -> 5432
+```
 
-## Imágenes multi-stage
+DNS interno:
 
-Backend compila con Maven/JDK 21 y copia solo el jar a una imagen JRE 21 ejecutada por usuario no root. Frontend compila con Node 24.15 y copia `dist/.../browser` a Nginx; producción nunca usa `ng serve`. Los `.dockerignore` excluyen dependencias y artefactos locales.
+```text
+db:5432
+backend:8080
+```
 
-## Diagnóstico
+`localhost` dentro del contenedor backend no apunta a PostgreSQL.
+
+## Healthchecks
+
+PostgreSQL:
+
+```text
+pg_isready
+```
+
+Backend:
+
+```text
+/actuator/health
+```
+
+`depends_on.condition: service_healthy` controla el arranque inicial, no la disponibilidad permanente.
+
+## Multi-stage
+
+Backend:
+
+```text
+Maven/JDK -> jar -> JRE
+```
+
+Frontend:
+
+```text
+Node -> ng build -> Nginx
+```
+
+Producción no usa `ng serve`.
+
+## Comandos
 
 ```bash
+docker compose config
 docker compose ps
 docker compose logs backend
 docker compose logs db
 docker compose exec db psql -U launchforge -d launchforge
-docker inspect launchforge-backend-1
 ```
 
-Si health falla, probar el comando exacto dentro del contenedor, revisar variables con `docker compose config` y comparar logs de DB/backend. Para reinicio limpio: `docker compose down -v` y `docker compose up --build`.
+Reset:
 
-Si Compose falla con `failed to bind host port`, otro proceso ya ocupa ese puerto en el host. Cambia el puerto publicado en `.env` o libera el puerto en el sistema operativo.
+```bash
+docker compose down -v
+docker compose up --build
+```
 
-## Volúmenes y secretos
+## Secretos
 
-`postgres_data` conserva datos entre `down/up`. `.env` no se versiona; `.env.example` solo contiene valores locales inseguros. Compose sustituye variables del host y pasa al backend la URL interna.
+`.env.example` contiene valores locales.
+
+`.env` real no debe versionarse.
+
+En entornos compartidos se deben reemplazar password de DB y JWT secret.
