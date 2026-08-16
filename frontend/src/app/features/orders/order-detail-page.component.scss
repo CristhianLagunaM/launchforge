@@ -3,40 +3,124 @@
   gap: 1rem;
 }
 
+.order-requirements {
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, .025),
+      rgba(114, 231, 255, .015)
+    );
+  border: 1px solid rgba(114, 231, 255, .12);
+  border-radius: 1rem;
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+}
+
+.order-requirements__header {
+  display: grid;
+  gap: .35rem;
+}
+
+.order-requirements__header .eyebrow {
+  color: #72e7ff;
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.order-requirements__header h3 {
+  color: #f4f7fb;
+  font-size: 1.35rem;
+  font-weight: 400;
+  letter-spacing: -.02em;
+  margin: 0;
+}
+
+.requirement-block {
+  background: rgba(4, 8, 15, .25);
+  border: 1px solid rgba(255, 255, 255, .07);
+  border-radius: .75rem;
+  padding: .9rem 1rem;
+}
+
+.requirement-block span {
+  color: #8493a9;
+  display: block;
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  margin-bottom: .35rem;
+  text-transform: uppercase;
+}
+
+.requirement-block p {
+  color: #d7deea;
+  line-height: 1.55;
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.requirement-contact-grid {
+  display: grid;
+  gap: .75rem;
+  grid-template-columns: repeat(
+    3,
+    minmax(0, 1fr)
+  );
+}
+
 .discount-list,
 .items-list {
   display: grid;
-  gap: 0.75rem;
+  gap: .75rem;
   margin-top: 1rem;
 }
 
-.item-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.85rem 0;
-  border-top: 1px solid rgba(13, 27, 62, 0.12);
-}
-
-.item-row p {
-  margin: 0.15rem 0 0;
-}
-
-.items-list {
-  display: grid;
-  gap: 0.75rem;
-  margin-top: 1rem;
+.discount-list h3 {
+  margin-bottom: .25rem;
 }
 
 .item-row {
   align-items: center;
-  border-top: 1px solid #d8deea;
+  border-top: 1px solid rgba(255, 255, 255, .08);
   display: flex;
-  justify-content: space-between;
   gap: 1rem;
-  padding-top: 0.75rem;
+  justify-content: space-between;
+  padding: .85rem 0;
+}
+
+.item-row > div {
+  min-width: 0;
 }
 
 .item-row p {
-  margin: 0.2rem 0 0;
+  color: #93a2b7;
+  line-height: 1.45;
+  margin: .2rem 0 0;
+}
+
+.item-row > strong {
+  flex: none;
+}
+
+@media (max-width: 760px) {
+  .requirement-contact-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .order-requirements {
+    padding: 1rem;
+  }
+
+  .item-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }

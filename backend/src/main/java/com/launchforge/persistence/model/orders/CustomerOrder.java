@@ -1,6 +1,7 @@
 package com.launchforge.persistence.model.orders;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,6 +67,26 @@ public class CustomerOrder extends AbstractTimestampedEntity {
     @Size(max = 120)
     @Column(length = 120)
     private String idempotencyKey;
+
+    @Column(name = "requirement_description", columnDefinition = "TEXT")
+    private String requirementDescription;
+
+    @Column(name = "project_objective", columnDefinition = "TEXT")
+    private String projectObjective;
+
+    @Size(max = 180)
+    @Column(name = "contact_email", length = 180)
+    private String contactEmail;
+
+    @Size(max = 40)
+    @Column(name = "contact_phone", length = 40)
+    private String contactPhone;
+
+    @Column(name = "desired_delivery_date")
+    private LocalDate desiredDeliveryDate;
+
+    @Column(name = "references_url", columnDefinition = "TEXT")
+    private String referencesUrl;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
@@ -159,6 +180,54 @@ public class CustomerOrder extends AbstractTimestampedEntity {
 
     public void setIdempotencyKey(String idempotencyKey) {
         this.idempotencyKey = idempotencyKey;
+    }
+
+    public String getRequirementDescription() {
+        return requirementDescription;
+    }
+
+    public void setRequirementDescription(String requirementDescription) {
+        this.requirementDescription = requirementDescription;
+    }
+
+    public String getProjectObjective() {
+        return projectObjective;
+    }
+
+    public void setProjectObjective(String projectObjective) {
+        this.projectObjective = projectObjective;
+    }
+
+    public String getContactEmail() {
+        return contactEmail;
+    }
+
+    public void setContactEmail(String contactEmail) {
+        this.contactEmail = contactEmail;
+    }
+
+    public String getContactPhone() {
+        return contactPhone;
+    }
+
+    public void setContactPhone(String contactPhone) {
+        this.contactPhone = contactPhone;
+    }
+
+    public LocalDate getDesiredDeliveryDate() {
+        return desiredDeliveryDate;
+    }
+
+    public void setDesiredDeliveryDate(LocalDate desiredDeliveryDate) {
+        this.desiredDeliveryDate = desiredDeliveryDate;
+    }
+
+    public String getReferencesUrl() {
+        return referencesUrl;
+    }
+
+    public void setReferencesUrl(String referencesUrl) {
+        this.referencesUrl = referencesUrl;
     }
 
     public List<OrderItem> getItems() {

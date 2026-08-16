@@ -1,12 +1,13 @@
 package com.launchforge.orders.application;
 
+import org.springframework.stereotype.Component;
+
+import com.launchforge.orders.api.dto.OrderDiscountResponse;
 import com.launchforge.orders.api.dto.OrderItemResponse;
 import com.launchforge.orders.api.dto.OrderResponse;
-import com.launchforge.orders.api.dto.OrderDiscountResponse;
+import com.launchforge.persistence.model.discounts.OrderDiscount;
 import com.launchforge.persistence.model.orders.CustomerOrder;
 import com.launchforge.persistence.model.orders.OrderItem;
-import com.launchforge.persistence.model.discounts.OrderDiscount;
-import org.springframework.stereotype.Component;
 
 @Component
 public class OrderMapper {
@@ -22,10 +23,24 @@ public class OrderMapper {
                 order.getDiscountTotal(),
                 order.getTotal(),
                 order.getIdempotencyKey(),
+
+                order.getRequirementDescription(),
+                order.getProjectObjective(),
+                order.getContactEmail(),
+                order.getContactPhone(),
+                order.getDesiredDeliveryDate(),
+                order.getReferencesUrl(),
+
                 order.getCreatedAt(),
                 order.getUpdatedAt(),
-                order.getItems().stream().map(this::toItemResponse).toList(),
-                order.getOrderDiscounts().stream().map(this::toDiscountResponse).toList()
+                order.getItems()
+                        .stream()
+                        .map(this::toItemResponse)
+                        .toList(),
+                order.getOrderDiscounts()
+                        .stream()
+                        .map(this::toDiscountResponse)
+                        .toList()
         );
     }
 
@@ -40,7 +55,9 @@ public class OrderMapper {
         );
     }
 
-    private OrderDiscountResponse toDiscountResponse(OrderDiscount discount) {
+    private OrderDiscountResponse toDiscountResponse(
+            OrderDiscount discount
+    ) {
         return new OrderDiscountResponse(
                 discount.getCode(),
                 discount.getPercentage(),
