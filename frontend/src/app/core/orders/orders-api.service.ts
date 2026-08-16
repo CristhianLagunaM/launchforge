@@ -17,6 +17,8 @@ export class OrdersApiService {
     return this.httpClient.get<Order[]>(this.ordersUrl);
   }
 
+  listAllOrders() { return this.httpClient.get<Order[]>(`${this.ordersUrl}/admin`); }
+
   getOrder(orderId: string) {
     return this.httpClient.get<Order>(`${this.ordersUrl}/${orderId}`);
   }
@@ -24,4 +26,9 @@ export class OrdersApiService {
   cancelOrder(orderId: string) {
     return this.httpClient.patch<Order>(`${this.ordersUrl}/${orderId}/cancel`, {});
   }
+
+  confirmOrder(orderId: string) {
+    return this.httpClient.patch<Order>(`${this.ordersUrl}/${orderId}/confirm`, {});
+  }
+  completeOrder(orderId: string) { return this.httpClient.patch<Order>(`${this.ordersUrl}/${orderId}/complete`, {}); }
 }
