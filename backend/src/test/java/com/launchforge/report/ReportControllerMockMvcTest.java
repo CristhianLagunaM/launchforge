@@ -45,6 +45,17 @@ class ReportControllerMockMvcTest extends AbstractPostgresIntegrationTest {
                 .andExpect(jsonPath("$[0].quantitySold").isNumber());
     }
 
+    @Test
+    void adminCanReadDashboardMetrics() throws Exception {
+        mockMvc.perform(get("/api/v1/reports/dashboard").with(adminJwt()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.netRevenue").isNumber())
+                .andExpect(jsonPath("$.ordersByStatus.pending").isNumber())
+                .andExpect(jsonPath("$.capacity.available").isNumber())
+                .andExpect(jsonPath("$.monthlyRevenue", hasSize(6)))
+                .andExpect(jsonPath("$.generatedAt").exists());
+    }
+
     private org.springframework.test.web.servlet.request.RequestPostProcessor adminJwt() {
         return jwt().jwt(token -> token.claim("roles", List.of("ADMIN")))
                 .authorities(new SimpleGrantedAuthority("ROLE_ADMIN"));
@@ -55,4 +66,3 @@ class ReportControllerMockMvcTest extends AbstractPostgresIntegrationTest {
                 .authorities(new SimpleGrantedAuthority("ROLE_CUSTOMER"));
     }
 }
-
