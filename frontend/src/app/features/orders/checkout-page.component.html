@@ -2,31 +2,275 @@
   <header class="checkout-header">
     <p class="eyebrow">Último paso</p>
     <h1>Confirma tu lanzamiento</h1>
-    <p>Revisa las soluciones seleccionadas antes de crear la orden.</p>
+    <p>
+      Revisa las soluciones seleccionadas y cuéntanos qué necesitas
+      antes de crear la orden.
+    </p>
   </header>
 
   <mat-card appearance="outlined" class="checkout-card">
     <mat-card-content>
       @if (cartStore.isEmpty()) {
-        <div class="empty-state"><mat-icon>shopping_cart</mat-icon><p>No hay productos para procesar.</p></div>
+        <div class="empty-state">
+          <mat-icon>shopping_cart</mat-icon>
+          <p>No hay productos para procesar.</p>
+        </div>
       } @else {
         <div class="order-lines">
           @for (item of cartStore.items(); track item.productId) {
-            <div class="order-line" [class.order-line--conflict]="ordersStore.capacityConflict()?.productId === item.productId"><div><strong>{{ item.name }}</strong><span>{{ item.sku }} · Cantidad {{ item.quantity }}</span>@if (ordersStore.capacityConflict()?.productId === item.productId) {<span class="capacity-warning"><mat-icon>warning</mat-icon>Solicitaste {{ ordersStore.capacityConflict()?.requestedQuantity }}; disponibles {{ ordersStore.capacityConflict()?.availableQuantity }}</span>}</div><strong>{{ item.price * item.quantity | currency:'USD':'symbol':'1.2-2' }}</strong></div>
+            <div
+              class="order-line"
+              [class.order-line--conflict]="
+                ordersStore.capacityConflict()?.productId === item.productId
+              "
+            >
+              <div>
+                <strong>{{ item.name }}</strong>
+
+                <span>
+                  {{ item.sku }} · Cantidad {{ item.quantity }}
+                </span>
+
+                @if (
+                  ordersStore.capacityConflict()?.productId === item.productId
+                ) {
+                  <span class="capacity-warning">
+                    <mat-icon>warning</mat-icon>
+
+                    Solicitaste
+                    {{ ordersStore.capacityConflict()?.requestedQuantity }};
+                    disponibles
+                    {{ ordersStore.capacityConflict()?.availableQuantity }}
+                  </span>
+                }
+              </div>
+
+              <strong>
+                {{
+                  item.price * item.quantity
+                    | currency:'COP':'symbol-narrow':'1.0-0':'es-CO'
+                }}
+              </strong>
+            </div>
           }
         </div>
-        <div class="checkout-total"><span><small>{{ cartStore.itemCount() }} productos</small>Subtotal</span><strong>{{ cartStore.subtotal() | currency:'USD':'symbol':'1.2-2' }}</strong></div>
-        <p class="checkout-note"><mat-icon>verified_user</mat-icon>La disponibilidad y los descuentos aplicables se confirman al crear la orden.</p>
+
+        <form
+          class="requirements-form"
+          [formGroup]="requirementsForm"
+        >
+          <div class="requirements-header">
+            <p class="eyebrow">Brief del proyecto</p>
+            <h2>Cuéntanos sobre tu proyecto</h2>
+
+            <p>
+              Esta información nos permitirá entender exactamente qué
+              necesitas y cómo podemos ayudarte.
+            </p>
+          </div>
+
+          <mat-form-field
+            appearance="outline"
+            class="full-width"
+          >
+            <mat-label>¿Qué necesitas?</mat-label>
+
+            <textarea
+              matInput
+              rows="4"
+              maxlength="3000"
+              formControlName="requirementDescription"
+              placeholder="Describe el servicio, solución o funcionalidad que necesitas"
+            ></textarea>
+
+            @if (
+              requirementsForm.controls.requirementDescription.touched &&
+              requirementsForm.controls.requirementDescription.hasError('required')
+            ) {
+              <mat-error>
+                Describe brevemente qué necesitas.
+              </mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field
+            appearance="outline"
+            class="full-width"
+          >
+            <mat-label>Objetivo del proyecto</mat-label>
+
+            <textarea
+              matInput
+              rows="3"
+              maxlength="1000"
+              formControlName="projectObjective"
+              placeholder="Ejemplo: aumentar ventas, automatizar un proceso o captar nuevos clientes"
+            ></textarea>
+
+            @if (
+              requirementsForm.controls.projectObjective.touched &&
+              requirementsForm.controls.projectObjective.hasError('required')
+            ) {
+              <mat-error>
+                Indica cuál es el objetivo del proyecto.
+              </mat-error>
+            }
+          </mat-form-field>
+
+          <div class="requirements-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Correo de contacto</mat-label>
+
+              <input
+                matInput
+                type="email"
+                maxlength="180"
+                formControlName="contactEmail"
+                placeholder="cliente@empresa.com"
+              />
+
+              @if (
+                requirementsForm.controls.contactEmail.touched &&
+                requirementsForm.controls.contactEmail.hasError('required')
+              ) {
+                <mat-error>
+                  El correo de contacto es obligatorio.
+                </mat-error>
+              }
+
+              @if (
+                requirementsForm.controls.contactEmail.touched &&
+                requirementsForm.controls.contactEmail.hasError('email')
+              ) {
+                <mat-error>
+                  Ingresa un correo válido.
+                </mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Teléfono</mat-label>
+
+              <input
+                matInput
+                type="tel"
+                maxlength="40"
+                formControlName="contactPhone"
+                placeholder="+57 300 000 0000"
+              />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Fecha deseada</mat-label>
+
+              <input
+                matInput
+                type="date"
+                formControlName="desiredDeliveryDate"
+              />
+            </mat-form-field>
+          </div>
+
+          <mat-form-field
+            appearance="outline"
+            class="full-width"
+          >
+            <mat-label>Referencias o enlaces</mat-label>
+
+            <textarea
+              matInput
+              rows="2"
+              maxlength="2000"
+              formControlName="referencesUrl"
+              placeholder="Sitios web, diseños, documentos o referencias que nos ayuden a entender tu idea"
+            ></textarea>
+          </mat-form-field>
+        </form>
+
+        <div class="checkout-total">
+          <span>
+            <small>
+              {{ cartStore.itemCount() }} productos
+            </small>
+            Subtotal
+          </span>
+
+          <strong>
+            {{
+              cartStore.subtotal()
+                | currency:'COP':'symbol-narrow':'1.0-0':'es-CO'
+            }}
+          </strong>
+        </div>
+
+        <p class="checkout-note">
+          <mat-icon>verified_user</mat-icon>
+          La disponibilidad y los descuentos aplicables se confirman
+          al crear la orden.
+        </p>
       }
 
       @if (ordersStore.error()) {
-        <div class="error-banner" role="alert"><mat-icon>error_outline</mat-icon><div><strong>No pudimos confirmar la orden</strong>@if (ordersStore.capacityConflict(); as conflict) {<p><b>{{ conflict.productName }} ({{ conflict.sku }})</b>: solicitaste {{ conflict.requestedQuantity }}, pero hay {{ conflict.availableQuantity }} disponibles.</p>} @else {<p>{{ ordersStore.error() }}</p>}</div></div>
+        <div
+          class="error-banner"
+          role="alert"
+        >
+          <mat-icon>error_outline</mat-icon>
+
+          <div>
+            <strong>
+              No pudimos confirmar la orden
+            </strong>
+
+            @if (
+              ordersStore.capacityConflict();
+              as conflict
+            ) {
+              <p>
+                <b>
+                  {{ conflict.productName }}
+                  ({{ conflict.sku }})
+                </b>:
+                solicitaste
+                {{ conflict.requestedQuantity }},
+                pero hay
+                {{ conflict.availableQuantity }}
+                disponibles.
+              </p>
+            } @else {
+              <p>
+                {{ ordersStore.error() }}
+              </p>
+            }
+          </div>
+        </div>
       }
     </mat-card-content>
+
     <mat-card-actions>
-      <a mat-button routerLink="/cart">Volver al carrito</a>
-      <button mat-flat-button color="primary" type="button" [disabled]="cartStore.isEmpty() || ordersStore.submitting()" (click)="submitOrder()">
-        {{ ordersStore.submitting() ? 'Procesando...' : 'Confirmar orden' }}
+      <a
+        mat-button
+        routerLink="/cart"
+      >
+        Volver al carrito
+      </a>
+
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        [disabled]="
+          cartStore.isEmpty() ||
+          requirementsForm.invalid ||
+          ordersStore.submitting()
+        "
+        (click)="submitOrder()"
+      >
+        {{
+          ordersStore.submitting()
+            ? 'Procesando...'
+            : 'Confirmar orden'
+        }}
       </button>
     </mat-card-actions>
   </mat-card>

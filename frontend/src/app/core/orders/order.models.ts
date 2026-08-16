@@ -13,6 +13,13 @@ export interface CreateOrderItemPayload {
 
 export interface CreateOrderPayload {
   items: CreateOrderItemPayload[];
+
+  requirementDescription: string;
+  projectObjective: string;
+  contactEmail: string;
+  contactPhone?: string;
+  desiredDeliveryDate?: string;
+  referencesUrl?: string;
 }
 
 export interface OrderItem {
@@ -33,7 +40,11 @@ export interface OrderDiscount {
   applicationOrder: number;
 }
 
-export type OrderStatus = 'CREATED' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED';
+export type OrderStatus =
+  | 'CREATED'
+  | 'CONFIRMED'
+  | 'CANCELLED'
+  | 'COMPLETED';
 
 export interface Order {
   id: string;
@@ -45,6 +56,14 @@ export interface Order {
   discountTotal: number;
   total: number;
   idempotencyKey: string | null;
+
+  requirementDescription: string;
+  projectObjective: string;
+  contactEmail: string;
+  contactPhone: string | null;
+  desiredDeliveryDate: string | null;
+  referencesUrl: string | null;
+
   createdAt: string;
   updatedAt: string;
   items: OrderItem[];
