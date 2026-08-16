@@ -23,16 +23,19 @@
 }
 
 .rule-button__content { display: grid; gap: .2rem; padding-block: .35rem; text-align: left; }
-.rule-button__content small { color: #8190a5; font-size: .72rem; line-height: 1.35; white-space: normal; }
+.rule-button__content { color: var(--lf-muted); }
+.rule-button__content small { color: var(--lf-meta); font-size: .72rem; line-height: 1.35; white-space: normal; }
 
 .date-time-grid { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr) minmax(9rem, .4fr); }
 
 .rule-button-active {
-  background: rgba(42, 99, 193, 0.12);
+  background: var(--lf-interactive);
+  border-left: 2px solid var(--lf-cyan);
+  color: var(--lf-text);
 }
 
 .rule-meta {
-  color: #42526b;
+  color: var(--lf-meta);
   font-size: 0.95rem;
 }
 

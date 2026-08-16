@@ -16,7 +16,7 @@
     <mat-card appearance="outlined">
       <mat-card-header>
         <mat-card-title>{{ order.orderNumber }}</mat-card-title>
-        <mat-card-subtitle>{{ order.status }} · {{ order.createdAt | date:'medium' }}</mat-card-subtitle>
+        <mat-card-subtitle>{{ statusLabel(order.status) }} · {{ order.createdAt | date:'medium' }}</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
         <p><strong>Cliente:</strong> {{ order.customerEmail }}</p>
@@ -30,8 +30,8 @@
             @for (discount of order.discounts; track discount.code + '-' + discount.applicationOrder) {
               <div class="item-row">
                 <div>
-                  <strong>{{ discount.code }}</strong>
-                  <p>{{ discount.reason }}</p>
+                  <strong>{{ discountLabel(discount.code) }}</strong>
+                  <p>{{ discount.code === 'TIME_RANGE' ? 'Compra realizada dentro del horario promocional.' : discount.code === 'RANDOM_ORDER' ? 'La orden fue seleccionada para la promoción.' : 'Se alcanzó el mínimo de compras requerido.' }}</p>
                   <p>Base: {{ discount.baseAmount | currency:'USD':'symbol':'1.2-2' }} · {{ discount.percentage }}%</p>
                 </div>
                 <strong>-{{ discount.amount | currency:'USD':'symbol':'1.2-2' }}</strong>
@@ -53,7 +53,13 @@
         </div>
       </mat-card-content>
       <mat-card-actions>
-        @if (order.status === 'CONFIRMED') {
+        @if (authStore.isAdmin() && order.status === 'CREATED') {
+          <button mat-button type="button" [disabled]="ordersStore.submitting()" (click)="ordersStore.confirmOrder(order.id)">Confirmar compra</button>
+        }
+        @if (authStore.isAdmin() && order.status === 'CONFIRMED') {
+          <button mat-button type="button" [disabled]="ordersStore.submitting()" (click)="ordersStore.completeOrder(order.id)">Marcar como completada</button>
+        }
+        @if (order.status === 'CREATED') {
           <button mat-button type="button" [disabled]="ordersStore.submitting()" (click)="ordersStore.cancelOrder(order.id)">
             {{ ordersStore.submitting() ? 'Cancelando...' : 'Cancelar orden' }}
           </button>
