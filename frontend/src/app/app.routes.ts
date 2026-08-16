@@ -91,6 +91,14 @@ export const routes: Routes = [
             path: 'audit',
             loadComponent: () =>
               import('./features/admin/audit/admin-audit-page.component').then((m) => m.AdminAuditPageComponent)
+          },
+          {
+            path: 'users',
+            loadComponent: () => import('./features/admin/users/admin-users-page.component').then((m) => m.AdminUsersPageComponent)
+          },
+          {
+            path: 'orders',
+            loadComponent: () => import('./features/orders/orders-page.component').then((m) => m.OrdersPageComponent)
           }
         ]
   },

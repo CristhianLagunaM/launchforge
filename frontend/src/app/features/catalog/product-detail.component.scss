@@ -25,7 +25,7 @@
 
 .detail-visual { min-height: 18rem; display: grid; place-items: center; position: relative; background: radial-gradient(circle, rgba(114,231,255,.18), transparent 35%), linear-gradient(135deg, #101a2e, #18112e); border-bottom: 1px solid rgba(114,231,255,.14); }
 .detail-visual span { position: absolute; top: 1rem; left: 1rem; color: #73839a; font: .7rem monospace; letter-spacing: .12em; }
-.detail-visual mat-icon { width: auto; height: auto; font-size: 7rem; color: #80ebff; filter: drop-shadow(0 0 30px rgba(114,231,255,.45)); }
+.detail-visual mat-icon { width: auto; height: auto; font-size: 5rem; color: var(--lf-cyan); opacity: .85; }
 .detail-card > :not(.detail-visual) { margin-inline: 1.5rem; }
 .detail-card > .detail-actions { margin-bottom: 1.5rem; }
 

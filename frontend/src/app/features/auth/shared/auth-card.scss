@@ -2,22 +2,20 @@
   display: block;
   min-height: 100vh;
   background:
-    linear-gradient(90deg, rgba(3, 7, 16, .96), rgba(6, 11, 25, .83) 52%, rgba(16, 10, 38, .9)),
-    url('/images/launchforge-hero-v1.png') center / cover fixed;
+    linear-gradient(90deg, rgba(8, 9, 9, .98) 0 36%, rgba(8, 9, 9, .76) 58%, rgba(8, 9, 9, .28)),
+    url('/images/launchforge-hero-v2.png') center / cover fixed;
   overflow: hidden;
   position: relative;
 }
 
 :host::before {
-  animation: auth-orbit 14s linear infinite;
-  background: conic-gradient(from 90deg, transparent, rgba(114, 231, 255, .16), transparent 35%);
-  border-radius: 50%;
+  background: repeating-linear-gradient(90deg, transparent 0 79px, rgba(255,255,255,.025) 80px);
   content: '';
-  height: 42rem;
-  left: -18rem;
+  height: 100%;
+  left: 0;
   position: absolute;
-  top: -20rem;
-  width: 42rem;
+  top: 0;
+  width: 100%;
 }
 
 .auth-page {
@@ -33,10 +31,7 @@
   z-index: 1;
 }
 
-.auth-panel,
-.auth-form-card {
-  border-radius: 1.5rem;
-}
+.auth-panel, .auth-form-card { border-radius: 8px; }
 
 .auth-panel {
   color: #ecf3ff;
@@ -75,21 +70,21 @@
   transition: color .2s ease, transform .2s ease;
 }
 
-.auth-bullet:hover { color: #8beeff; transform: translateX(.35rem); }
+.auth-bullet:hover { color: var(--lf-text); transform: translateX(2px); }
 .auth-bullet mat-icon { color: #72e7ff; }
 
 .auth-form-card {
-  background: rgba(12, 18, 30, 0.92);
-  border-color: rgba(114, 231, 255, .18);
-  backdrop-filter: blur(18px);
-  padding: 1rem;
+  background: rgba(18, 18, 20, .96);
+  border-color: #363638;
+  backdrop-filter: blur(8px);
+  padding: 1.25rem;
   animation: auth-enter-right .75s .08s cubic-bezier(.2,.8,.2,1) both;
-  box-shadow: 0 28px 90px rgba(0, 0, 0, .5), 0 0 55px rgba(73, 189, 255, .08);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .42);
   overflow: hidden;
   position: relative;
 }
 
-.auth-form-card::before { background: linear-gradient(90deg, transparent, #72e7ff, #8a5cff, transparent); content: ''; height: 2px; left: 0; position: absolute; right: 0; top: 0; }
+.auth-form-card::before { background: var(--lf-cyan); content: ''; height: 2px; left: 1.25rem; position: absolute; right: calc(100% - 4rem); top: 0; }
 
 .full-width {
   width: 100%;
@@ -116,8 +111,6 @@
 
 @keyframes auth-enter-left { from { opacity: 0; transform: translateX(-2rem); } to { opacity: 1; transform: none; } }
 @keyframes auth-enter-right { from { opacity: 0; transform: translateX(2rem) scale(.98); } to { opacity: 1; transform: none; } }
-@keyframes auth-orbit { to { transform: rotate(360deg); } }
-
 @media (prefers-reduced-motion: reduce) {
   :host::before, .auth-panel, .auth-form-card { animation: none; }
   .auth-bullet { transition: none; }

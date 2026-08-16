@@ -1,6 +1,7 @@
 package com.launchforge.report.api;
 
 import com.launchforge.report.api.dto.ActiveProductReport;
+import com.launchforge.report.api.dto.DashboardReport;
 import com.launchforge.report.api.dto.TopCustomerReport;
 import com.launchforge.report.api.dto.TopProductReport;
 import com.launchforge.report.application.ReportQueryService;
@@ -34,5 +35,9 @@ public class ReportController {
     public List<TopCustomerReport> topCustomers() {
         return reportQueryService.topCustomers();
     }
-}
 
+    @GetMapping("/dashboard")
+    public DashboardReport dashboard() {
+        return reportQueryService.dashboard();
+    }
+}

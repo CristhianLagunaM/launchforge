@@ -21,7 +21,9 @@ El Aspect ejecuta primero el método. Solo si termina correctamente resuelve el 
 - USER_CREATED
 - PRODUCT_CREATED, PRODUCT_UPDATED y PRODUCT_DISABLED
 - INVENTORY_ADJUSTED
-- ORDER_CREATED y ORDER_CANCELLED
+- ORDER_CREATED, ORDER_CONFIRMED, ORDER_COMPLETED y ORDER_CANCELLED
+
+`ORDER_CONFIRMED` se emite después de la confirmación ADMIN y del consumo definitivo de la reserva. Si falla el inventario o la transacción, no se persiste un evento de confirmación exitosa.
 - DISCOUNT_CONFIGURATION_UPDATED
 
 USER_STATUS_CHANGED y USER_ROLE_CHANGED quedan definidos para futuros casos administrativos; esos casos de uso todavía no existen. No se auditan GET ordinarios.

@@ -107,6 +107,39 @@ class ReportRepositoryIntegrationTest extends AbstractPostgresIntegrationTest {
                 .containsExactly(7L, 7L, 5L, 4L, 3L);
     }
 
+    @Test
+    void dashboardAggregatesMoneyStatusesCapacityAndMonthlyRevenueInPostgres() {
+        UUID customerId = insertUser("dashboard@reports.test", "Dashboard", "Buyer");
+        UUID productId = insertProduct("SKU-D", "Dashboard product", true);
+        jdbcTemplate.update("""
+                INSERT INTO inventory (id, product_id, available_quantity, reserved_quantity, version, updated_at)
+                VALUES (?, ?, 0, 2, 0, ?)
+                """, UUID.randomUUID(), productId, Timestamp.from(Instant.now()));
+        UUID confirmedOrder = insertOrder(customerId, "CONFIRMED");
+        jdbcTemplate.update("""
+                UPDATE orders SET subtotal = 200.00, discount_total = 50.00, total = 150.00
+                WHERE id = ?
+                """, confirmedOrder);
+        insertOrder(customerId, "CREATED");
+        insertOrder(customerId, "CANCELLED");
+
+        var result = reportQueryService.dashboard();
+
+        assertThat(result.grossRevenue()).isEqualByComparingTo("200.00");
+        assertThat(result.netRevenue()).isEqualByComparingTo("150.00");
+        assertThat(result.discountTotal()).isEqualByComparingTo("50.00");
+        assertThat(result.averageTicket()).isEqualByComparingTo("150.00");
+        assertThat(result.totalOrders()).isEqualTo(3);
+        assertThat(result.ordersByStatus().pending()).isEqualTo(1);
+        assertThat(result.ordersByStatus().confirmed()).isEqualTo(1);
+        assertThat(result.ordersByStatus().cancelled()).isEqualTo(1);
+        assertThat(result.capacity().available()).isZero();
+        assertThat(result.capacity().reserved()).isEqualTo(2);
+        assertThat(result.capacity().outOfStockProducts()).isEqualTo(1);
+        assertThat(result.monthlyRevenue()).hasSize(6);
+        assertThat(result.monthlyRevenue().get(5).revenue()).isEqualByComparingTo("150.00");
+    }
+
     private UUID insertProduct(String sku, String name, boolean active) {
         UUID id = UUID.randomUUID();
         jdbcTemplate.update("""

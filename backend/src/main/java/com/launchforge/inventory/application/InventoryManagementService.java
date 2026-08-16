@@ -66,6 +66,25 @@ public class InventoryManagementService {
         return applyDirectAdjustment(productId, InventoryAdjustmentOperation.RESTORE, quantity);
     }
 
+    @Transactional
+    public InventoryResponse reserveCapacity(UUID productId, int quantity) { return applyReservation(productId, quantity, 1); }
+    @Transactional
+    public InventoryResponse confirmReservation(UUID productId, int quantity) { return applyReservation(productId, quantity, 2); }
+    @Transactional
+    public InventoryResponse releaseReservation(UUID productId, int quantity) { return applyReservation(productId, quantity, 3); }
+
+    private InventoryResponse applyReservation(UUID productId, int quantity, int operation) {
+        Inventory inventory = loadInventory(productId);
+        try {
+            if (operation == 1) inventory.reserve(quantity);
+            else if (operation == 2) inventory.confirmReservation(quantity);
+            else inventory.releaseReservation(quantity);
+            return inventoryMapper.toResponse(inventoryRepository.saveAndFlush(inventory));
+        } catch (InsufficientInventoryException exception) {
+            throw new InsufficientCapacityException(inventory.getProduct().getId(), inventory.getProduct().getSku(), inventory.getProduct().getName(), inventory.getAvailableQuantity(), quantity);
+        }
+    }
+
     private InventoryResponse applyDirectAdjustment(UUID productId, InventoryAdjustmentOperation operation, int quantity) {
         Inventory inventory = loadInventory(productId);
         applyOperation(inventory, operation, quantity);

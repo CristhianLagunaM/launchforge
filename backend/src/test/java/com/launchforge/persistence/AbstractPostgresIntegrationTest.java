@@ -7,6 +7,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 @Testcontainers
+@SuppressWarnings("resource") // Testcontainers owns and closes @Container instances.
 public abstract class AbstractPostgresIntegrationTest {
 
     @Container

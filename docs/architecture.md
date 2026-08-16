@@ -1,5 +1,48 @@
 # Architecture
 
+## Vista de despliegue
+
+```mermaid
+flowchart TD
+    B[Browser] --> N[Angular / Nginx]
+    N --> S[Spring Boot API]
+    S --> A[Application / Domain]
+    A --> P[(PostgreSQL)]
+    F[Flyway] --> P
+    X[Security JWT] -. transversal .-> S
+    Y[Audit AOP] -. transversal .-> A
+```
+
+## Flujo de una orden
+
+```mermaid
+sequenceDiagram
+    participant UI as Angular
+    participant API as Spring Boot
+    participant INV as Inventory
+    participant DB as PostgreSQL
+    UI->>API: POST /api/v1/orders + Idempotency-Key
+    API->>INV: reservar capacidad
+    INV->>DB: optimistic locking
+    API->>API: calcular descuentos
+    API->>DB: guardar order, items y discounts
+    API-->>UI: 201 Created o 409 Problem Details
+```
+
+## Discount Engine
+
+```mermaid
+flowchart LR
+    C[DiscountContext] --> E[DiscountEngine]
+    E --> T[TimeRange 10%]
+    E --> R[Random Order 50%]
+    E --> F[Frequent Customer 5%]
+    T --> O[DiscountResult acumulado]
+    R --> O
+    F --> O
+    O --> D[order_discounts]
+```
+
 LaunchForge mantiene un monorepo con tres piezas principales:
 
 - `frontend`: Angular 21 standalone, Angular Material, NgRx Signal Store y routing lazy
@@ -42,7 +85,9 @@ Concurrencia:
 
 Checkout:
 
-`Angular cart/checkout -> OrdersStore -> OrdersApiService -> OrderController -> CreateOrderUseCase -> TransactionalOrderCreator -> InventoryManagementService + OrderRepository -> PostgreSQL`
+`Angular cart/checkout -> OrdersStore -> OrdersApiService -> OrderController -> CreateOrderUseCase -> TransactionalOrderCreator -> reserva de Inventory + OrderRepository -> PostgreSQL`
+
+La orden se crea como `CREATED` (pendiente de confirmación). ADMIN la confirma con `PATCH /api/v1/orders/{id}/confirm`; la reserva pasa a consumo definitivo y el estado cambia a `CONFIRMED`. Cancelar `CREATED` libera la reserva; cancelar `CONFIRMED` restaura capacidad consumida.
 
 Consulta:
 
@@ -63,6 +108,7 @@ Cancelación:
 - `Inventory` centraliza invariantes de capacidad
 - `@Version` protege capacidad contra race conditions sin locks en memoria
 - la creación de órdenes usa una transacción corta y explícita
+- las órdenes pendientes reservan capacidad: disminuye `available_quantity` y aumenta `reserved_quantity`
 - la idempotencia se apoya en un header HTTP y una restricción única en PostgreSQL
 - `order_items` conserva snapshots para proteger histórico frente a cambios del catálogo
 
@@ -80,7 +126,7 @@ Orden actual:
 
 Decisiones específicas:
 
-- los descuentos combinables se calculan sobre el subtotal original;
+- los descuentos combinables se calculan linealmente sobre el subtotal original y se suman sus porcentajes aplicados;
 - `DiscountEngine` recibe estrategias por DI;
 - `RandomProvider` desacopla producción y tests;
 - `OrderDiscount` conserva trazabilidad histórica aunque cambie la configuración;

@@ -42,6 +42,24 @@ Login, registro y el inicio autenticado comunican beneficios para el usuario en 
 
 La interfaz utiliza español para acciones, ayuda, fechas y paginación. Los identificadores técnicos que forman parte natural del contrato o del dominio de desarrollo —como SKU, slug, enums y nombres comerciales registrados en inglés— conservan su forma original.
 
+## Refinamiento visual
+
+La segunda pasada visual conserva el modo oscuro, el hero tecnológico, el cohete, la marca LaunchForge y el cyan oficial. Se incorporó un sistema común de tokens para fondo, superficies, bordes y tres niveles de texto; el cyan queda reservado para identidad, selección y datos relevantes en vez de funcionar como color universal de interacción.
+
+El hero `frontend/public/images/launchforge-hero-v2.png` sustituye visualmente al recurso anterior sin eliminarlo del repositorio. Su dirección editorial muestra infraestructura computacional física, cableado y una zona operativa realista en grafito, acero, cyan escaso y una luz ámbar contenida. Se evitan deliberadamente los patrones de imagen generativa más repetidos: personaje con visor, hologramas, ciudad cyberpunk, gradientes magenta, saturación neón, cerebro neuronal literal y composición simétrica de stock.
+
+Las vistas operativas aumentan su densidad sin alterar su composición ni comportamiento. Usuarios separa claramente nombre y correo; órdenes reduce la altura de sus filas; inventario utiliza un borde seleccionado sin resplandor; descuentos distingue la regla activa con una señal mínima; auditoría mantiene identificadores técnicos en monoespaciada y filas de bajo contraste. El catálogo conserva mayor espacio, arte futurista y hero, pero usa movimientos de uno o dos píxeles, sombras contenidas y metadata secundaria para evitar competencia visual.
+
+Inputs, navegación y estados de foco comparten superficies oscuras, radios técnicos y transiciones de 150 ms. El cambio es exclusivamente de presentación: no modifica rutas, contratos HTTP, stores, seguridad, validaciones ni reglas de negocio.
+
+La dirección antiplantilla se apoya en fichas técnicas, líneas estructurales, materiales fotográficos, metadata monoespaciada y contraste editorial. Las acciones principales usan un tono claro y las secundarias se mantienen neutrales; el cyan queda reservado para el cohete, pequeños indicadores, selección y cifras operativas. También se corrigió la convivencia entre controles nativos y `mat-form-field` para impedir el efecto visual de un segundo input incrustado dentro del campo Material.
+
+Login y registro utilizan explícitamente la variante `outline` de Angular Material. El wrapper es la única superficie visible y el autocompletado de navegadores WebKit conserva el mismo fondo, texto y caret, evitando una segunda caja superpuesta. La portada autenticada abandonó el degradado azul-violeta residual y comparte ahora superficies de grafito, retícula técnica, radios y densidad con administración, catálogo y reportes.
+
+Reportes utiliza un ámbar desaturado (`#A87932` a `#D6B46A`) como segunda codificación visual. Este acento cálido diferencia clientes frecuentes de las métricas cyan sin competir con la marca ni confundirse con el verde reservado para estados correctos.
+
+El tablero de reportes organiza la información en tres niveles: KPI financieros, tendencia y estado operativo, y rankings detallados. La evolución mensual se representa sin dependencias gráficas adicionales; estados y alertas usan códigos cromáticos semánticos. El hero del catálogo reemplaza la enumeración técnica de filtros por una invitación centrada en el proyecto del cliente; los filtros permanecen disponibles en su sección específica.
+
 La administración de descuentos traduce los códigos de regla a nombres y descripciones funcionales. Las ventanas temporales se editan mediante calendario y hora local; antes de enviar la actualización se convierten a un instante UTC para conservar el contrato y evitar ambigüedades en el backend.
 
 ## Verificación

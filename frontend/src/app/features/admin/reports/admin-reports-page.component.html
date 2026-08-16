@@ -1,7 +1,7 @@
 <section class="reports-shell">
   <header class="reports-header">
     <div><p class="eyebrow">Inteligencia operativa</p><h1>Panel de rendimiento</h1><p>Una vista clara del catálogo, las ventas y los clientes con mayor actividad.</p></div>
-    <span class="live-badge"><span></span> Datos actuales</span>
+    <span class="live-badge"><span></span> Actualizado {{ reportStore.dashboard()?.generatedAt | date:'shortTime' }}</span>
   </header>
 
   @if (reportStore.loading()) {
@@ -17,11 +17,47 @@
       <mat-card-content>No hay información disponible para los reportes.</mat-card-content>
     </mat-card>
   } @else {
-    <div class="kpi-grid">
-      <article class="kpi-card"><mat-icon>inventory_2</mat-icon><span>Catálogo activo</span><strong>{{ reportStore.activeProducts().length }}</strong><small>soluciones disponibles</small></article>
-      <article class="kpi-card"><mat-icon>trending_up</mat-icon><span>Producto líder</span><strong>{{ reportStore.topProducts()[0]?.quantitySold ?? 0 }}</strong><small>{{ reportStore.topProducts()[0]?.name ?? 'Sin ventas' }}</small></article>
-      <article class="kpi-card"><mat-icon>groups</mat-icon><span>Cliente destacado</span><strong>{{ reportStore.topCustomers()[0]?.orderCount ?? 0 }}</strong><small>{{ reportStore.topCustomers()[0]?.firstName ?? 'Sin actividad' }} {{ reportStore.topCustomers()[0]?.lastName ?? '' }}</small></article>
-    </div>
+    @if (reportStore.dashboard(); as dashboard) {
+      <div class="kpi-grid">
+        <article class="kpi-card kpi-card--primary"><mat-icon>payments</mat-icon><span>Ingresos netos</span><strong>{{ dashboard.netRevenue | currency:'USD':'symbol':'1.0-0' }}</strong><small>ventas confirmadas y completadas</small></article>
+        <article class="kpi-card"><mat-icon>receipt_long</mat-icon><span>Órdenes válidas</span><strong>{{ dashboard.ordersByStatus.confirmed + dashboard.ordersByStatus.completed }}</strong><small>de {{ dashboard.totalOrders }} órdenes registradas</small></article>
+        <article class="kpi-card"><mat-icon>monitoring</mat-icon><span>Ticket promedio</span><strong>{{ dashboard.averageTicket | currency:'USD':'symbol':'1.0-0' }}</strong><small>valor medio por orden válida</small></article>
+        <article class="kpi-card kpi-card--amber"><mat-icon>sell</mat-icon><span>Descuentos concedidos</span><strong>{{ dashboard.discountTotal | currency:'USD':'symbol':'1.0-0' }}</strong><small>sobre {{ dashboard.grossRevenue | currency:'USD':'symbol':'1.0-0' }} brutos</small></article>
+      </div>
+
+      <div class="operations-grid">
+        <mat-card appearance="outlined" class="trend-card">
+          <mat-card-header><div><mat-card-title>Evolución de ingresos</mat-card-title><mat-card-subtitle>Últimos seis meses · órdenes confirmadas o completadas</mat-card-subtitle></div></mat-card-header>
+          <mat-card-content class="revenue-chart">
+            @for (month of dashboard.monthlyRevenue; track month.period) {
+              <div class="revenue-column">
+                <span class="revenue-value">{{ month.revenue | currency:'USD':'symbol':'1.0-0' }}</span>
+                <div class="revenue-track"><span [style.height.%]="revenueBarHeight(month.revenue)"></span></div>
+                <strong>{{ monthLabel(month.period) }}</strong><small>{{ month.orderCount }} órdenes</small>
+              </div>
+            }
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card appearance="outlined" class="operations-card">
+          <mat-card-header><div><mat-card-title>Estado operativo</mat-card-title><mat-card-subtitle>Órdenes y capacidad actual</mat-card-subtitle></div></mat-card-header>
+          <mat-card-content>
+            <div class="status-grid">
+              <div><span class="status-dot status-dot--pending"></span><small>Pendientes</small><strong>{{ dashboard.ordersByStatus.pending }}</strong></div>
+              <div><span class="status-dot status-dot--confirmed"></span><small>Confirmadas</small><strong>{{ dashboard.ordersByStatus.confirmed }}</strong></div>
+              <div><span class="status-dot status-dot--completed"></span><small>Completadas</small><strong>{{ dashboard.ordersByStatus.completed }}</strong></div>
+              <div><span class="status-dot status-dot--cancelled"></span><small>Canceladas</small><strong>{{ dashboard.ordersByStatus.cancelled }}</strong></div>
+            </div>
+            <div class="capacity-line"><span>Capacidad disponible</span><strong>{{ dashboard.capacity.available }}</strong></div>
+            <div class="capacity-line"><span>Capacidad reservada</span><strong>{{ dashboard.capacity.reserved }}</strong></div>
+            <div class="capacity-alert" [class.capacity-alert--clear]="dashboard.capacity.outOfStockProducts === 0">
+              <mat-icon>{{ dashboard.capacity.outOfStockProducts === 0 ? 'check_circle' : 'warning' }}</mat-icon>
+              <span>{{ dashboard.capacity.outOfStockProducts === 0 ? 'Todos los productos tienen capacidad' : dashboard.capacity.outOfStockProducts + ' productos sin cupo' }}</span>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    }
 
     <div class="chart-grid">
       <mat-card appearance="outlined" class="chart-card">
@@ -33,7 +69,7 @@
         </mat-card-content>
       </mat-card>
 
-      <mat-card appearance="outlined" class="chart-card chart-card--violet">
+      <mat-card appearance="outlined" class="chart-card chart-card--amber">
         <mat-card-header><mat-icon>leaderboard</mat-icon><div><mat-card-title>Clientes frecuentes</mat-card-title><mat-card-subtitle>Órdenes confirmadas o completadas</mat-card-subtitle></div></mat-card-header>
         <mat-card-content class="bar-list">
           @for (item of reportStore.topCustomers(); track item.customerId; let position = $index) {

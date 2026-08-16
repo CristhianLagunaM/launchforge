@@ -8,7 +8,7 @@ describe('ReportStore', () => {
     TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
   });
 
-  it('exposes loading and maps the three prepared backend responses', async () => {
+  it('exposes loading and maps the prepared backend responses', async () => {
     const store = TestBed.inject(ReportStore);
     const http = TestBed.inject(HttpTestingController);
 
@@ -24,6 +24,12 @@ describe('ReportStore', () => {
     http.expectOne('/api/v1/reports/top-customers').flush([
       { customerId: 'u-1', email: 'customer@test.dev', firstName: 'Ada', lastName: 'Lovelace', orderCount: 7 }
     ]);
+    http.expectOne('/api/v1/reports/dashboard').flush({
+      grossRevenue: 1500, netRevenue: 1200, discountTotal: 300, averageTicket: 600, totalOrders: 4,
+      ordersByStatus: { pending: 1, confirmed: 1, completed: 1, cancelled: 1 },
+      capacity: { available: 12, reserved: 2, outOfStockProducts: 1 },
+      monthlyRevenue: [{ period: '2026-08', revenue: 1200, orderCount: 2 }], generatedAt: '2026-08-15T20:00:00Z'
+    });
     await loadPromise;
 
     expect(store.loading()).toBe(false);
@@ -31,6 +37,7 @@ describe('ReportStore', () => {
     expect(store.activeProducts()[0]?.sku).toBe('LF-1');
     expect(store.topProducts()[0]?.quantitySold).toBe(12);
     expect(store.topCustomers()[0]?.orderCount).toBe(7);
+    expect(store.dashboard()?.netRevenue).toBe(1200);
     http.verify();
   });
 
@@ -45,6 +52,7 @@ describe('ReportStore', () => {
     );
     http.expectOne('/api/v1/reports/top-products').flush([]);
     http.expectOne('/api/v1/reports/top-customers').flush([]);
+    http.expectOne('/api/v1/reports/dashboard').flush({});
     await loadPromise;
 
     expect(store.loading()).toBe(false);
@@ -54,4 +62,3 @@ describe('ReportStore', () => {
     http.verify();
   });
 });
-

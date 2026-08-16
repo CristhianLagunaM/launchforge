@@ -8,13 +8,20 @@
   gap: 1rem;
 }
 
+.orders-search { display:flex; align-items:center; gap:.75rem; max-width:620px; }
+.orders-search input { flex:1; padding:.72rem .9rem; }
+
 .order-card__content {
   align-items: center;
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1rem 1.25rem;
+  padding: .7rem 1rem;
 }
+
+.order-card { border-radius:8px; }
+.order-card h2 { font-size:1.05rem; margin:0; }
+.order-card p { color:#8E8E93; font-size:.82rem; margin:.3rem 0 0; }
 
 .order-card__meta {
   align-items: flex-end;

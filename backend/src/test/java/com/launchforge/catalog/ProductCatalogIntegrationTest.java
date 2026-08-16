@@ -14,7 +14,6 @@ import com.launchforge.persistence.model.catalog.Product;
 import com.launchforge.persistence.model.inventory.Inventory;
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

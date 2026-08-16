@@ -7,6 +7,7 @@ Fase 7 implementa tres reportes de solo lectura, protegidos con rol `ADMIN`:
 - `GET /api/v1/reports/active-products`
 - `GET /api/v1/reports/top-products`
 - `GET /api/v1/reports/top-customers`
+- `GET /api/v1/reports/dashboard`
 
 No incluye auditoría ni introduce el rol `AUDITOR`.
 
@@ -36,6 +37,14 @@ LIMIT 5;
 ```
 
 `CANCELLED` y `CREATED` se excluyen en el `WHERE`. El desempate estable usa nombre y SKU ascendentes. La respuesta usa `TopProductProjection` y `TopProductReport`; el frontend recibe el ranking ya preparado.
+
+## Dashboard operativo
+
+`dashboard` entrega una vista consolidada sin cargar órdenes en memoria. Una consulta usa agregaciones con `FILTER` para calcular subtotal vendido, ingresos netos, descuentos, ticket promedio y conteos `CREATED`, `CONFIRMED`, `COMPLETED` y `CANCELLED`. Subconsultas agregan capacidad disponible, reservada y productos activos sin cupo.
+
+La evolución de seis meses se genera en PostgreSQL mediante `generate_series`. Un `LEFT JOIN` conserva los meses sin ventas con valor cero. Solo `CONFIRMED` y `COMPLETED` contribuyen a ingresos y tendencia. La respuesta incluye `generatedAt` desde un `Clock` UTC inyectable.
+
+El frontend presenta cuatro KPI financieros, barras mensuales, distribución de estados, alertas de capacidad y los rankings existentes. Angular transforma únicamente proporciones visuales; no recalcula métricas financieras ni reglas de negocio.
 
 ### Top 5 clientes
 

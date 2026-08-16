@@ -2,6 +2,8 @@
 
 ## 1. Qué representa inventario en LaunchForge
 
+Una orden pendiente reserva capacidad: `available_quantity` disminuye y `reserved_quantity` aumenta. Al confirmar, la reserva se consume (`reserved_quantity` disminuye); al cancelar una pendiente, vuelve a estar disponible. La capacidad total se interpreta como `available_quantity + reserved_quantity`.
+
 `inventory` no modela unidades físicas.
 
 Modela capacidad operativa disponible para iniciar nuevos proyectos.

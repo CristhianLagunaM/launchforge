@@ -50,5 +50,42 @@ public interface ReportRepository extends Repository<Product, UUID> {
             LIMIT 5
             """, nativeQuery = true)
     List<TopCustomerProjection> findTopCustomers();
-}
 
+    @Query(value = """
+            SELECT COALESCE(SUM(o.subtotal) FILTER (WHERE o.status IN ('CONFIRMED', 'COMPLETED')), 0) AS grossRevenue,
+                   COALESCE(SUM(o.total) FILTER (WHERE o.status IN ('CONFIRMED', 'COMPLETED')), 0) AS netRevenue,
+                   COALESCE(SUM(o.discount_total) FILTER (WHERE o.status IN ('CONFIRMED', 'COMPLETED')), 0) AS discountTotal,
+                   COALESCE(AVG(o.total) FILTER (WHERE o.status IN ('CONFIRMED', 'COMPLETED')), 0) AS averageTicket,
+                   COUNT(o.id) AS totalOrders,
+                   COUNT(o.id) FILTER (WHERE o.status = 'CREATED') AS pendingOrders,
+                   COUNT(o.id) FILTER (WHERE o.status = 'CONFIRMED') AS confirmedOrders,
+                   COUNT(o.id) FILTER (WHERE o.status = 'COMPLETED') AS completedOrders,
+                   COUNT(o.id) FILTER (WHERE o.status = 'CANCELLED') AS cancelledOrders,
+                   (SELECT COALESCE(SUM(i.available_quantity), 0) FROM inventory i) AS availableCapacity,
+                   (SELECT COALESCE(SUM(i.reserved_quantity), 0) FROM inventory i) AS reservedCapacity,
+                   (SELECT COUNT(*) FROM inventory i JOIN products p ON p.id = i.product_id
+                    WHERE p.active = TRUE AND i.available_quantity = 0) AS outOfStockProducts
+            FROM orders o
+            """, nativeQuery = true)
+    DashboardSummaryProjection dashboardSummary();
+
+    @Query(value = """
+            WITH months AS (
+                SELECT generate_series(
+                    date_trunc('month', CURRENT_TIMESTAMP) - INTERVAL '5 months',
+                    date_trunc('month', CURRENT_TIMESTAMP),
+                    INTERVAL '1 month'
+                ) AS month_start
+            )
+            SELECT TO_CHAR(m.month_start, 'YYYY-MM') AS period,
+                   COALESCE(SUM(o.total), 0) AS revenue,
+                   COUNT(o.id) AS orderCount
+            FROM months m
+            LEFT JOIN orders o ON o.created_at >= m.month_start
+                              AND o.created_at < m.month_start + INTERVAL '1 month'
+                              AND o.status IN ('CONFIRMED', 'COMPLETED')
+            GROUP BY m.month_start
+            ORDER BY m.month_start
+            """, nativeQuery = true)
+    List<MonthlyRevenueProjection> monthlyRevenue();
+}

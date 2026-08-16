@@ -28,6 +28,11 @@ public class OrderQueryService {
     }
 
     @Transactional(readOnly = true)
+    public List<OrderResponse> listAllOrders() {
+        return orderRepository.findAllByOrderByCreatedAtDesc().stream().map(orderMapper::toResponse).toList();
+    }
+
+    @Transactional(readOnly = true)
     public OrderResponse getOrder(UUID orderId, UUID requesterId, boolean adminRequest) {
         CustomerOrder order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ApiNotFoundException(
