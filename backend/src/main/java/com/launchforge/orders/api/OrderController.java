@@ -35,15 +35,21 @@ public class OrderController {
     private final CreateOrderUseCase createOrderUseCase;
     private final OrderQueryService orderQueryService;
     private final CancelOrderUseCase cancelOrderUseCase;
+    private final com.launchforge.orders.application.ConfirmOrderUseCase confirmOrderUseCase;
+    private final com.launchforge.orders.application.CompleteOrderUseCase completeOrderUseCase;
 
     public OrderController(
             CreateOrderUseCase createOrderUseCase,
             OrderQueryService orderQueryService,
-            CancelOrderUseCase cancelOrderUseCase
+            CancelOrderUseCase cancelOrderUseCase,
+            com.launchforge.orders.application.ConfirmOrderUseCase confirmOrderUseCase,
+            com.launchforge.orders.application.CompleteOrderUseCase completeOrderUseCase
     ) {
         this.createOrderUseCase = createOrderUseCase;
         this.orderQueryService = orderQueryService;
         this.cancelOrderUseCase = cancelOrderUseCase;
+        this.confirmOrderUseCase = confirmOrderUseCase;
+        this.completeOrderUseCase = completeOrderUseCase;
     }
 
     @PostMapping
@@ -64,6 +70,10 @@ public class OrderController {
         return orderQueryService.listOrders(UUID.fromString(jwt.getSubject()));
     }
 
+    @GetMapping("/admin")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<OrderResponse> listAllOrders() { return orderQueryService.listAllOrders(); }
+
     @GetMapping("/{id}")
     public OrderResponse getOrder(
             @PathVariable UUID id,
@@ -74,7 +84,7 @@ public class OrderController {
     }
 
     @PatchMapping("/{id}/cancel")
-    @PreAuthorize("hasRole('CUSTOMER')")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     public OrderResponse cancelOrder(
             @PathVariable UUID id,
             @AuthenticationPrincipal Jwt jwt,
@@ -82,6 +92,14 @@ public class OrderController {
     ) {
         return cancelOrderUseCase.cancelOrder(id, UUID.fromString(jwt.getSubject()), isAdmin(authentication));
     }
+
+    @PatchMapping("/{id}/confirm")
+    @PreAuthorize("hasRole('ADMIN')")
+    public OrderResponse confirmOrder(@PathVariable UUID id) { return confirmOrderUseCase.confirm(id); }
+
+    @PatchMapping("/{id}/complete")
+    @PreAuthorize("hasRole('ADMIN')")
+    public OrderResponse completeOrder(@PathVariable UUID id) { return completeOrderUseCase.complete(id); }
 
     private boolean isAdmin(Authentication authentication) {
         return authentication.getAuthorities().stream().anyMatch(authority -> authority.toString().equals("ROLE_ADMIN"));

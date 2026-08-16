@@ -22,7 +22,7 @@ public class AuditMetadataFactory {
                 metadata.put("newStatus", false);
             }
             case INVENTORY_ADJUSTED -> addInventory(metadata, arguments, result);
-            case ORDER_CREATED -> addOrder(metadata, result, false);
+            case ORDER_CREATED, ORDER_CONFIRMED, ORDER_COMPLETED -> addOrder(metadata, result, false);
             case ORDER_CANCELLED -> addOrder(metadata, result, true);
             case DISCOUNT_CONFIGURATION_UPDATED -> addDiscount(metadata, result);
             case USER_STATUS_CHANGED, USER_ROLE_CHANGED -> { }
@@ -53,7 +53,7 @@ public class AuditMetadataFactory {
     private void addOrder(Map<String, Object> metadata, Object result, boolean cancelled) {
         if (result instanceof OrderResponse order) {
             if (cancelled) {
-                metadata.put("previousStatus", "CONFIRMED");
+                metadata.put("previousStatus", "CREATED");
                 metadata.put("newStatus", order.status().name());
             } else {
                 metadata.put("status", order.status().name());

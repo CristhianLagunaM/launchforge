@@ -12,7 +12,7 @@ import { AuthStore } from '../../core/auth/auth.store';
   template: `
     <section class="home-shell">
       <header class="welcome-panel">
-        <p class="eyebrow">LaunchForge workspace</p>
+        <p class="eyebrow">Espacio de trabajo LaunchForge</p>
         <h1>Hola, {{ authStore.user()?.firstName }}.</h1>
         <p>Tu próxima solución digital está lista para tomar forma.</p>
       </header>
@@ -28,15 +28,15 @@ import { AuthStore } from '../../core/auth/auth.store';
   `,
   styles: [`
     :host { display: block; min-height: calc(100vh - 8rem); }
-    .home-shell { display: grid; gap: 1.5rem; margin: 0 auto; max-width: 76rem; padding: clamp(2rem, 7vw, 6rem) 1rem; }
-    .welcome-panel { background: linear-gradient(120deg, rgba(10,25,40,.95), rgba(20,13,48,.9)); border: 1px solid rgba(114,231,255,.2); border-radius: 1.5rem; overflow: hidden; padding: clamp(2rem, 6vw, 4.5rem); position: relative; }
-    .welcome-panel::after { background: radial-gradient(circle, rgba(114,231,255,.35), transparent 65%); content: ''; height: 18rem; position: absolute; right: -5rem; top: -8rem; width: 18rem; }
+    .home-shell { display: grid; gap: 1rem; margin: 0 auto; max-width: 88rem; padding: clamp(2rem, 6vw, 5rem) 1rem; }
+    .welcome-panel { background: #121516; border: 1px solid #303536; border-radius: 8px; overflow: hidden; padding: clamp(2rem, 6vw, 4.5rem); position: relative; }
+    .welcome-panel::after { background: repeating-linear-gradient(90deg, transparent 0 63px, rgba(255,255,255,.025) 64px); border-left: 1px solid #34393a; content: ''; inset: 0 0 0 62%; position: absolute; }
     .eyebrow { color: #72e7ff; font-size: .75rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
     h1 { font-size: clamp(2.4rem, 6vw, 4.5rem); font-weight: 300; letter-spacing: -.04em; margin: .4rem 0; }
     .welcome-panel > p:last-child { color: #aeb9ca; font-size: 1.05rem; }
     .action-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); }
-    .action-card { align-items: center; background: rgba(12,18,30,.88); border: 1px solid rgba(255,255,255,.09); border-radius: 1rem; color: #edf7ff; display: flex; gap: 1rem; min-height: 7rem; padding: 1.25rem; transition: transform .2s ease, border-color .2s ease; }
-    .action-card:hover { border-color: rgba(114,231,255,.4); text-decoration: none; transform: translateY(-4px); }
+    .action-card { align-items: center; background: #121214; border: 1px solid #2b2b2f; border-radius: 6px; color: #edf7ff; display: flex; gap: 1rem; min-height: 6.25rem; padding: 1rem; transition: transform .15s ease, border-color .15s ease; }
+    .action-card:hover { border-color: #4a4a50; text-decoration: none; transform: translateY(-2px); }
     .action-card mat-icon { color: #72e7ff; font-size: 2rem; height: 2rem; width: 2rem; }
     .action-card span { display: grid; gap: .35rem; }
     .action-card small { color: #92a0b5; line-height: 1.4; }

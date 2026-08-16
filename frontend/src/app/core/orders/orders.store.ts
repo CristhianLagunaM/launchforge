@@ -41,6 +41,11 @@ export const OrdersStore = signalStore(
         patchState(store, { loading: false, error: describeHttpError(error, 'No fue posible cargar órdenes.') });
       }
     },
+    async loadAllOrders(): Promise<void> {
+      patchState(store, { loading: true, error: null });
+      try { patchState(store, { orders: await firstValueFrom(ordersApi.listAllOrders()), loading: false }); }
+      catch (error) { patchState(store, { loading: false, error: describeHttpError(error, 'No fue posible cargar las órdenes administrativas.') }); }
+    },
     async loadOrder(orderId: string): Promise<void> {
       patchState(store, { loading: true, error: null, selectedOrder: null });
       try {
@@ -83,6 +88,18 @@ export const OrdersStore = signalStore(
       } catch (error) {
         patchState(store, { submitting: false, error: describeHttpError(error, 'No fue posible cancelar la orden.') });
       }
+    },
+    async confirmOrder(orderId: string): Promise<void> {
+      patchState(store, { submitting: true, error: null });
+      try {
+        const order = await firstValueFrom(ordersApi.confirmOrder(orderId));
+        patchState(store, { submitting: false, selectedOrder: order, orders: store.orders().map((existing) => existing.id === order.id ? order : existing) });
+      } catch (error) { patchState(store, { submitting: false, error: describeHttpError(error, 'No fue posible confirmar la orden.') }); }
+    },
+    async completeOrder(orderId: string): Promise<void> {
+      patchState(store, { submitting: true, error: null });
+      try { const order = await firstValueFrom(ordersApi.completeOrder(orderId)); patchState(store, { submitting: false, selectedOrder: order, orders: store.orders().map((existing) => existing.id === order.id ? order : existing) }); }
+      catch (error) { patchState(store, { submitting: false, error: describeHttpError(error, 'No fue posible completar la orden.') }); }
     },
     clearSelectedOrder(): void {
       patchState(store, { selectedOrder: null });

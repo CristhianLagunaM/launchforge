@@ -11,7 +11,8 @@ export const roleGuard: CanActivateFn = (route) => {
     return router.createUrlTree(['/login']);
   }
 
-  if (requiredRoles.some((role) => authStore.roles().includes(role))) {
+  const currentRoles = authStore.roles().map((role) => role.replace(/^ROLE_/, '').toUpperCase());
+  if (requiredRoles.some((role) => currentRoles.includes(role.replace(/^ROLE_/, '').toUpperCase()))) {
     return true;
   }
 

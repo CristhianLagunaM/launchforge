@@ -21,3 +21,29 @@ export interface TopCustomerReport {
   orderCount: number;
 }
 
+export interface MonthlyRevenueReport {
+  period: string;
+  revenue: number;
+  orderCount: number;
+}
+
+export interface DashboardReport {
+  grossRevenue: number;
+  netRevenue: number;
+  discountTotal: number;
+  averageTicket: number;
+  totalOrders: number;
+  ordersByStatus: {
+    pending: number;
+    confirmed: number;
+    completed: number;
+    cancelled: number;
+  };
+  capacity: {
+    available: number;
+    reserved: number;
+    outOfStockProducts: number;
+  };
+  monthlyRevenue: MonthlyRevenueReport[];
+  generatedAt: string;
+}

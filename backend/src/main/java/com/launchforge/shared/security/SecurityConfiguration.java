@@ -1,8 +1,8 @@
 package com.launchforge.shared.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.launchforge.shared.web.CorrelationIdFilter;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
-import com.nimbusds.jose.proc.SecurityContext;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import javax.crypto.SecretKey;
@@ -27,16 +27,15 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
-import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
-import com.launchforge.shared.web.CorrelationIdFilter;
+import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfiguration {
 
     @Bean
-    SecurityFilterChain securityFilterChain(
+    public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             JwtAuthenticationConverter jwtAuthenticationConverter,
             RestAuthenticationEntryPoint authenticationEntryPoint,
@@ -70,12 +69,12 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
     @Bean
-    DaoAuthenticationProvider daoAuthenticationProvider(
+    public DaoAuthenticationProvider daoAuthenticationProvider(
             DatabaseUserDetailsService userDetailsService,
             PasswordEncoder passwordEncoder
     ) {
@@ -85,24 +84,24 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    PasswordEncoder passwordEncoder() {
+    public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
     @Bean
-    JwtEncoder jwtEncoder(JwtProperties jwtProperties) {
+    public JwtEncoder jwtEncoder(JwtProperties jwtProperties) {
         return new NimbusJwtEncoder(new ImmutableSecret<>(jwtSecretKey(jwtProperties)));
     }
 
     @Bean
-    JwtDecoder jwtDecoder(JwtProperties jwtProperties) {
+    public JwtDecoder jwtDecoder(JwtProperties jwtProperties) {
         return NimbusJwtDecoder.withSecretKey(jwtSecretKey(jwtProperties))
                 .macAlgorithm(MacAlgorithm.HS256)
                 .build();
     }
 
     @Bean
-    JwtAuthenticationConverter jwtAuthenticationConverter() {
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
         converter.setJwtGrantedAuthoritiesConverter(this::extractAuthorities);
         converter.setPrincipalClaimName("email");
@@ -110,12 +109,12 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    RestAuthenticationEntryPoint restAuthenticationEntryPoint(ObjectMapper objectMapper) {
+    public RestAuthenticationEntryPoint restAuthenticationEntryPoint(ObjectMapper objectMapper) {
         return new RestAuthenticationEntryPoint(objectMapper);
     }
 
     @Bean
-    RestAccessDeniedHandler restAccessDeniedHandler(ObjectMapper objectMapper) {
+    public RestAccessDeniedHandler restAccessDeniedHandler(ObjectMapper objectMapper) {
         return new RestAccessDeniedHandler(objectMapper);
     }
 

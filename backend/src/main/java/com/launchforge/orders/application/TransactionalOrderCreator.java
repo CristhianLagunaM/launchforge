@@ -71,7 +71,7 @@ public class TransactionalOrderCreator {
         order.setId(UUID.randomUUID());
         order.setCustomer(customer);
         order.setOrderNumber(generateOrderNumber());
-        order.setStatus(OrderStatus.CONFIRMED);
+        order.setStatus(OrderStatus.CREATED);
         order.setIdempotencyKey(idempotencyKey);
         order.setDiscountTotal(ZERO);
         Instant orderCreatedAt = Instant.now();
@@ -82,8 +82,7 @@ public class TransactionalOrderCreator {
         for (Map.Entry<UUID, Integer> entry : consolidatedItems.entrySet()) {
             Product product = loadProduct(entry.getKey());
             validateActiveProduct(product);
-            inventoryManagementService.consumeCapacity(product.getId(), entry.getValue());
-
+            inventoryManagementService.reserveCapacity(product.getId(), entry.getValue());
             OrderItem item = buildOrderItem(product, entry.getValue());
             subtotal = subtotal.add(item.getSubtotal());
             order.addItem(item);

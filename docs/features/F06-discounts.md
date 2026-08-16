@@ -83,7 +83,7 @@ El pipeline se ordena por `applicationOrder`:
 2. `RANDOM_ORDER`
 3. `FREQUENT_CUSTOMER`
 
-El cálculo conserva orden de trazabilidad, pero los descuentos combinables se calculan sobre el subtotal original:
+El cálculo conserva orden de trazabilidad. Los descuentos combinables son lineales acumulativos: cada porcentaje se calcula sobre el subtotal original y luego se suman los importes. Por ejemplo, 10% + 50% + 5% = 65%; sobre US$950 el descuento es US$617,50 y el total US$332,50:
 
 - subtotal `100.00`
 - `TIME_RANGE` 10% => `10.00`
