@@ -6,12 +6,15 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+
 import org.springframework.stereotype.Service;
 
 @Service
 public class DiscountEngine {
 
-    private static final BigDecimal ZERO = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+    private static final BigDecimal ZERO =
+            BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
 
     private final DiscountConfigurationService discountConfigurationService;
     private final List<DiscountStrategy> discountStrategies;
@@ -21,46 +24,80 @@ public class DiscountEngine {
             List<DiscountStrategy> discountStrategies
     ) {
         this.discountConfigurationService = discountConfigurationService;
+
         this.discountStrategies = discountStrategies.stream()
-                .sorted(Comparator.comparingInt(DiscountStrategy::applicationOrder))
+                .sorted(Comparator.comparingInt(strategy ->
+                        Objects.requireNonNull(
+                                strategy,
+                                "Discount strategy must not be null"
+                        ).applicationOrder()
+                ))
                 .toList();
     }
 
-    public DiscountEngineResult applyDiscounts(DiscountContext initialContext) {
-        Map<DiscountCode, com.launchforge.persistence.model.discounts.DiscountConfiguration> configurations =
-                discountConfigurationService.getEnabledConfigurationsByCode();
-        List<DiscountApplication> appliedDiscounts = new ArrayList<>();
-        BigDecimal subtotal = initialContext.subtotal().setScale(2, RoundingMode.HALF_UP);
+    public DiscountEngineResult applyDiscounts(
+            DiscountContext initialContext
+    ) {
+        Map<
+                DiscountCode,
+                com.launchforge.persistence.model.discounts.DiscountConfiguration
+        > configurations =
+                discountConfigurationService
+                        .getEnabledConfigurationsByCode();
+
+        List<DiscountApplication> appliedDiscounts =
+                new ArrayList<>();
+
+        BigDecimal subtotal = initialContext
+                .subtotal()
+                .setScale(2, RoundingMode.HALF_UP);
+
         BigDecimal discountTotal = ZERO;
 
         for (DiscountStrategy strategy : discountStrategies) {
-            var configuration = configurations.get(strategy.code());
+            var configuration =
+                    configurations.get(strategy.code());
+
             if (configuration == null) {
                 continue;
             }
 
-            DiscountContext currentContext = new DiscountContext(
-                    initialContext.orderId(),
-                    initialContext.customerId(),
-                    initialContext.createdAt(),
-                    subtotal,
-                    subtotal
-            );
+            DiscountContext currentContext =
+                    new DiscountContext(
+                            initialContext.orderId(),
+                            initialContext.customerId(),
+                            initialContext.createdAt(),
+                            subtotal,
+                            subtotal
+                    );
 
-            if (!strategy.isApplicable(currentContext, configuration)) {
+            if (!strategy.isApplicable(
+                    currentContext,
+                    configuration
+            )) {
                 continue;
             }
 
-            DiscountApplication application = strategy.apply(currentContext, configuration).orElse(null);
-            if (application == null || application.amount().compareTo(ZERO) <= 0) {
+            DiscountApplication application = strategy
+                    .apply(currentContext, configuration)
+                    .orElse(null);
+
+            if (application == null
+                    || application.amount().compareTo(ZERO) <= 0) {
                 continue;
             }
 
-            discountTotal = discountTotal.add(application.amount()).setScale(2, RoundingMode.HALF_UP);
+            discountTotal = discountTotal
+                    .add(application.amount())
+                    .setScale(2, RoundingMode.HALF_UP);
+
             appliedDiscounts.add(application);
         }
 
-        BigDecimal finalTotal = subtotal.subtract(discountTotal).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal finalTotal = subtotal
+                .subtract(discountTotal)
+                .setScale(2, RoundingMode.HALF_UP);
+
         if (finalTotal.compareTo(ZERO) < 0) {
             throw DiscountConfigurationRules.invalidConfiguration(
                     null,
@@ -68,6 +105,10 @@ public class DiscountEngine {
             );
         }
 
-        return new DiscountEngineResult(discountTotal, finalTotal, appliedDiscounts);
+        return new DiscountEngineResult(
+                discountTotal,
+                finalTotal,
+                appliedDiscounts
+        );
     }
 }

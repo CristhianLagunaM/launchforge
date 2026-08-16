@@ -24,10 +24,10 @@ El Aspect:
 
 ```mermaid
 flowchart LR
-    U[Use case] -->|@LogAction| A[AuditAspect]
-    A --> M[Metadata allow-list]
-    M --> W[AuditWriter MANDATORY]
-    W --> DB[(audit_log)]
+    U["Use case"] -->|"@LogAction"| A["AuditAspect"]
+    A --> M["Metadata allow-list"]
+    M --> W["AuditWriter MANDATORY"]
+    W --> DB[("audit_log")]
 ```
 
 ## Consequences

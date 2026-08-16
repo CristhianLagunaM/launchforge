@@ -31,6 +31,7 @@ import com.launchforge.persistence.model.inventory.Inventory;
 @SpringBootTest
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+@SuppressWarnings("null")
 class OrderControllerMockMvcTest extends AbstractPostgresIntegrationTest {
 
     private static final UUID CUSTOMER_ID =
@@ -62,7 +63,7 @@ class OrderControllerMockMvcTest extends AbstractPostgresIntegrationTest {
     private JdbcTemplate jdbcTemplate;
 
     @BeforeEach
-    void resetMutableFixtures() {
+    public void resetMutableFixtures() {
         jdbcTemplate.update(
                 """
                 DELETE FROM order_discounts

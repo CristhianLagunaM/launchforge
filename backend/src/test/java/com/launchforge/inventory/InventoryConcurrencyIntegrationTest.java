@@ -2,13 +2,16 @@ package com.launchforge.inventory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -44,7 +47,7 @@ class InventoryConcurrencyIntegrationTest
     private UUID productId;
 
     @BeforeEach
-    void setUpInventory() {
+    public void setUpInventory() {
         productId = resolveProductId();
 
         jdbcTemplate.update(
@@ -61,7 +64,7 @@ class InventoryConcurrencyIntegrationTest
     }
 
     @AfterEach
-    void restoreSeedInventory() {
+    public void restoreSeedInventory() {
         if (productId == null) {
             return;
         }
@@ -100,7 +103,10 @@ class InventoryConcurrencyIntegrationTest
 
         TransactionTemplate transactionTemplate =
                 new TransactionTemplate(
-                        transactionManager
+                        Objects.requireNonNull(
+                                transactionManager,
+                                "Transaction manager must not be null"
+                        )
                 );
 
         AtomicInteger successCount =
@@ -138,9 +144,9 @@ class InventoryConcurrencyIntegrationTest
                         );
 
                         successCount.incrementAndGet();
-                    } catch (Throwable throwable) {
+                    } catch (RuntimeException exception) {
                         failures.add(
-                                throwable
+                                exception
                         );
                     }
 
@@ -243,7 +249,14 @@ class InventoryConcurrencyIntegrationTest
                     5,
                     TimeUnit.SECONDS
             );
-        } catch (Exception exception) {
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+
+            throw new IllegalStateException(
+                    "Concurrent test barrier was interrupted.",
+                    exception
+            );
+        } catch (BrokenBarrierException | TimeoutException exception) {
             throw new IllegalStateException(
                     "Concurrent test barrier failed.",
                     exception

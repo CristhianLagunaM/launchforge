@@ -30,10 +30,18 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("null")
 class ProductCatalogServiceTest {
 
-    private static final UUID PRODUCT_ID = UUID.fromString("22222222-2222-2222-2222-222222222221");
-    private static final UUID ACTOR_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
+    private static final UUID PRODUCT_ID =
+            UUID.fromString(
+                    "22222222-2222-2222-2222-222222222221"
+            );
+
+    private static final UUID ACTOR_ID =
+            UUID.fromString(
+                    "11111111-1111-1111-1111-111111111111"
+            );
 
     @Mock
     private ProductRepository productRepository;
@@ -50,7 +58,7 @@ class ProductCatalogServiceTest {
     private ProductCatalogService productCatalogService;
 
     @BeforeEach
-    void setUp() {
+    public void setUp() {
         productCatalogService = new ProductCatalogService(
                 productRepository,
                 categoryRepository,
@@ -62,15 +70,18 @@ class ProductCatalogServiceTest {
 
     @Test
     void createsProductWhenRequestIsValid() {
-        ProductUpsertRequest request = new ProductUpsertRequest(
-                "LF-NEW-001",
-                "New Product",
-                "new-product",
-                "Useful package",
-                1L,
-                new BigDecimal("1500.00")
-        );
+        ProductUpsertRequest request =
+                new ProductUpsertRequest(
+                        "LF-NEW-001",
+                        "New Product",
+                        "new-product",
+                        "Useful package",
+                        1L,
+                        new BigDecimal("1500.00")
+                );
+
         Category category = buildCategory();
+
         Product saved = buildProduct();
         saved.setSku(request.sku());
         saved.setName(request.name());
@@ -79,132 +90,312 @@ class ProductCatalogServiceTest {
         saved.setPrice(request.price());
         saved.setCategory(category);
 
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
-        when(productRepository.save(any(Product.class))).thenReturn(saved);
+        when(
+                categoryRepository.findById(1L)
+        ).thenReturn(
+                Optional.of(category)
+        );
 
-        var response = productCatalogService.createProduct(request, ACTOR_ID);
+        when(
+                productRepository.save(
+                        any(Product.class)
+                )
+        ).thenReturn(
+                saved
+        );
 
-        assertThat(response.sku()).isEqualTo("LF-NEW-001");
-        assertThat(response.slug()).isEqualTo("new-product");
-        assertThat(response.category().id()).isEqualTo(1L);
+        var response =
+                productCatalogService.createProduct(
+                        request,
+                        ACTOR_ID
+                );
+
+        assertThat(
+                response.sku()
+        ).isEqualTo(
+                "LF-NEW-001"
+        );
+
+        assertThat(
+                response.slug()
+        ).isEqualTo(
+                "new-product"
+        );
+
+        assertThat(
+                response.category().id()
+        ).isEqualTo(
+                1L
+        );
     }
 
     @Test
     void rejectsDuplicateSku() {
-        ProductUpsertRequest request = new ProductUpsertRequest(
-                "LF-LANDING-001",
-                "Another Product",
-                "another-product",
-                "Useful package",
-                1L,
-                new BigDecimal("1500.00")
-        );
-        when(productRepository.existsBySkuIgnoreCase("LF-LANDING-001")).thenReturn(true);
+        ProductUpsertRequest request =
+                new ProductUpsertRequest(
+                        "LF-LANDING-001",
+                        "Another Product",
+                        "another-product",
+                        "Useful package",
+                        1L,
+                        new BigDecimal("1500.00")
+                );
 
-        assertThatThrownBy(() -> productCatalogService.createProduct(request, ACTOR_ID))
-                .isInstanceOf(ApiConflictException.class)
-                .hasMessageContaining("SKU");
+        when(
+                productRepository.existsBySkuIgnoreCase(
+                        "LF-LANDING-001"
+                )
+        ).thenReturn(
+                true
+        );
+
+        assertThatThrownBy(
+                () ->
+                        productCatalogService.createProduct(
+                                request,
+                                ACTOR_ID
+                        )
+        )
+                .isInstanceOf(
+                        ApiConflictException.class
+                )
+                .hasMessageContaining(
+                        "SKU"
+                );
     }
 
     @Test
     void rejectsDuplicateSlug() {
-        ProductUpsertRequest request = new ProductUpsertRequest(
-                "LF-NEW-001",
-                "Another Product",
-                "landing-page-launch",
-                "Useful package",
-                1L,
-                new BigDecimal("1500.00")
-        );
-        when(productRepository.existsBySlugIgnoreCase("landing-page-launch")).thenReturn(true);
+        ProductUpsertRequest request =
+                new ProductUpsertRequest(
+                        "LF-NEW-001",
+                        "Another Product",
+                        "landing-page-launch",
+                        "Useful package",
+                        1L,
+                        new BigDecimal("1500.00")
+                );
 
-        assertThatThrownBy(() -> productCatalogService.createProduct(request, ACTOR_ID))
-                .isInstanceOf(ApiConflictException.class)
-                .hasMessageContaining("slug");
+        when(
+                productRepository.existsBySlugIgnoreCase(
+                        "landing-page-launch"
+                )
+        ).thenReturn(
+                true
+        );
+
+        assertThatThrownBy(
+                () ->
+                        productCatalogService.createProduct(
+                                request,
+                                ACTOR_ID
+                        )
+        )
+                .isInstanceOf(
+                        ApiConflictException.class
+                )
+                .hasMessageContaining(
+                        "slug"
+                );
     }
 
     @Test
     void updatesExistingProduct() {
         Product existing = buildProduct();
         Category category = buildCategory();
-        ProductUpsertRequest request = new ProductUpsertRequest(
-                "LF-LANDING-002",
-                "Landing Page Premium",
-                "landing-page-premium",
-                "Updated package",
-                1L,
-                new BigDecimal("1900.00")
+
+        ProductUpsertRequest request =
+                new ProductUpsertRequest(
+                        "LF-LANDING-002",
+                        "Landing Page Premium",
+                        "landing-page-premium",
+                        "Updated package",
+                        1L,
+                        new BigDecimal("1900.00")
+                );
+
+        when(
+                productRepository.findById(PRODUCT_ID)
+        ).thenReturn(
+                Optional.of(existing)
         );
 
-        when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(existing));
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
-        when(productRepository.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(
+                categoryRepository.findById(1L)
+        ).thenReturn(
+                Optional.of(category)
+        );
 
-        var response = productCatalogService.updateProduct(PRODUCT_ID, request, ACTOR_ID);
+        when(
+                productRepository.save(
+                        any(Product.class)
+                )
+        ).thenAnswer(
+                invocation ->
+                        invocation.getArgument(0)
+        );
 
-        assertThat(response.name()).isEqualTo("Landing Page Premium");
-        assertThat(response.price()).isEqualByComparingTo("1900.00");
-        assertThat(response.slug()).isEqualTo("landing-page-premium");
+        var response =
+                productCatalogService.updateProduct(
+                        PRODUCT_ID,
+                        request,
+                        ACTOR_ID
+                );
+
+        assertThat(
+                response.name()
+        ).isEqualTo(
+                "Landing Page Premium"
+        );
+
+        assertThat(
+                response.price()
+        ).isEqualByComparingTo(
+                "1900.00"
+        );
+
+        assertThat(
+                response.slug()
+        ).isEqualTo(
+                "landing-page-premium"
+        );
     }
 
     @Test
     void disablesProductViaStatusChange() {
         Product existing = buildProduct();
-        when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(existing));
-        when(productRepository.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        var response = productCatalogService.changeStatus(PRODUCT_ID, new ProductStatusRequest(false), ACTOR_ID);
+        when(
+                productRepository.findById(PRODUCT_ID)
+        ).thenReturn(
+                Optional.of(existing)
+        );
 
-        assertThat(response.active()).isFalse();
+        when(
+                productRepository.save(
+                        any(Product.class)
+                )
+        ).thenAnswer(
+                invocation ->
+                        invocation.getArgument(0)
+        );
+
+        var response =
+                productCatalogService.changeStatus(
+                        PRODUCT_ID,
+                        new ProductStatusRequest(false),
+                        ACTOR_ID
+                );
+
+        assertThat(
+                response.active()
+        ).isFalse();
     }
 
     @Test
     void throwsNotFoundWhenProductDoesNotExist() {
-        when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.empty());
+        when(
+                productRepository.findById(PRODUCT_ID)
+        ).thenReturn(
+                Optional.empty()
+        );
 
-        assertThatThrownBy(() -> productCatalogService.getProduct(PRODUCT_ID, true))
-                .isInstanceOf(ApiNotFoundException.class);
+        assertThatThrownBy(
+                () ->
+                        productCatalogService.getProduct(
+                                PRODUCT_ID,
+                                true
+                        )
+        ).isInstanceOf(
+                ApiNotFoundException.class
+        );
     }
 
     @Test
     void deleteSoftDisablesProductsWithCommercialHistory() {
         Product existing = buildProduct();
-        when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(existing));
-        when(orderItemRepository.existsByProduct_Id(PRODUCT_ID)).thenReturn(true);
-        when(productRepository.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        productCatalogService.deleteProduct(PRODUCT_ID, ACTOR_ID);
+        when(
+                productRepository.findById(PRODUCT_ID)
+        ).thenReturn(
+                Optional.of(existing)
+        );
 
-        assertThat(existing.getActive()).isFalse();
-        verify(inventoryRepository, never()).deleteByProduct_Id(PRODUCT_ID);
+        when(
+                orderItemRepository.existsByProduct_Id(
+                        PRODUCT_ID
+                )
+        ).thenReturn(
+                true
+        );
+
+        when(
+                productRepository.save(
+                        any(Product.class)
+                )
+        ).thenAnswer(
+                invocation ->
+                        invocation.getArgument(0)
+        );
+
+        productCatalogService.deleteProduct(
+                PRODUCT_ID,
+                ACTOR_ID
+        );
+
+        assertThat(
+                existing.getActive()
+        ).isFalse();
+
+        verify(
+                inventoryRepository,
+                never()
+        ).deleteByProduct_Id(
+                PRODUCT_ID
+        );
     }
 
     private Product buildProduct() {
         Product product = new Product();
+
         product.setId(PRODUCT_ID);
         product.setSku("LF-LANDING-001");
         product.setName("Landing Page Launch");
         product.setSlug("landing-page-launch");
-        product.setDescription("High-conversion landing page.");
-        product.setPrice(new BigDecimal("1200.00"));
+        product.setDescription(
+                "High-conversion landing page."
+        );
+        product.setPrice(
+                new BigDecimal("1200.00")
+        );
         product.setActive(true);
-        product.setCategory(buildCategory());
+        product.setCategory(
+                buildCategory()
+        );
         product.setCreatedBy(ACTOR_ID);
         product.setUpdatedBy(ACTOR_ID);
-        Inventory inventory = new Inventory();
+
+        Inventory inventory =
+                new Inventory();
+
         inventory.setAvailableQuantity(8);
         inventory.setReservedQuantity(1);
         inventory.setProduct(product);
+
         product.setInventory(inventory);
+
         return product;
     }
 
     private Category buildCategory() {
-        Category category = new Category();
+        Category category =
+                new Category();
+
         category.setId(1L);
         category.setName("WEB");
         category.setSlug("web");
         category.setActive(true);
+
         return category;
     }
 }

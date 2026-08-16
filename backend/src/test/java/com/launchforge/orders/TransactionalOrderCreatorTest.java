@@ -41,6 +41,7 @@ import com.launchforge.shared.exception.ApiConflictException;
 import com.launchforge.shared.exception.ApiNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("null")
 class TransactionalOrderCreatorTest {
 
     @Mock
@@ -61,7 +62,7 @@ class TransactionalOrderCreatorTest {
     private TransactionalOrderCreator transactionalOrderCreator;
 
     @BeforeEach
-    void setUp() {
+    public void setUp() {
         transactionalOrderCreator = new TransactionalOrderCreator(
                 userRepository,
                 productRepository,

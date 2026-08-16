@@ -27,7 +27,9 @@ import com.launchforge.persistence.AbstractPostgresIntegrationTest;
 @SpringBootTest
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-class ProductControllerMockMvcTest extends AbstractPostgresIntegrationTest {
+@SuppressWarnings("null")
+class ProductControllerMockMvcTest
+        extends AbstractPostgresIntegrationTest {
 
     private static final UUID ADMIN_ID =
             UUID.fromString(
@@ -53,7 +55,7 @@ class ProductControllerMockMvcTest extends AbstractPostgresIntegrationTest {
     private JdbcTemplate jdbcTemplate;
 
     @BeforeEach
-    void resetFixtures() {
+    public void resetFixtures() {
         cleanupTestProduct();
         ensureAdminExists();
     }
@@ -80,7 +82,9 @@ class ProductControllerMockMvcTest extends AbstractPostgresIntegrationTest {
     }
 
     @Test
-    void createProductRejectsAnonymousRequest() throws Exception {
+    void createProductRejectsAnonymousRequest()
+            throws Exception {
+
         mockMvc.perform(
                         post("/api/v1/products")
                                 .contentType(
@@ -104,7 +108,9 @@ class ProductControllerMockMvcTest extends AbstractPostgresIntegrationTest {
     }
 
     @Test
-    void createProductRejectsCustomerRole() throws Exception {
+    void createProductRejectsCustomerRole()
+            throws Exception {
+
         mockMvc.perform(
                         post("/api/v1/products")
                                 .with(
@@ -131,7 +137,9 @@ class ProductControllerMockMvcTest extends AbstractPostgresIntegrationTest {
     }
 
     @Test
-    void createProductAllowsAdminRole() throws Exception {
+    void createProductAllowsAdminRole()
+            throws Exception {
+
         mockMvc.perform(
                         post("/api/v1/products")
                                 .with(
@@ -171,7 +179,9 @@ class ProductControllerMockMvcTest extends AbstractPostgresIntegrationTest {
     }
 
     @Test
-    void getProductReturnsNotFoundForUnknownId() throws Exception {
+    void getProductReturnsNotFoundForUnknownId()
+            throws Exception {
+
         mockMvc.perform(
                         get(
                                 "/api/v1/products/99999999-9999-9999-9999-999999999999"
@@ -191,7 +201,9 @@ class ProductControllerMockMvcTest extends AbstractPostgresIntegrationTest {
     }
 
     @Test
-    void createProductValidatesRequestBody() throws Exception {
+    void createProductValidatesRequestBody()
+            throws Exception {
+
         mockMvc.perform(
                         post("/api/v1/products")
                                 .with(

@@ -1,5 +1,18 @@
 package com.launchforge.catalog.application;
 
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.launchforge.audit.application.AuditAction;
+import com.launchforge.audit.application.LogAction;
 import com.launchforge.catalog.api.dto.CategoryResponse;
 import com.launchforge.catalog.api.dto.ProductResponse;
 import com.launchforge.catalog.api.dto.ProductStatusRequest;
@@ -15,15 +28,6 @@ import com.launchforge.persistence.model.inventory.Inventory;
 import com.launchforge.shared.exception.ApiBadRequestException;
 import com.launchforge.shared.exception.ApiConflictException;
 import com.launchforge.shared.exception.ApiNotFoundException;
-import java.util.List;
-import java.util.UUID;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import com.launchforge.audit.application.AuditAction;
-import com.launchforge.audit.application.LogAction;
 
 @Service
 public class ProductCatalogService {
@@ -49,15 +53,31 @@ public class ProductCatalogService {
     }
 
     @Transactional(readOnly = true)
-    public Page<ProductResponse> listProducts(ProductSearchCriteria criteria, Pageable pageable, boolean includeInactive) {
+    public Page<ProductResponse> listProducts(
+            ProductSearchCriteria criteria,
+            Pageable pageable,
+            boolean includeInactive
+    ) {
         validatePriceRange(criteria);
-        return productRepository.findAll(ProductSpecifications.withCriteria(criteria, includeInactive), pageable)
+
+        return productRepository
+                .findAll(
+                        ProductSpecifications.withCriteria(
+                                criteria,
+                                includeInactive
+                        ),
+                        pageable
+                )
                 .map(productMapper::toProductResponse);
     }
 
     @Transactional(readOnly = true)
-    public ProductResponse getProduct(UUID productId, boolean includeInactive) {
+    public ProductResponse getProduct(
+            UUID productId,
+            boolean includeInactive
+    ) {
         Product product = loadProduct(productId);
+
         if (!includeInactive && !Boolean.TRUE.equals(product.getActive())) {
             throw new ApiNotFoundException(
                     "Product not found",
@@ -65,56 +85,135 @@ public class ProductCatalogService {
                     "catalog/product-not-found"
             );
         }
+
         return productMapper.toProductResponse(product);
     }
 
     @Transactional(readOnly = true)
     public List<CategoryResponse> listCategories(boolean includeInactive) {
-        List<Category> categories = includeInactive
-                ? categoryRepository.findAll().stream().sorted(java.util.Comparator.comparing(Category::getName)).toList()
-                : categoryRepository.findAllByActiveTrueOrderByNameAsc();
+        List<Category> categories;
+
+        if (includeInactive) {
+            categories = categoryRepository.findAll()
+                    .stream()
+                    .sorted(Comparator.comparing(category ->
+                            Objects.requireNonNull(
+                                    category.getName(),
+                                    "Category name must not be null"
+                            )
+                    ))
+                    .toList();
+        } else {
+            categories = categoryRepository.findAllByActiveTrueOrderByNameAsc();
+        }
+
         return categories.stream()
                 .map(productMapper::toCategoryResponse)
                 .toList();
     }
 
     @Transactional
-    @LogAction(action = AuditAction.PRODUCT_CREATED, resource = "PRODUCT", resourceId = "#result.id()")
-    public ProductResponse createProduct(ProductUpsertRequest request, UUID actorUserId) {
-        validateUniqueFields(request.sku(), request.slug(), null);
+    @LogAction(
+            action = AuditAction.PRODUCT_CREATED,
+            resource = "PRODUCT",
+            resourceId = "#result.id()"
+    )
+    public ProductResponse createProduct(
+            ProductUpsertRequest request,
+            UUID actorUserId
+    ) {
+        validateUniqueFields(
+                request.sku(),
+                request.slug(),
+                null
+        );
+
         Category category = loadCategory(request.categoryId());
 
         Product product = new Product();
-        applyUpsert(product, request, category, actorUserId, true);
+
+        applyUpsert(
+                product,
+                request,
+                category,
+                actorUserId,
+                true
+        );
+
         Product savedProduct = saveProduct(product);
+
         ensureInventoryExists(savedProduct);
+
         return productMapper.toProductResponse(savedProduct);
     }
 
     @Transactional
-    @LogAction(action = AuditAction.PRODUCT_UPDATED, resource = "PRODUCT", resourceId = "#result.id()")
-    public ProductResponse updateProduct(UUID productId, ProductUpsertRequest request, UUID actorUserId) {
+    @LogAction(
+            action = AuditAction.PRODUCT_UPDATED,
+            resource = "PRODUCT",
+            resourceId = "#result.id()"
+    )
+    public ProductResponse updateProduct(
+            UUID productId,
+            ProductUpsertRequest request,
+            UUID actorUserId
+    ) {
         Product product = loadProduct(productId);
-        validateUniqueFields(request.sku(), request.slug(), productId);
+
+        validateUniqueFields(
+                request.sku(),
+                request.slug(),
+                productId
+        );
+
         Category category = loadCategory(request.categoryId());
 
-        applyUpsert(product, request, category, actorUserId, false);
-        return productMapper.toProductResponse(saveProduct(product));
+        applyUpsert(
+                product,
+                request,
+                category,
+                actorUserId,
+                false
+        );
+
+        return productMapper.toProductResponse(
+                saveProduct(product)
+        );
     }
 
     @Transactional
-    @LogAction(action = AuditAction.PRODUCT_UPDATED, resource = "PRODUCT", resourceId = "#result.id()")
-    public ProductResponse changeStatus(UUID productId, ProductStatusRequest request, UUID actorUserId) {
+    @LogAction(
+            action = AuditAction.PRODUCT_UPDATED,
+            resource = "PRODUCT",
+            resourceId = "#result.id()"
+    )
+    public ProductResponse changeStatus(
+            UUID productId,
+            ProductStatusRequest request,
+            UUID actorUserId
+    ) {
         Product product = loadProduct(productId);
+
         product.setActive(request.active());
         product.setUpdatedBy(actorUserId);
-        return productMapper.toProductResponse(saveProduct(product));
+
+        return productMapper.toProductResponse(
+                saveProduct(product)
+        );
     }
 
     @Transactional
-    @LogAction(action = AuditAction.PRODUCT_DISABLED, resource = "PRODUCT", resourceId = "#productId")
-    public void deleteProduct(UUID productId, UUID actorUserId) {
+    @LogAction(
+            action = AuditAction.PRODUCT_DISABLED,
+            resource = "PRODUCT",
+            resourceId = "#productId"
+    )
+    public void deleteProduct(
+            UUID productId,
+            UUID actorUserId
+    ) {
         Product product = loadProduct(productId);
+
         if (orderItemRepository.existsByProduct_Id(productId)) {
             product.setActive(false);
             product.setUpdatedBy(actorUserId);
@@ -123,12 +222,23 @@ public class ProductCatalogService {
         }
 
         inventoryRepository.deleteByProduct_Id(productId);
-        productRepository.delete(product);
+
+        Product productToDelete = Objects.requireNonNull(
+                product,
+                "Product to delete must not be null"
+        );
+
+        productRepository.delete(productToDelete);
     }
 
     private Product saveProduct(Product product) {
+        Product productToSave = Objects.requireNonNull(
+                product,
+                "Product to save must not be null"
+        );
+
         try {
-            return productRepository.save(product);
+            return productRepository.save(productToSave);
         } catch (DataIntegrityViolationException exception) {
             throw new ApiConflictException(
                     "Product conflict",
@@ -151,29 +261,39 @@ public class ProductCatalogService {
         product.setDescription(request.description().trim());
         product.setCategory(category);
         product.setPrice(request.price());
+
         if (creating) {
             product.setActive(Boolean.TRUE);
             product.setCreatedBy(actorUserId);
         }
+
         product.setUpdatedBy(actorUserId);
     }
 
     private void ensureInventoryExists(Product product) {
-        if (inventoryRepository.findByProduct_Id(product.getId()).isPresent()) {
+        if (inventoryRepository
+                .findByProduct_Id(product.getId())
+                .isPresent()) {
             return;
         }
 
         Inventory inventory = new Inventory();
+
         inventory.setProduct(product);
         inventory.setAvailableQuantity(0);
         inventory.setReservedQuantity(0);
+
         product.setInventory(inventory);
+
         inventoryRepository.save(inventory);
     }
 
     private void validatePriceRange(ProductSearchCriteria criteria) {
-        if (criteria.minPrice() != null && criteria.maxPrice() != null
-                && criteria.maxPrice().compareTo(criteria.minPrice()) < 0) {
+        if (criteria.minPrice() != null
+                && criteria.maxPrice() != null
+                && criteria.maxPrice()
+                        .compareTo(criteria.minPrice()) < 0) {
+
             throw new ApiBadRequestException(
                     "Invalid price range",
                     "maxPrice must be greater than or equal to minPrice.",
@@ -182,10 +302,18 @@ public class ProductCatalogService {
         }
     }
 
-    private void validateUniqueFields(String sku, String slug, UUID currentProductId) {
+    private void validateUniqueFields(
+            String sku,
+            String slug,
+            UUID currentProductId
+    ) {
         boolean duplicatedSku = currentProductId == null
                 ? productRepository.existsBySkuIgnoreCase(sku)
-                : productRepository.existsBySkuIgnoreCaseAndIdNot(sku, currentProductId);
+                : productRepository.existsBySkuIgnoreCaseAndIdNot(
+                        sku,
+                        currentProductId
+                );
+
         if (duplicatedSku) {
             throw new ApiConflictException(
                     "Duplicate SKU",
@@ -196,7 +324,11 @@ public class ProductCatalogService {
 
         boolean duplicatedSlug = currentProductId == null
                 ? productRepository.existsBySlugIgnoreCase(slug)
-                : productRepository.existsBySlugIgnoreCaseAndIdNot(slug, currentProductId);
+                : productRepository.existsBySlugIgnoreCaseAndIdNot(
+                        slug,
+                        currentProductId
+                );
+
         if (duplicatedSlug) {
             throw new ApiConflictException(
                     "Duplicate slug",
@@ -216,10 +348,15 @@ public class ProductCatalogService {
     }
 
     private Category loadCategory(Long categoryId) {
-        return categoryRepository.findById(categoryId)
+        Long id = Objects.requireNonNull(
+                categoryId,
+                "Category id must not be null"
+        );
+
+        return categoryRepository.findById(id)
                 .orElseThrow(() -> new ApiNotFoundException(
                         "Category not found",
-                        "Category not found for id: " + categoryId,
+                        "Category not found for id: " + id,
                         "catalog/category-not-found"
                 ));
     }
