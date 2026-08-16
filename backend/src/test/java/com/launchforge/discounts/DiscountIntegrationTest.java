@@ -35,6 +35,7 @@ import com.launchforge.persistence.AbstractPostgresIntegrationTest;
 @AutoConfigureMockMvc
 @Import(DiscountIntegrationTest.DeterministicRandomConfiguration.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+@SuppressWarnings("null")
 class DiscountIntegrationTest extends AbstractPostgresIntegrationTest {
 
     private static final UUID FREQUENT_CUSTOMER_ID =
@@ -63,7 +64,7 @@ class DiscountIntegrationTest extends AbstractPostgresIntegrationTest {
     private JdbcTemplate jdbcTemplate;
 
     @BeforeEach
-    void resetFixtures() {
+    public void resetFixtures() {
         ensureCustomerExists(
                 FREQUENT_CUSTOMER_ID,
                 FREQUENT_CUSTOMER_EMAIL,
@@ -1157,7 +1158,7 @@ class DiscountIntegrationTest extends AbstractPostgresIntegrationTest {
 
         @Bean
         @Primary
-        RandomProvider randomProvider() {
+        public RandomProvider randomProvider() {
             return (
                     orderId,
                     customerId

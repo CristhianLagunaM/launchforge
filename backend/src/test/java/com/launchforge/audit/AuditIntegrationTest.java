@@ -36,6 +36,7 @@ import com.launchforge.persistence.AbstractPostgresIntegrationTest;
 @AutoConfigureMockMvc
 @Import(AuditIntegrationTest.RollbackConfiguration.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+@SuppressWarnings("null")
 class AuditIntegrationTest extends AbstractPostgresIntegrationTest {
 
     private static final UUID ADMIN_ID =
@@ -67,7 +68,7 @@ class AuditIntegrationTest extends AbstractPostgresIntegrationTest {
     private RollbackProbe rollbackProbe;
 
     @BeforeEach
-    void resetFixtures() {
+    public void resetFixtures() {
         deleteAuditByCorrelation(
                 "audit-product-update"
         );
@@ -656,7 +657,7 @@ class AuditIntegrationTest extends AbstractPostgresIntegrationTest {
     static class RollbackConfiguration {
 
         @Bean
-        RollbackProbe rollbackProbe() {
+        public RollbackProbe rollbackProbe() {
             return new RollbackProbe();
         }
     }

@@ -1,13 +1,17 @@
 package com.launchforge.shared.security;
 
-import com.launchforge.persistence.model.identity.User;
-import com.launchforge.persistence.model.identity.UserRole;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import com.launchforge.persistence.model.identity.Role;
+import com.launchforge.persistence.model.identity.User;
+import com.launchforge.persistence.model.identity.UserRole;
 
 public record AuthUserPrincipal(
         UUID id,
@@ -18,24 +22,48 @@ public record AuthUserPrincipal(
 ) implements UserDetails {
 
     public static AuthUserPrincipal fromUser(User user) {
-        List<String> roleNames = user.getUserRoles().stream()
-                .map(UserRole::getRole)
-                .map(role -> role.getName().toUpperCase())
-                .toList();
+        List<String> roleNames = new ArrayList<>();
+
+        for (UserRole userRole : user.getUserRoles()) {
+            if (userRole == null) {
+                continue;
+            }
+
+            Role role = userRole.getRole();
+
+            if (role == null || role.getName() == null) {
+                continue;
+            }
+
+            roleNames.add(
+                    role.getName().toUpperCase()
+            );
+        }
+
         return new AuthUserPrincipal(
                 user.getId(),
                 user.getEmail(),
                 user.getPasswordHash(),
                 Boolean.TRUE.equals(user.getEnabled()),
-                roleNames
+                List.copyOf(roleNames)
         );
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return roles.stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-                .toList();
+        List<GrantedAuthority> authorities = new ArrayList<>();
+
+        for (String role : roles) {
+            if (role != null) {
+                authorities.add(
+                        new SimpleGrantedAuthority(
+                                "ROLE_" + role
+                        )
+                );
+            }
+        }
+
+        return List.copyOf(authorities);
     }
 
     @Override

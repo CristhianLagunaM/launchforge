@@ -15,6 +15,7 @@ public interface OrderRepository
         extends JpaRepository<CustomerOrder, UUID> {
 
     @Override
+    @SuppressWarnings("null")
     @EntityGraph(
             attributePaths = {
                     "customer",

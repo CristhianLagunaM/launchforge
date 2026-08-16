@@ -7,6 +7,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -178,10 +179,8 @@ public class TransactionalOrderCreator {
     private Map<UUID, Integer> consolidateItems(
             CreateOrderRequest request
     ) {
-        if (
-                request.items() == null ||
-                request.items().isEmpty()
-        ) {
+        if (request.items() == null
+                || request.items().isEmpty()) {
             throw new ApiBadRequestException(
                     "Invalid order items",
                     "Order must contain at least one item.",
@@ -192,8 +191,7 @@ public class TransactionalOrderCreator {
         Map<UUID, Integer> consolidated =
                 new LinkedHashMap<>();
 
-        for (OrderItemRequest item :
-                request.items()) {
+        for (OrderItemRequest item : request.items()) {
 
             if (item.quantity() <= 0) {
                 throw new ApiBadRequestException(
@@ -203,45 +201,54 @@ public class TransactionalOrderCreator {
                 );
             }
 
-            consolidated.merge(
-                    item.productId(),
-                    item.quantity(),
-                    Integer::sum
-            );
+            UUID productId = item.productId();
+            Integer currentQuantity = consolidated.get(productId);
+
+            if (currentQuantity == null) {
+                consolidated.put(
+                        productId,
+                        item.quantity()
+                );
+            } else {
+                consolidated.put(
+                        productId,
+                        currentQuantity + item.quantity()
+                );
+            }
         }
 
         return consolidated;
     }
 
     private User loadCustomer(UUID customerId) {
-        return userRepository.findById(customerId)
-                .filter(
-                        user ->
-                                Boolean.TRUE.equals(
-                                        user.getEnabled()
-                                )
+        UUID id = Objects.requireNonNull(
+                customerId,
+                "Customer id must not be null"
+        );
+
+        return userRepository.findById(id)
+                .filter(user ->
+                        Boolean.TRUE.equals(
+                                user.getEnabled()
+                        )
                 )
-                .orElseThrow(
-                        () ->
-                                new ApiNotFoundException(
-                                        "Customer not found",
-                                        "Customer not found for id: "
-                                                + customerId,
-                                        "orders/customer-not-found"
-                                )
+                .orElseThrow(() ->
+                        new ApiNotFoundException(
+                                "Customer not found",
+                                "Customer not found for id: " + id,
+                                "orders/customer-not-found"
+                        )
                 );
     }
 
     private Product loadProduct(UUID productId) {
         return productRepository.findById(productId)
-                .orElseThrow(
-                        () ->
-                                new ApiNotFoundException(
-                                        "Product not found",
-                                        "Product not found for id: "
-                                                + productId,
-                                        "orders/product-not-found"
-                                )
+                .orElseThrow(() ->
+                        new ApiNotFoundException(
+                                "Product not found",
+                                "Product not found for id: " + productId,
+                                "orders/product-not-found"
+                        )
                 );
     }
 
@@ -308,10 +315,9 @@ public class TransactionalOrderCreator {
             CustomerOrder order,
             DiscountEngineResult discountResult
     ) {
-        for (
-                DiscountApplication application :
-                        discountResult.appliedDiscounts()
-        ) {
+        for (DiscountApplication application :
+                discountResult.appliedDiscounts()) {
+
             OrderDiscount orderDiscount =
                     new OrderDiscount();
 

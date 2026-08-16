@@ -27,6 +27,7 @@ import com.launchforge.persistence.AbstractPostgresIntegrationTest;
 @SpringBootTest
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+@SuppressWarnings("null")
 class InventoryControllerMockMvcTest extends AbstractPostgresIntegrationTest {
 
     private static final UUID ADMIN_ID =
@@ -47,7 +48,7 @@ class InventoryControllerMockMvcTest extends AbstractPostgresIntegrationTest {
     private JdbcTemplate jdbcTemplate;
 
     @BeforeEach
-    void resetFixtures() {
+    public void resetFixtures() {
         ensureAdminExists();
 
         jdbcTemplate.update(

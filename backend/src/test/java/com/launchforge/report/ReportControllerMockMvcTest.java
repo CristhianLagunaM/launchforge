@@ -19,6 +19,7 @@ import com.launchforge.persistence.AbstractPostgresIntegrationTest;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@SuppressWarnings("null")
 class ReportControllerMockMvcTest
         extends AbstractPostgresIntegrationTest {
 
@@ -30,10 +31,13 @@ class ReportControllerMockMvcTest
             throws Exception {
 
         mockMvc.perform(
-                get(
-                        "/api/v1/reports/top-products"))
+                        get(
+                                "/api/v1/reports/top-products"
+                        )
+                )
                 .andExpect(
-                        status().isUnauthorized());
+                        status().isUnauthorized()
+                );
     }
 
     @Test
@@ -41,12 +45,16 @@ class ReportControllerMockMvcTest
             throws Exception {
 
         mockMvc.perform(
-                get(
-                        "/api/v1/reports/top-products")
-                        .with(
-                                customerJwt()))
+                        get(
+                                "/api/v1/reports/top-products"
+                        )
+                                .with(
+                                        customerJwt()
+                                )
+                )
                 .andExpect(
-                        status().isForbidden());
+                        status().isForbidden()
+                );
     }
 
     @Test
@@ -54,19 +62,27 @@ class ReportControllerMockMvcTest
             throws Exception {
 
         mockMvc.perform(
-                get(
-                        "/api/v1/reports/top-products")
-                        .with(
-                                adminJwt()))
+                        get(
+                                "/api/v1/reports/top-products"
+                        )
+                                .with(
+                                        adminJwt()
+                                )
+                )
                 .andExpect(
-                        status().isOk())
+                        status().isOk()
+                )
                 .andExpect(
                         jsonPath(
-                                "$").isArray())
+                                "$"
+                        ).isArray()
+                )
                 .andExpect(
                         jsonPath(
                                 "$",
-                                hasSize(0)));
+                                hasSize(0)
+                        )
+                );
     }
 
     @Test
@@ -74,51 +90,77 @@ class ReportControllerMockMvcTest
             throws Exception {
 
         mockMvc.perform(
-                get(
-                        "/api/v1/reports/dashboard")
-                        .with(
-                                adminJwt()))
+                        get(
+                                "/api/v1/reports/dashboard"
+                        )
+                                .with(
+                                        adminJwt()
+                                )
+                )
                 .andExpect(
-                        status().isOk())
-                .andExpect(
-                        jsonPath(
-                                "$.netRevenue").isNumber())
-                .andExpect(
-                        jsonPath(
-                                "$.ordersByStatus.pending").isNumber())
+                        status().isOk()
+                )
                 .andExpect(
                         jsonPath(
-                                "$.capacity.available").isNumber())
+                                "$.netRevenue"
+                        ).isNumber()
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.ordersByStatus.pending"
+                        ).isNumber()
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.capacity.available"
+                        ).isNumber()
+                )
                 .andExpect(
                         jsonPath(
                                 "$.monthlyRevenue",
-                                hasSize(6)))
+                                hasSize(6)
+                        )
+                )
                 .andExpect(
                         jsonPath(
-                                "$.generatedAt").exists());
+                                "$.generatedAt"
+                        ).exists()
+                );
     }
 
     private RequestPostProcessor adminJwt() {
         return jwt()
                 .jwt(
-                        token -> token.claim(
-                                "roles",
-                                List.of(
-                                        "ADMIN")))
+                        token ->
+                                token.claim(
+                                        "roles",
+                                        List.of(
+                                                "ADMIN"
+                                        )
+                                )
+                )
                 .authorities(
                         new SimpleGrantedAuthority(
-                                "ROLE_ADMIN"));
+                                "ROLE_ADMIN"
+                        )
+                );
     }
 
     private RequestPostProcessor customerJwt() {
         return jwt()
                 .jwt(
-                        token -> token.claim(
-                                "roles",
-                                List.of(
-                                        "CUSTOMER")))
+                        token ->
+                                token.claim(
+                                        "roles",
+                                        List.of(
+                                                "CUSTOMER"
+                                        )
+                                )
+                )
                 .authorities(
                         new SimpleGrantedAuthority(
-                                "ROLE_CUSTOMER"));
+                                "ROLE_CUSTOMER"
+                        )
+                );
     }
 }

@@ -28,6 +28,7 @@ import com.launchforge.persistence.model.orders.OrderStatus;
 import com.launchforge.shared.exception.ApiConflictException;
 
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("null")
 class CancelOrderUseCaseTest {
 
     private static final UUID CUSTOMER_ID = UUID.fromString(

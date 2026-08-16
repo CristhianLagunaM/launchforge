@@ -26,7 +26,8 @@ import com.launchforge.persistence.model.inventory.Inventory;
 
 @SpringBootTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-class ProductCatalogIntegrationTest extends AbstractPostgresIntegrationTest {
+class ProductCatalogIntegrationTest
+        extends AbstractPostgresIntegrationTest {
 
     @Autowired
     private ProductCatalogService productCatalogService;
@@ -65,7 +66,7 @@ class ProductCatalogIntegrationTest extends AbstractPostgresIntegrationTest {
                 page.getContent()
         )
                 .extracting(
-                        ProductResponse::name
+                        product -> product.name()
                 )
                 .contains(
                         "Landing Page Launch"

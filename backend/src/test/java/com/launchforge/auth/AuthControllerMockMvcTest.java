@@ -29,7 +29,9 @@ import com.launchforge.persistence.AbstractPostgresIntegrationTest;
 @SpringBootTest
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-class AuthControllerMockMvcTest extends AbstractPostgresIntegrationTest {
+@SuppressWarnings("null")
+class AuthControllerMockMvcTest
+        extends AbstractPostgresIntegrationTest {
 
     private static final UUID ADMIN_ID =
             UUID.fromString(
@@ -55,13 +57,15 @@ class AuthControllerMockMvcTest extends AbstractPostgresIntegrationTest {
     private JdbcTemplate jdbcTemplate;
 
     @BeforeEach
-    void resetFixtures() {
+    public void resetFixtures() {
         cleanupRegisteredCustomer();
         ensureAdminExists();
     }
 
     @Test
-    void registerCreatesCustomerAndReturnsToken() throws Exception {
+    void registerCreatesCustomerAndReturnsToken()
+            throws Exception {
+
         mockMvc.perform(
                         post("/api/v1/auth/register")
                                 .contentType(
@@ -114,7 +118,9 @@ class AuthControllerMockMvcTest extends AbstractPostgresIntegrationTest {
     }
 
     @Test
-    void registerRejectsDuplicateEmail() throws Exception {
+    void registerRejectsDuplicateEmail()
+            throws Exception {
+
         mockMvc.perform(
                         post("/api/v1/auth/register")
                                 .contentType(
@@ -152,7 +158,9 @@ class AuthControllerMockMvcTest extends AbstractPostgresIntegrationTest {
     }
 
     @Test
-    void loginReturnsJwtWhenCredentialsAreValid() throws Exception {
+    void loginReturnsJwtWhenCredentialsAreValid()
+            throws Exception {
+
         mockMvc.perform(
                         post("/api/v1/auth/login")
                                 .contentType(
@@ -191,7 +199,9 @@ class AuthControllerMockMvcTest extends AbstractPostgresIntegrationTest {
     }
 
     @Test
-    void loginRejectsIncorrectCredentials() throws Exception {
+    void loginRejectsIncorrectCredentials()
+            throws Exception {
+
         mockMvc.perform(
                         post("/api/v1/auth/login")
                                 .contentType(
@@ -227,7 +237,9 @@ class AuthControllerMockMvcTest extends AbstractPostgresIntegrationTest {
     }
 
     @Test
-    void protectedEndpointRejectsRequestsWithoutJwt() throws Exception {
+    void protectedEndpointRejectsRequestsWithoutJwt()
+            throws Exception {
+
         mockMvc.perform(
                         get("/api/v1/admin/ping")
                 )

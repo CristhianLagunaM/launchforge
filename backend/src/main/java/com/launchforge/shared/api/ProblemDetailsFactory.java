@@ -1,6 +1,8 @@
 package com.launchforge.shared.api;
 
 import java.net.URI;
+import java.util.Objects;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 
@@ -16,12 +18,37 @@ public final class ProblemDetailsFactory {
             String instance,
             String typeSuffix
     ) {
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(status, detail);
+        HttpStatus nonNullStatus = Objects.requireNonNull(
+                status,
+                "HTTP status must not be null"
+        );
+
+        ProblemDetail problemDetail =
+                ProblemDetail.forStatusAndDetail(
+                        nonNullStatus,
+                        detail
+                );
+
         problemDetail.setTitle(title);
-        problemDetail.setType(URI.create("https://launchforge/errors/" + typeSuffix));
+
+        URI type = Objects.requireNonNull(
+                URI.create(
+                        "https://launchforge/errors/" + typeSuffix
+                ),
+                "Problem type URI must not be null"
+        );
+
+        problemDetail.setType(type);
+
         if (instance != null) {
-            problemDetail.setInstance(URI.create(instance));
+            URI instanceUri = Objects.requireNonNull(
+                    URI.create(instance),
+                    "Problem instance URI must not be null"
+            );
+
+            problemDetail.setInstance(instanceUri);
         }
+
         return problemDetail;
     }
 }
