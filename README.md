@@ -265,9 +265,22 @@ spring.flyway.enabled=true
 spring.jpa.hibernate.ddl-auto=validate
 ```
 
-El repositorio contiene migraciones versionadas desde `V1` hasta `V8`.
+El repositorio contiene una baseline consolidada de ocho migraciones versionadas, desde `V1` hasta `V8`.
+
+```text
+V1  Identity
+V2  Catalog
+V3  Inventory
+V4  Orders
+V5  Discounts
+V6  Audit
+V7  Indexes
+V8  Initial catalog data
+```
 
 Hibernate **no modifica automáticamente** el esquema: únicamente valida que las entidades JPA sean compatibles con la estructura creada por Flyway.
+
+A partir de la baseline publicada, los cambios posteriores deben incorporarse mediante nuevas migraciones incrementales sin reescribir las versiones existentes.
 
 ### Validar instalación desde cero
 
@@ -287,7 +300,9 @@ flowchart LR
     E --> F[Frontend disponible]
 ```
 
-> `docker compose down -v` elimina los datos locales almacenados en el volumen de PostgreSQL.
+> `docker compose down -v` elimina los datos locales almacenados en el volumen de PostgreSQL. Utilízalo únicamente cuando quieras reconstruir deliberadamente la base local.
+
+La estrategia completa de migraciones está documentada en [`docs/migration-plan.md`](docs/migration-plan.md).
 
 ## 8. Builds, tests y calidad
 
@@ -305,6 +320,8 @@ O:
 cd backend
 mvn clean verify
 ```
+
+El gate `clean verify` ejecuta la validación completa del backend, incluyendo pruebas y generación de cobertura JaCoCo.
 
 ### Verificación del frontend
 
@@ -337,7 +354,24 @@ make test
 make build
 ```
 
-## 9. Checklist rápido
+## 9. Integración y entrega continua
+
+GitHub Actions valida backend y frontend de forma independiente antes de integrar cambios.
+
+Los gates principales son:
+
+```text
+Backend CI  -> mvn clean verify
+Frontend CI -> npm ci + lint + test + build
+```
+
+El workflow de release vuelve a ejecutar ambos gates antes de publicar imágenes de backend y frontend en GHCR.
+
+La automatización actual cubre **Continuous Delivery hasta GHCR**. El despliegue automático hacia un proveedor específico queda fuera del alcance mientras no exista un entorno de destino definido.
+
+Más detalles en [`docs/ci.md`](docs/ci.md).
+
+## 10. Checklist rápido
 
 Antes de considerar el entorno listo:
 
@@ -370,6 +404,7 @@ flowchart TD
     D --> T[testing.md]
     D --> Q[quality.md]
     D --> CI[ci.md]
+    D --> MP[migration-plan.md]
     D --> TR[troubleshooting.md]
     D --> DEC[decisions/]
     D --> F[features/]
@@ -384,6 +419,7 @@ Documentos principales:
 - [Pruebas](docs/testing.md)
 - [Calidad](docs/quality.md)
 - [Integración continua](docs/ci.md)
+- [Plan de migraciones](docs/migration-plan.md)
 - [Troubleshooting](docs/troubleshooting.md)
 
 Las decisiones y funcionalidades específicas se documentan adicionalmente en:

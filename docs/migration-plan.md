@@ -10,6 +10,8 @@ Ruta:
 backend/src/main/resources/db/migration/
 ```
 
+La baseline actual del proyecto está compuesta por ocho migraciones:
+
 ```mermaid
 flowchart LR
     V1[V1 Identity] --> V2[V2 Catalog]
@@ -18,33 +20,34 @@ flowchart LR
     V4 --> V5[V5 Discounts]
     V5 --> V6[V6 Audit]
     V6 --> V7[V7 Indexes]
-    V7 --> V8[V8 Seed histórico]
-    V8 --> V9[V9 Search indexes]
-    V9 --> V10[V10 Random range]
-    V10 --> V11[V11 Discount alignment]
-    V11 --> V12[V12 Reservation reconciliation]
-    V12 --> V13[V13 Reset + product catalog]
-    V13 --> V14[V14 Inventory initialization]
-    V14 --> V15[V15 Discount configuration]
-    V15 --> V16[V16 Order requirements]
+    V7 --> V8[V8 Initial catalog seed]
 ```
 
 ## Regla de evolución
 
-Una migración compartida **no se edita**.
+Las migraciones `V1` a `V8` representan la baseline consolidada actual del proyecto.
 
-Todo cambio posterior se expresa mediante una nueva versión incremental.
+Una vez que esta baseline sea utilizada en un entorno compartido o desplegado, sus migraciones deben considerarse **inmutables**.
+
+Todo cambio posterior debe expresarse mediante una nueva migración incremental.
 
 ```text
-NO modificar V1..V16 para corregir una base existente.
-Crear V17__... cuando aparezca el siguiente cambio.
+NO modificar V1..V8 después de publicar la baseline.
+
+Crear V9__... para el siguiente cambio de esquema o datos.
 ```
+
+Durante el desarrollo inicial se consolidó el historial de migraciones porque la aplicación aún no dependía de una base compartida o productiva. Esto permitió eliminar migraciones intermedias y destructivas y dejar una secuencia reproducible desde una base vacía.
+
+A partir de esta baseline, el historial debe evolucionar únicamente hacia adelante.
+
+---
 
 ## V1 — Identity
 
 `V1__create_identity.sql`
 
-Crea:
+Crea las estructuras relacionadas con usuarios y autorización:
 
 - `users`;
 - `roles`;
@@ -55,30 +58,62 @@ Roles base:
 - `ADMIN`;
 - `CUSTOMER`.
 
-No crea un administrador de aplicación listo para usar. El bootstrap del primer administrador se realiza después del registro normal, asignando el rol mediante PostgreSQL tal como se documenta en el README.
+La migración registra únicamente los roles necesarios para operar la aplicación.
+
+No crea usuarios de demostración ni un administrador listo para usar.
+
+El primer usuario se registra mediante el flujo normal de autenticación y, cuando se requiere un administrador inicial, el rol `ADMIN` se asigna posteriormente siguiendo el procedimiento documentado en el README.
+
+---
 
 ## V2 — Catalog
 
 `V2__create_catalog.sql`
 
-Crea:
+Crea las estructuras principales del catálogo:
 
 - `categories`;
 - `products`.
 
-Incluye unicidad para nombres/slugs/SKU y protección de precio no negativo.
+Incluye restricciones para proteger la integridad del dominio, entre ellas:
+
+- nombres y slugs únicos cuando corresponde;
+- SKU único;
+- precios no negativos;
+- relaciones entre productos y categorías.
+
+Esta migración contiene únicamente estructura y restricciones.
+
+Los datos iniciales del catálogo se cargan posteriormente en `V8`.
+
+---
 
 ## V3 — Inventory
 
 `V3__create_inventory.sql`
 
-Crea `inventory` con:
+Crea la tabla `inventory`.
 
-- `available_quantity`;
-- `reserved_quantity`;
-- `version`.
+Campos principales:
 
-Incluye restricciones de cantidades no negativas y relación 1:1 con producto.
+```text
+available_quantity
+reserved_quantity
+version
+```
+
+Incluye:
+
+- cantidades disponibles no negativas;
+- cantidades reservadas no negativas;
+- relación 1:1 entre producto e inventario;
+- campo `version` inicializado en `0`.
+
+El campo `version` es utilizado por Hibernate mediante optimistic locking para proteger las actualizaciones concurrentes de inventario.
+
+La disponibilidad efectiva se determina considerando tanto la cantidad disponible como las unidades reservadas por órdenes pendientes.
+
+---
 
 ## V4 — Orders
 
@@ -89,13 +124,63 @@ Crea:
 - `orders`;
 - `order_items`.
 
-Incluye:
+Esta migración concentra la estructura final requerida actualmente para el flujo de órdenes.
 
-- `order_number` único;
-- valores monetarios no negativos;
-- cantidad positiva;
-- estados `CREATED`, `CONFIRMED`, `CANCELLED`, `COMPLETED`;
-- idempotencia por `(customer_id, idempotency_key)` cuando la llave existe.
+### Estados de orden
+
+Los estados soportados son:
+
+```text
+CREATED
+CONFIRMED
+CANCELLED
+COMPLETED
+```
+
+### Integridad monetaria
+
+Incluye restricciones para proteger:
+
+- subtotal no negativo;
+- descuentos no negativos;
+- total no negativo;
+- cantidades de items positivas;
+- precios unitarios no negativos.
+
+### Idempotencia
+
+La creación de órdenes puede utilizar una `idempotency_key`.
+
+La base de datos protege la unicidad de la intención de compra mediante:
+
+```text
+(customer_id, idempotency_key)
+```
+
+cuando la llave está presente.
+
+Esto evita crear órdenes duplicadas cuando un cliente reintenta la misma solicitud.
+
+### Snapshots comerciales
+
+`order_items` conserva los valores comerciales utilizados al momento de crear una orden, evitando depender de cambios posteriores en el catálogo.
+
+### Requerimientos comerciales
+
+La orden también almacena información adicional del requerimiento:
+
+```text
+requirement_description
+project_objective
+contact_email
+contact_phone
+desired_delivery_date
+references_url
+```
+
+Estos campos permiten que la orden represente tanto los productos solicitados como el contexto comercial del proyecto.
+
+---
 
 ## V5 — Discounts
 
@@ -106,150 +191,159 @@ Crea:
 - `discount_configuration`;
 - `order_discounts`.
 
-Códigos de reglas:
+Las reglas configurables actualmente soportadas son:
 
-- `TIME_RANGE`;
-- `RANDOM_ORDER`;
-- `FREQUENT_CUSTOMER`.
+```text
+TIME_RANGE
+RANDOM_ORDER
+FREQUENT_CUSTOMER
+```
+
+La migración crea también la configuración inicial de las tres reglas.
+
+| Code | Porcentaje | Estado inicial | Parámetros |
+| --- | ---: | --- | --- |
+| `TIME_RANGE` | 10% | deshabilitado | rango configurable |
+| `RANDOM_ORDER` | 50% | deshabilitado | rango configurable |
+| `FREQUENT_CUSTOMER` | 5% | deshabilitado | 5 órdenes / 12 meses |
+
+Las reglas temporales no tienen fechas de negocio fijas dentro de la baseline.
+
+La configuración se habilita y modifica posteriormente desde la administración de la aplicación.
+
+Los descuentos aplicados a una orden se almacenan en `order_discounts`, conservando trazabilidad de:
+
+- regla aplicada;
+- porcentaje;
+- valor descontado.
+
+---
 
 ## V6 — Audit
 
 `V6__create_audit.sql`
 
-Crea `audit_log` con:
+Crea `audit_log`.
+
+La tabla permite registrar eventos relevantes producidos por operaciones del sistema.
+
+Entre la información almacenada se encuentra:
 
 - actor;
 - acción;
-- recurso;
+- tipo de recurso;
+- identificador del recurso;
 - correlation ID;
-- IP;
+- dirección IP;
 - metadata JSONB;
-- fecha.
+- fecha del evento.
+
+La auditoría forma parte de la misma frontera transaccional de las operaciones críticas de negocio cuando corresponde.
+
+---
 
 ## V7 — Indexes
 
 `V7__create_indexes.sql`
 
-Añade índices orientados a consultas de:
+Consolida los índices necesarios para las consultas principales de la aplicación.
+
+Incluye índices orientados a:
 
 - catálogo;
+- búsquedas de productos;
+- inventario;
 - órdenes;
-- items;
+- items de órdenes;
 - descuentos;
-- auditoría.
+- auditoría;
+- reportes.
 
-## V8 — Seed histórico inicial
+Entre los campos utilizados para búsqueda y filtrado se encuentran características como:
+
+- precio del producto;
+- disponibilidad de inventario;
+- estados de orden;
+- relaciones entre cliente y orden.
+
+Esta migración mantiene separados los aspectos estructurales de las optimizaciones de consulta.
+
+---
+
+## V8 — Datos iniciales de catálogo
 
 `V8__seed_demo_data.sql`
 
-Fue parte del baseline inicial y aportó datos reproducibles para desarrollo y pruebas.
+Carga los datos mínimos necesarios para que una instalación nueva tenga un catálogo reproducible.
 
-Las migraciones posteriores pueden transformar o reemplazar esos datos; no debe asumirse que las cuentas históricas de V8 siguen disponibles en el estado final de una base nueva.
+Incluye:
 
-## V9 — Product search indexes
+- 6 categorías;
+- 10 productos;
+- inventario inicial para los productos.
 
-`V9__create_product_search_indexes.sql`
-
-Añade índices para:
-
-- `products.price`;
-- `inventory.available_quantity`.
-
-## V10 — Random discount range
-
-`V10__configure_random_discount_range.sql`
-
-Ajusta la configuración temporal de `RANDOM_ORDER`.
-
-## V11 — Discount seed alignment
-
-`V11__align_discount_seed_with_accumulative_rules.sql`
-
-Alinea datos históricos con la regla final de descuentos acumulables sobre el subtotal original.
-
-## V12 — Reservation reconciliation
-
-`V12__reconcile_inventory_reservations.sql`
-
-Normaliza `reserved_quantity` y reconstruye reservas a partir de órdenes `CREATED`, evitando reservas huérfanas al evolucionar el flujo pendiente/confirmada.
-
-## V13 — Reset de datos y catálogo final
-
-`V13__reset_demo_data_and_seed_products.sql`
-
-Esta migración:
-
-1. trunca datos funcionales previos;
-2. reinicia identidades de catálogos secuenciales;
-3. elimina usuarios históricos de seed;
-4. reconstruye categorías;
-5. carga el catálogo final de productos.
-
-Tablas afectadas por el reset:
+Cada producto recibe inicialmente:
 
 ```text
-audit_log
-order_discounts
-order_items
-orders
-inventory
-discount_configuration
-user_roles
-users
-products
-categories
-```
-
-Como consecuencia, una base construida hasta `V16` **no depende de usuarios demo**.
-
-## V14 — Inicialización de inventario
-
-`V14__initialize_product_inventory.sql`
-
-Crea una fila de inventario para todo producto que aún no la tenga:
-
-```text
-available_quantity = 0
+available_quantity = 10
 reserved_quantity  = 0
 version            = 0
 ```
 
-El `ADMIN` puede ajustar después la capacidad desde la aplicación.
+Esta migración **no crea usuarios de demostración**.
 
-## V15 — Configuración final de descuentos
+Tampoco crea:
 
-`V15__restore_discount_configuration.sql`
+- órdenes;
+- registros de auditoría;
+- descuentos aplicados;
+- administradores preconfigurados.
 
-Restablece las tres configuraciones:
+Las configuraciones de descuentos pertenecen a `V5` y permanecen inicialmente deshabilitadas.
 
-| Code | Porcentaje | Estado inicial | Parámetros |
-|---|---:|---|---|
-| `TIME_RANGE` | 10% | deshabilitado | rango configurable |
-| `RANDOM_ORDER` | 50% | deshabilitado | rango configurable |
-| `FREQUENT_CUSTOMER` | 5% | deshabilitado | 5 órdenes / 12 meses |
+---
 
-Las reglas se habilitan y configuran posteriormente desde administración.
+## Resultado de una instalación nueva
 
-## V16 — Requerimientos de orden
-
-`V16__add_order_requirements.sql`
-
-Añade a `orders`:
+Al ejecutar las migraciones sobre una base de datos vacía, Flyway debe aplicar exactamente:
 
 ```text
-requirement_description TEXT
-project_objective TEXT
-contact_email VARCHAR(180)
-contact_phone VARCHAR(40)
-desired_delivery_date DATE
-references_url TEXT
+V1
+V2
+V3
+V4
+V5
+V6
+V7
+V8
 ```
 
-Estos campos permiten que la orden represente no solo productos seleccionados sino el contexto comercial del proyecto solicitado.
+El test de integración de persistencia verifica esta condición consultando `flyway_schema_history`.
 
-## Verificación
+El resultado esperado es:
 
-Consultar:
+```text
+8 migraciones exitosas
+```
+
+en el siguiente orden:
+
+```text
+1
+2
+3
+4
+5
+6
+7
+8
+```
+
+---
+
+## Verificación manual
+
+El historial puede consultarse directamente en PostgreSQL:
 
 ```sql
 SELECT
@@ -264,11 +358,55 @@ FROM flyway_schema_history
 ORDER BY installed_rank;
 ```
 
-Para validar todo el historial desde cero:
+Una instalación nueva debe mostrar únicamente las ocho versiones de la baseline.
+
+---
+
+## Validación desde cero
+
+Para validar completamente la creación de la base en un entorno local:
 
 ```bash
 docker compose down -v
 docker compose up --build
 ```
 
-> `down -v` elimina el volumen local de PostgreSQL y debe utilizarse únicamente cuando se desea reconstruir una base de desarrollo.
+Esto elimina el volumen local de PostgreSQL y obliga a Flyway a reconstruir todo el esquema desde una base vacía.
+
+> `docker compose down -v` elimina los datos persistidos en los volúmenes asociados al Compose. Debe utilizarse únicamente cuando se desea reconstruir deliberadamente una base de desarrollo.
+
+Después del arranque se puede validar el estado de los servicios con:
+
+```bash
+docker compose ps
+```
+
+La aplicación debe iniciar únicamente después de que PostgreSQL esté disponible y las migraciones hayan terminado correctamente.
+
+---
+
+## Evolución futura
+
+La siguiente modificación de esquema o datos deberá iniciar en:
+
+```text
+V9__descripcion_del_cambio.sql
+```
+
+Ejemplos:
+
+```text
+V9__add_product_attribute.sql
+V10__create_supplier_table.sql
+V11__add_order_reporting_index.sql
+```
+
+Las nuevas migraciones deben:
+
+1. ser incrementales;
+2. evitar operaciones destructivas innecesarias;
+3. mantener compatibilidad con datos existentes;
+4. poder ejecutarse automáticamente durante el arranque;
+5. quedar cubiertas por la validación de integración cuando modifiquen la estructura esperada.
+
+Una vez publicada esta baseline, ninguna migración existente entre `V1` y `V8` debe ser reescrita para corregir una base ya desplegada.
