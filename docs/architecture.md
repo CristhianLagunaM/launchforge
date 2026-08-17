@@ -10,7 +10,7 @@ flowchart TD
     N -->|/api| S[Spring Boot 3 / Java 21]
     S --> A[Application / Domain]
     A --> P[(PostgreSQL 17)]
-    F[Flyway V1-V16] --> P
+    F[Flyway V1-V8] --> P
     X[Spring Security + JWT] -. transversal .-> S
     Y[Audit AOP] -. transversal .-> A
 ```
@@ -138,7 +138,7 @@ Además de los items, una orden almacena información del requerimiento:
 - fecha deseada de entrega opcional;
 - referencias URL opcionales.
 
-Estos campos forman parte de `orders` desde `V16__add_order_requirements.sql`.
+Estos campos forman parte de la estructura consolidada de `orders` definida en `V4__create_orders.sql`.
 
 ## Idempotencia
 
@@ -234,12 +234,13 @@ flowchart LR
 ## Persistencia
 
 - PostgreSQL es la fuente persistente de verdad;
-- Flyway controla evolución del esquema;
+- Flyway controla evolución del esquema mediante la baseline `V1` a `V8`;
 - Hibernate usa `ddl-auto=validate`;
 - no se usa `ddl-auto=update`;
 - dinero usa `NUMERIC`/`BigDecimal`;
 - timestamps usan UTC;
-- las migraciones compartidas no se reescriben.
+- las migraciones publicadas no se reescriben;
+- todo cambio posterior a la baseline debe incorporarse mediante una nueva migración incremental.
 
 ## Decisiones relacionadas
 
